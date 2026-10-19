@@ -57,12 +57,25 @@ Okuma sırası: ortam değişkeni → `.streamlit/secrets.toml` (Streamlit Cloud
 | Değişken | Zorunlu mu | Açıklama |
 |---|---|---|
 | `SUPABASE_URL`, `SUPABASE_KEY` | Önerilir | Kalıcı kayıt. Yoksa yerel SQLite. |
-| `FOOTBALL_DATA_TOKEN` | Hayır | football-data.org (ücretsiz kayıt). |
-| `API_FOOTBALL_KEY` | Hayır (önerilir) | İlk 11, sakatlık, oyuncu dakikaları, maç istatistiği. |
-| `ODDS_API_KEY` | Hayır | The Odds API piyasa oranları. |
+| Veri kaynağı anahtarları | Evet (her biri) | Aşağıdaki tablo. Tanımlı değilse kaynak atlanır ve arayüzde **🔑 anahtar bekleniyor** yazar. |
 | `LEAGUES` | Hayır | `T1,E0,SP1,I1,D1,F1` (T1 = Süper Lig; ayrıca E1, N1, P1). |
 | `COMPLETENESS_MIN` | Hayır | Tamlık eşiği (varsayılan 60/100). |
 | `DEMO_MODE` | Hayır | `1` = örnek veri modu. |
+
+**Veri kaynağı anahtarları** (hepsi ücretsiz kayıtla alınır; değerleri yalnızca env / GitHub Secrets / Streamlit
+Secrets / Supabase Vault'a yazın):
+
+| Ortam değişkeni / Secret | Kaynak | Nereden alınır | Ücretsiz limit |
+|---|---|---|---|
+| `THESPORTSDB_KEY` | TheSportsDB | https://www.thesportsdb.com/pricing | Ücretsiz anahtar '123': ~30 istek/dk, günlük liste lig başına 3 maç |
+| `API_FOOTBALL_KEY` | API-Football (api-sports.io) | https://dashboard.api-football.com/register | Ücretsiz: 100 istek/gün, 10/dk |
+| `FOOTBALL_DATA_TOKEN` | football-data.org | https://www.football-data.org/client/register | Ücretsiz: 12 turnuva, 10 istek/dk (Süper Lig yok) |
+| `ODDS_API_KEY` | The Odds API | https://the-odds-api.com/#get-access | Ücretsiz: ayda 500 kredi (h2h+totals × eu = 2 kredi/lig) |
+| `ODDSPAPI_KEY` | OddsPapi | https://oddspapi.io/en/register | Ücretsiz: ayda 250 istek (bot günde en çok 1 oran çağrısı yapar) |
+| `SPORTMONKS_KEY` | Sportmonks Football API v3 | https://my.sportmonks.com/register | Ücretsiz plan: yalnızca Danimarka Superliga + İskoçya Premiership (180 istek/saat/varlık); bizim liglerimiz ücretli planda |
+| `FOOTYSTATS_KEY` | FootyStats API | https://footystats.org/api | Ücretsiz: yalnızca Premier Lig, 180 istek/saat; Süper Lig ücretli (Hobby £29.99/ay) |
+| `SPORTDEVS_KEY` | SportDevs Football API | https://sportdevs.com/football | Ücretsiz: 300 istek/gün, 10 büyük lig |
+| `CLUBELO_KEY` | Club Elo | http://clubelo.com/API | Eskiden anahtarsızdı; Eylül 2026'dan beri API kimlik doğrulama istiyor, kayıt henüz kapalı |
 
 Diğer ayarlar için `.env.example` dosyasına bakın. **Gerçek anahtar hiçbir dosyada depoya girmez.**
 
@@ -86,8 +99,10 @@ Aynı işlemler arayüzde **Tahmin Botu** sayfasından da yapılabilir (anon ana
 - 08:00 TSİ `sabah`, gün içinde her 2 saatte bir `yenile + bot + sonuclandir`, gece `sonuclandir`;
   ayrıca **Actions → Run workflow** ile elle.
 - Repo → Settings → Secrets and variables → Actions → **Secrets**: `SUPABASE_URL`,
-  `SUPABASE_SERVICE_ROLE_KEY`, (isteğe bağlı) `API_FOOTBALL_KEY`, `FOOTBALL_DATA_TOKEN`, `ODDS_API_KEY`.
-  **Variables**: `LEAGUES` (isteğe bağlı).
+  `SUPABASE_SERVICE_ROLE_KEY` ve yukarıdaki tablodaki tüm veri anahtarları (`API_FOOTBALL_KEY`,
+  `FOOTBALL_DATA_TOKEN`, `ODDS_API_KEY`, `ODDSPAPI_KEY`, `SPORTMONKS_KEY`, `FOOTYSTATS_KEY`, `SPORTDEVS_KEY`,
+  `CLUBELO_KEY`, `THESPORTSDB_KEY`). Tanımlanmayan secret boş geçer; bot o kaynağı "anahtar bekleniyor" diye raporlar.
+  **Variables**: `LEAGUES` (boşsa `T1,E0,SP1,I1,D1,F1`).
 
 ## Model özeti
 
@@ -105,28 +120,25 @@ Aynı işlemler arayüzde **Tahmin Botu** sayfasından da yapılabilir (anon ana
 
 ## Veri kaynakları ve sınırları
 
-**Anahtarsız çalışanlar**
-- **football-data.co.uk** — Süper Lig dahil sonuç, İY skoru, şut, isabetli şut, korner, faul, kart, hakem,
-  açılış/kapanış oranları (CSV). Güncel sezon fikstürü de alınır. Kale vuruşu ve xG Süper Lig için yok.
-- **TheSportsDB** (ücretsiz anahtar `123`) — fikstür/sonuç, stadyum, şehir. Ücretsiz uç noktalar sınırlı ve
-  yavaş (istekler arası bekleme uygulanır).
-- **Open-Meteo** — hava durumu (anahtarsız, ticari olmayan kullanım).
-- **RSS** — TRT Spor, AA Spor, Fotomaç, BBC Football; yalnızca başlık/özet/bağlantı saklanır.
+Ayrıntılı liste, kullanım koşulu notları ve Elo geriye dönük testi: **[docs/kaynaklar.md](docs/kaynaklar.md)**.
 
-**Anahtar gerektirenler**
-- **API-Football** (birincil kaynak: fikstür, ilk 11, sakatlık, oyuncu istatistiği) — ücretsiz plan 100 istek/gün;
-  ücretsiz planda güncel sezona erişim kısıtlı olabilir. Bot günlük bütçeyi sayar (`API_FOOTBALL_DAILY_BUDGET`).
-- **football-data.org** — ücretsiz planda Süper Lig yok (büyük Avrupa ligleri var), 10 istek/dk.
-- **The Odds API** — ücretsiz ayda 500 kredi; Türk bahis şirketleri yok (uluslararası ortalama + Pinnacle).
-- **Supabase** — kalıcı kayıt.
+**Anahtarsız (şu an çalışıyor):** football-data.co.uk (Süper Lig dahil sonuç/istatistik/hakem/oran CSV),
+OpenLigaDB (Bundesliga dakikalar içinde; Premier Lig ve La Liga boşluk doldurur), openfootball (CC0, boşluk doldurur),
+TheSportsDB (ücretsiz anahtar `123`), Wikidata SPARQL (stadyum, kapasite, şehir, koordinat, teknik direktör),
+Open-Meteo (hava), 18 Türkçe ve uluslararası RSS akışı, Meclis Elo (iç hesap, gol modeli önseli).
+
+**Anahtar bekleyenler:** API-Football, football-data.org, The Odds API, OddsPapi, Sportmonks, FootyStats,
+SportDevs, Club Elo. Anahtar eklenince bir sonraki `yenile` ile devreye girerler.
 
 **Bilinçli olarak KULLANILMAYANLAR:** FotMob, SofaScore, Flashscore, WhoScored, Transfermarkt, Forebet,
-Understat, FBref, Nesine — kazıma (scraping) yapılmaz. Tüm istekler `90Meclis/1.0` kimliğiyle, önbellekli ve
-sınırlı hızda yapılır; kaynakların kullanım koşullarına uyulur.
+Understat, FBref, Nesine iç uç noktaları, ESPN'in belgelenmemiş API'si. Bunlarda kazıma (scraping) yapılmaz.
+Tüm istekler `90Meclis/1.0` kimliğiyle, önbellekli ve sınırlı hızda yapılır.
 
-**Birleştirme:** aynı maç = aynı lig + iki takım eşleşti + başlama saati ±36 saat. Alan bazında öncelik
-API-Football → The Odds API → football-data.org → TheSportsDB → football-data.co.uk; boş alan sıradaki kaynaktan
-doldurulur, her alanın kaynağı `matches.sources` içinde, eksikler `missing_fields` içinde saklanır, skor çelişkileri
+**Birleştirme:** aynı maç = aynı lig + iki takım eşleşti + başlama saati ±36 saat. Genel alanlarda öncelik
+API-Football → Sportmonks → football-data.org → FootyStats → SportDevs → OpenLigaDB → The Odds API → OddsPapi →
+TheSportsDB → football-data.co.uk → openfootball. Oranlarda öncelik The Odds API → OddsPapi →
+football-data.co.uk → FootyStats → API-Football → Sportmonks. Boş alan sıradaki kaynaktan doldurulur. Her alanın
+kaynağı `matches.sources` içinde, eksikler `missing_fields` içinde saklanır, skor çelişkileri
 `sources._conflicts` altına yazılır. Hiçbir maç düşürülmez.
 
 ## Değiştirilemez defter
@@ -141,7 +153,7 @@ Veritabanı tetikleyicileri (Supabase'te ve yerel SQLite'ta):
 
 ```bash
 pytest -q
-# İsteğe bağlı: şemayı gerçek PostgreSQL'de sına (boş bir test veritabanı verin)
+# Şemayı gerçek PostgreSQL'de sınamak için (boş bir test veritabanı verin)
 MECLIS_TEST_PG_DSN="host=localhost dbname=meclis_test user=postgres" pytest tests/test_postgres_schema.py
 ```
 

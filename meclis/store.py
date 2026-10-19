@@ -97,7 +97,8 @@ class BaseStore:
 # ----------------------------------------------------------------------------
 _SQLITE_SCHEMA = """
 create table if not exists teams (id text primary key, league text not null, name text not null,
-  aliases text default '[]', ext_ids text default '{}', stadium text, city text, lat real, lon real, updated_at text);
+  aliases text default '[]', ext_ids text default '{}', stadium text, city text, lat real, lon real, coach text,
+  capacity int, updated_at text);
 create table if not exists matches (id text primary key, league text not null, season text, kickoff_at text not null,
   home_team_id text not null, away_team_id text not null, home_name text not null, away_name text not null,
   status text not null default 'planlandi' check (status in ('planlandi','basladi','bitti','ertelendi','iptal')),
@@ -250,7 +251,21 @@ class SQLiteStore(BaseStore):
         self.conn.row_factory = sqlite3.Row
         self.conn.execute("pragma foreign_keys = on")
         self.conn.executescript(_SQLITE_SCHEMA)
+        if path != ":memory:":
+            self._migrate()
         seed_sources(self)
+
+    def _migrate(self) -> None:
+        """Eski yerel veritabanına şema aynasında olup dosyada olmayan sütunları ekler."""
+        ref = sqlite3.connect(":memory:")
+        ref.executescript(_SQLITE_SCHEMA)
+        for t in PRIMARY_KEYS:
+            have = self._cols(t)
+            for cid, name, typ, notnull, default, pk in ref.execute(f"pragma table_info({t})"):
+                if name not in have:
+                    self.conn.execute(f"alter table {t} add column {name} {typ or ''}"
+                                      + (f" default {default}" if default is not None else ""))
+        ref.close()
 
     def _cols(self, table: str) -> set[str]:
         return {r[1] for r in self.conn.execute(f"pragma table_info({table})")}
@@ -417,8 +432,28 @@ class SupabaseStore(BaseStore):
                 cls._COLUMNS[t] = mirror._cols(t)
         return cls._COLUMNS.get(table) or None
 
+    MISSING_COLUMNS: dict[str, set[str]] = {}
+
+    def _drop_missing_column(self, table: str, err: Exception) -> bool:
+        """PostgREST 'Could not find the 'x' column' (PGRST204) → sütun canlı şemada yok. supabase/schema.sql
+        yeniden çalıştırılana kadar o sütun atlanır (veri kaybı değil, yalnızca o alan yazılmaz)."""
+        import re as _re
+
+        m = _re.search(r"Could not find the '([^']+)' column", str(err))
+        if not m:
+            return False
+        col = m.group(1)
+        miss = SupabaseStore.MISSING_COLUMNS.setdefault(table, set())
+        if col in miss:
+            return False
+        miss.add(col)
+        log.warning("Supabase şeması eski: %s.%s yok — supabase/schema.sql'i yeniden çalıştırın", table, col)
+        return True
+
     def _clean(self, rows: list[dict], table: str | None = None) -> list[dict]:
         cols = self._known_cols(table) if table else None
+        if table and cols and SupabaseStore.MISSING_COLUMNS.get(table):
+            cols = cols - SupabaseStore.MISSING_COLUMNS[table]
         if table in ("predictions", "coupons") and cols:
             cols = cols - {"created_at", "recorded_at"}  # sunucu saatini tetikleyici yazar
         out = [_no_nan(json.loads(json.dumps(r, default=str))) for r in rows]
@@ -427,12 +462,16 @@ class SupabaseStore(BaseStore):
     def upsert(self, table, rows):
         if not rows or not self._guard(table):
             return
-        try:
-            for i in range(0, len(rows), 500):
-                self.client.table(table).upsert(self._clean(rows[i:i + 500], table),
-                                                on_conflict=",".join(PRIMARY_KEYS[table])).execute()
-        except Exception as e:
-            raise StoreError(f"Supabase upsert hatası ({table}): {e}") from e
+        for i in range(0, len(rows), 500):
+            chunk = rows[i:i + 500]
+            for _ in range(4):  # canlı şema eskiyse bilinmeyen sütunu düşürüp yeniden dene
+                try:
+                    self.client.table(table).upsert(self._clean(chunk, table),
+                                                    on_conflict=",".join(PRIMARY_KEYS[table])).execute()
+                    break
+                except Exception as e:
+                    if not self._drop_missing_column(table, e):
+                        raise StoreError(f"Supabase upsert hatası ({table}): {e}") from e
 
     def insert(self, table, rows):
         if not rows or not self._guard(table):
@@ -489,29 +528,22 @@ class SupabaseStore(BaseStore):
             raise StoreError(f"Supabase güncelleme hatası ({table}): {e}") from e
 
 
-SOURCES_SEED = [
-    {"name": "football-data.co.uk", "api_key_secret": None, "key_storage": "anahtar gerekmez", "daily_limit": None,
-     "fills_fields": ["sonuç", "İY skoru", "şut", "isabetli şut", "korner", "faul", "kart", "hakem",
-                      "açılış/kapanış oranları", "fikstür"], "requires_key": False},
-    {"name": "thesportsdb", "api_key_secret": "THESPORTSDB_KEY", "key_storage": "env (varsayılan '123')",
-     "daily_limit": None, "fills_fields": ["fikstür", "sonuç", "stadyum", "şehir", "kadro listesi"], "requires_key": False},
-    {"name": "open-meteo", "api_key_secret": None, "key_storage": "anahtar gerekmez", "daily_limit": 10000,
-     "fills_fields": ["hava durumu", "şehir koordinatı"], "requires_key": False},
-    {"name": "rss", "api_key_secret": None, "key_storage": "anahtar gerekmez", "daily_limit": None,
-     "fills_fields": ["haber başlığı", "özet", "bağlantı"], "requires_key": False},
-    {"name": "football-data.org", "api_key_secret": "FOOTBALL_DATA_TOKEN", "key_storage": "env + GitHub Secrets + Vault",
-     "daily_limit": 14400, "fills_fields": ["fikstür", "sonuç", "İY skoru", "hakem", "stadyum"], "requires_key": True},
-    {"name": "api-football", "api_key_secret": "API_FOOTBALL_KEY", "key_storage": "env + GitHub Secrets + Vault",
-     "daily_limit": 100, "fills_fields": ["fikstür", "ilk 11", "sakat/cezalı", "maç istatistiği",
-                                          "oyuncu dakika/gol/asist", "hakem"], "requires_key": True},
-    {"name": "the-odds-api", "api_key_secret": "ODDS_API_KEY", "key_storage": "env + GitHub Secrets + Vault",
-     "daily_limit": None, "fills_fields": ["1X2 oranı", "Alt/Üst oranı", "Pinnacle oranı"], "requires_key": True},
-]
+def _sources_seed() -> list[dict]:
+    from .sources.registry import SOURCES
+
+    return [src.seed_row() for src in SOURCES]
+
+
+SOURCES_SEED = _sources_seed()
 
 
 def seed_sources(store: "BaseStore") -> None:
-    if not store.select("sources", limit=1):
-        store.upsert("sources", [dict(r, updated_at=to_iso(now_utc())) for r in SOURCES_SEED])
+    """Kaynak listesini idempotent olarak yazar (yeni kaynaklar eklenir, var olanlar güncellenir)."""
+    have = {r["name"]: r for r in store.select("sources")}
+    rows = [dict(r, updated_at=to_iso(now_utc())) for r in SOURCES_SEED
+            if r["name"] not in have or any(have[r["name"]].get(k) != v for k, v in r.items())]
+    if rows:
+        store.upsert("sources", rows)
 
 
 _STORE_CACHE: dict[str, BaseStore] = {}

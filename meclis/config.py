@@ -11,7 +11,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = ROOT / "data"
 
-try:  # .env desteği (opsiyonel)
+try:  # .env dosyası varsa okunur
     from dotenv import load_dotenv
 
     load_dotenv(ROOT / ".env", override=False)
@@ -92,6 +92,12 @@ class Settings:
     football_data_token: str | None = None
     api_football_key: str | None = None
     odds_api_key: str | None = None
+    sportmonks_key: str | None = None
+    footystats_key: str | None = None
+    sportdevs_key: str | None = None
+    oddspapi_key: str | None = None
+    clubelo_key: str | None = None
+    keys: dict = field(default_factory=dict)  # ENV ADI -> değer (yalnızca "tanımlı mı" kontrolü için)
     completeness_min: float = 60.0
     thesportsdb_key: str = "123"
     leagues: list[str] = field(default_factory=list)
@@ -115,12 +121,35 @@ class Settings:
         return bool(self.supabase_url and self.supabase_key)
 
 
+# Herkese açık RSS akışları (19.10.2026'da doğrulandı). Yalnızca başlık/özet/bağlantı saklanır.
 DEFAULT_FEEDS = [
+    # Türkiye
     "https://www.trthaber.com/spor_articles.rss",
     "https://www.aa.com.tr/tr/rss/default?cat=spor",
     "https://www.fotomac.com.tr/rss/futbol.xml",
+    "https://www.ntvspor.net/rss/kategori/futbol",
+    "https://www.ntvspor.net/rss/kategori/dunyadan-futbol",
+    "https://www.sporx.com/_xml/rss.php",
+    "https://www.hurriyet.com.tr/rss/spor",
+    "https://www.sabah.com.tr/rss/spor.xml",
+    "https://www.aspor.com.tr/rss/futbol.xml",
+    "https://www.ajansspor.com/rss",
+    "https://www.cnnturk.com/feed/rss/spor/news",
+    "https://www.haberturk.com/rss/spor.xml",
+    "https://www.sozcu.com.tr/feeds-rss-category-spor",
+    # Uluslararası
     "https://feeds.bbci.co.uk/sport/football/rss.xml",
+    "https://www.theguardian.com/football/rss",
+    "https://www.skysports.com/rss/12040",
+    "https://www.marca.com/rss/futbol/primera-division.xml",
+    "https://www.gazzetta.it/rss/calcio.xml",
 ]
+
+
+def _all_keys() -> dict:
+    from .sources.registry import SECRET_NAMES
+
+    return {n: get_setting(n) for n in SECRET_NAMES}
 
 
 def load_settings() -> Settings:
@@ -137,6 +166,12 @@ def load_settings() -> Settings:
         football_data_token=get_setting("FOOTBALL_DATA_TOKEN"),
         api_football_key=get_setting("API_FOOTBALL_KEY"),
         odds_api_key=get_setting("ODDS_API_KEY"),
+        sportmonks_key=get_setting("SPORTMONKS_KEY"),
+        footystats_key=get_setting("FOOTYSTATS_KEY"),
+        sportdevs_key=get_setting("SPORTDEVS_KEY"),
+        oddspapi_key=get_setting("ODDSPAPI_KEY"),
+        clubelo_key=get_setting("CLUBELO_KEY"),
+        keys=_all_keys(),
         completeness_min=get_float("COMPLETENESS_MIN", 60.0),
         thesportsdb_key=get_setting("THESPORTSDB_KEY", "123") or "123",
         leagues=leagues,

@@ -32,23 +32,57 @@ create table if not exists sources (
   updated_at       timestamptz not null default now()
 );
 
+-- Tohum meclis/sources/registry.py'den üretilir (tests/test_registry.py ikisinin eşit olduğunu denetler).
+-- Her kaynak zorunludur: anahtarı tanımlı değilse arayüzde "anahtar bekleniyor" görünür.
 insert into sources (name, api_key_secret, key_storage, daily_limit, fills_fields, requires_key, license_note) values
   ('football-data.co.uk', null, 'anahtar gerekmez', null,
-   '["sonuç","İY skoru","şut","isabetli şut","korner","faul","sarı/kırmızı kart","hakem","açılış/kapanış oranları","fikstür"]',
-   false, 'Ücretsiz CSV; ham veri yeniden yayınlanmaz, iç modelleme için. Kaynak gösterimi: football-data.co.uk'),
-  ('thesportsdb', 'THESPORTSDB_KEY', 'env (varsayılan ücretsiz test anahtarı "123")', null,
-   '["fikstür","sonuç","stadyum","şehir","kadro listesi"]', false, 'Ücretsiz anahtar ~30 istek/dk; sınırlı uç noktalar'),
+   '["sonuç","İY skoru","şut","isabetli şut","korner","faul","kart","hakem","açılış/kapanış oranları","fikstür"]', false,
+   'Ücretsiz katman: Ücretsiz CSV, limit yok (makul kullanım). Ham veri yeniden yayınlanmaz, iç modelleme için; kaynak gösterilir. Sonuçlar haftada ~2 kez güncellenir. Kayıt/bilgi: https://www.football-data.co.uk/data.php'),
+  ('openligadb', null, 'anahtar gerekmez', null,
+   '["fikstür","sonuç (dakikalar içinde)","İY skoru","gol dakikaları"]', false,
+   'Ücretsiz katman: Ücretsiz, anahtarsız REST API (makul kullanım). Topluluk tarafından girilen açık veri. Bundesliga (bl1) güvenilir; Premier Lig (pl) ve La Liga (la1) topluluk ligleri yalnızca boşluk doldurur. Kayıt/bilgi: https://www.openligadb.de'),
+  ('openfootball', null, 'anahtar gerekmez', null,
+   '["fikstür","sonuç","İY skoru"]', false,
+   'Ücretsiz katman: GitHub ham dosyaları, CC0 (kamu malı). CC0-1.0 lisanslı açık veri; güncelleme gecikmeli olabilir, en düşük öncelik. Kayıt/bilgi: https://github.com/openfootball/football.json'),
+  ('thesportsdb', 'THESPORTSDB_KEY', 'env + GitHub Actions Secrets + Supabase Vault', null,
+   '["fikstür","sonuç","stadyum","şehir","kadro listesi"]', false,
+   'Ücretsiz katman: Ücretsiz anahtar ''123'': ~30 istek/dk, günlük liste lig başına 3 maç. Patreon anahtarı (THESPORTSDB_KEY) tüm maçları ve ilk 11''i açar. Kayıt/bilgi: https://www.thesportsdb.com/pricing'),
+  ('wikidata', null, 'anahtar gerekmez', null,
+   '["stadyum","stadyum kapasitesi","şehir","stadyum koordinatı","teknik direktör"]', false,
+   'Ücretsiz katman: Ücretsiz, CC0; sorgu başına 60 sn, User-Agent zorunlu. CC0 veri; Wikimedia User-Agent politikasına uyulur, sonuçlar 14 gün önbelleklenir. Kayıt/bilgi: https://query.wikidata.org'),
   ('open-meteo', null, 'anahtar gerekmez', 10000,
-   '["hava durumu","şehir koordinatı"]', false, 'Ticari olmayan kullanım ücretsiz'),
+   '["hava durumu","şehir koordinatı"]', false,
+   'Ücretsiz katman: Ticari olmayan kullanım ücretsiz, 10.000 istek/gün. CC BY 4.0 veri; kaynak gösterilir. Kayıt/bilgi: https://open-meteo.com/en/pricing'),
   ('rss', null, 'anahtar gerekmez', null,
-   '["haber başlığı","özet","bağlantı"]', false, 'Yalnızca başlık/özet/bağlantı saklanır; tam metin kopyalanmaz'),
-  ('football-data.org', 'FOOTBALL_DATA_TOKEN', 'env + GitHub Secrets + Supabase Vault', 14400,
-   '["fikstür","sonuç","İY skoru","hakem","stadyum"]', true, 'Ücretsiz: 12 turnuva, 10 istek/dk; Süper Lig yok'),
-  ('api-football', 'API_FOOTBALL_KEY', 'env + GitHub Secrets + Supabase Vault', 100,
+   '["haber başlığı","özet","bağlantı"]', false,
+   'Ücretsiz katman: Yayıncıların herkese açık RSS akışları. Yalnızca başlık/özet/bağlantı saklanır; tam metin kopyalanmaz, bağlantı yayıncıya gider.'),
+  ('meclis-elo', null, 'anahtar gerekmez', null,
+   '["takım gücü (Elo)","gol modeli önseli"]', false,
+   'Ücretsiz katman: Havuzdaki gerçek sonuçlardan hesaplanır. Dış kaynak değil; football-data.co.uk/OpenLigaDB sonuçlarından türetilir.'),
+  ('api-football', 'API_FOOTBALL_KEY', 'env + GitHub Actions Secrets + Supabase Vault', 100,
    '["fikstür","ilk 11","sakat/cezalı","maç istatistiği","oyuncu dakika/gol/asist","hakem"]', true,
-   'Ücretsiz: 100 istek/gün, 10/dk; ücretsiz planda sezon erişimi sınırlı'),
-  ('the-odds-api', 'ODDS_API_KEY', 'env + GitHub Secrets + Supabase Vault', null,
-   '["1X2 oranı","Alt/Üst oranı","Pinnacle oranı"]', true, 'Ücretsiz: ayda 500 kredi (h2h+totals × eu = 2 kredi/lig); Türk bayisi yok')
+   'Ücretsiz katman: Ücretsiz: 100 istek/gün, 10/dk. Ücretsiz planda güncel sezon erişimi kısıtlı olabilir. Kayıt/bilgi: https://dashboard.api-football.com/register'),
+  ('football-data.org', 'FOOTBALL_DATA_TOKEN', 'env + GitHub Actions Secrets + Supabase Vault', 14400,
+   '["fikstür","sonuç","İY skoru","hakem","stadyum"]', true,
+   'Ücretsiz katman: Ücretsiz: 12 turnuva, 10 istek/dk (Süper Lig yok). Kayıt/bilgi: https://www.football-data.org/client/register'),
+  ('the-odds-api', 'ODDS_API_KEY', 'env + GitHub Actions Secrets + Supabase Vault', null,
+   '["1X2 oranı","Alt/Üst oranı","Pinnacle oranı"]', true,
+   'Ücretsiz katman: Ücretsiz: ayda 500 kredi (h2h+totals × eu = 2 kredi/lig). Türk bahis şirketi yok. Kayıt/bilgi: https://the-odds-api.com/#get-access'),
+  ('oddspapi', 'ODDSPAPI_KEY', 'env + GitHub Actions Secrets + Supabase Vault', 8,
+   '["1X2 oranı (Pinnacle dahil 300+ bahis şirketi)"]', true,
+   'Ücretsiz katman: Ücretsiz: ayda 250 istek (bot günde en çok 1 oran çağrısı yapar). Kayıt/bilgi: https://oddspapi.io/en/register'),
+  ('sportmonks', 'SPORTMONKS_KEY', 'env + GitHub Actions Secrets + Supabase Vault', 4320,
+   '["fikstür","sonuç","İY skoru","stadyum","hakem","maç istatistiği"]', true,
+   'Ücretsiz katman: Ücretsiz plan: yalnızca Danimarka Superliga + İskoçya Premiership (180 istek/saat/varlık); bizim liglerimiz ücretli planda. Kayıt/bilgi: https://my.sportmonks.com/register'),
+  ('footystats', 'FOOTYSTATS_KEY', 'env + GitHub Actions Secrets + Supabase Vault', 4320,
+   '["sonuç","İY skoru","korner","kart","isabetli şut","faul","stadyum","1X2 ve 2.5 Alt/Üst oranı"]', true,
+   'Ücretsiz katman: Ücretsiz: yalnızca Premier Lig, 180 istek/saat; Süper Lig ücretli (Hobby £29.99/ay). Kayıt/bilgi: https://footystats.org/api'),
+  ('sportdevs', 'SPORTDEVS_KEY', 'env + GitHub Actions Secrets + Supabase Vault', 300,
+   '["fikstür","sonuç","İY skoru","stadyum"]', true,
+   'Ücretsiz katman: Ücretsiz: 300 istek/gün, 10 büyük lig. Kayıt/bilgi: https://sportdevs.com/football'),
+  ('clubelo', 'CLUBELO_KEY', 'env + GitHub Actions Secrets + Supabase Vault', null,
+   '["takım gücü (Elo) başlangıç puanı"]', false,
+   'Ücretsiz katman: Eskiden anahtarsızdı; Eylül 2026''dan beri API kimlik doğrulama istiyor, kayıt henüz kapalı. Web sayfaları kazınmaz; API açılınca CLUBELO_KEY ile kullanılır. O zamana kadar Meclis Elo devrede. Kayıt/bilgi: http://clubelo.com/API')
 on conflict (name) do update set
   api_key_secret = excluded.api_key_secret, key_storage = excluded.key_storage, daily_limit = excluded.daily_limit,
   fills_fields = excluded.fills_fields, requires_key = excluded.requires_key, license_note = excluded.license_note,
@@ -67,8 +101,13 @@ create table if not exists teams (
   city          text,
   lat           double precision,
   lon           double precision,
+  coach         text,                        -- teknik direktör (Wikidata P286)
+  capacity      int,                         -- stadyum kapasitesi (Wikidata P1083)
   updated_at    timestamptz not null default now()
 );
+-- Eski kurulumlar için (idempotent)
+alter table teams add column if not exists coach text;
+alter table teams add column if not exists capacity int;
 
 -- ---------------------------------------------------------------------
 -- 1) matches — birleşik veri havuzundaki maçlar
@@ -493,7 +532,7 @@ end $$;
 grant select on v_tutanak, v_guven_haftalik, v_guven_pazar to anon, authenticated;
 
 -- ---------------------------------------------------------------------
--- (İsteğe bağlı) Supabase Vault — anahtarları veritabanında şifreli saklamak için ÖRNEK.
+-- Supabase Vault — anahtarları veritabanında şifreli saklamak için ÖRNEK.
 -- Gerçek anahtarı buraya YAZIP bu dosyayı depoya koymayın; aşağıdakini yalnızca SQL Editor'da,
 -- yer tutucuyu kendi anahtarınızla değiştirerek bir kez çalıştırın:
 --

@@ -81,8 +81,13 @@ def test_match_detail_renders(demo_env):
 
     at = AppTest.from_file(str(ROOT / "views" / "mac_merkezi.py"), default_timeout=90).run()
     st = list(S._STORE_CACHE.values())[0]
-    mid = st.select("matches", [("status", "eq", "planlandi")], order="kickoff_at")[0]["id"]
-    at.selectbox(key="mm_pick").set_value(mid)
+    from meclis.timeutil import now_utc, tr_date
+
+    m0 = st.select("matches", [("status", "eq", "planlandi"), ("kickoff_at", "gte", now_utc().isoformat())],
+                   order="kickoff_at")[0]
+    at.date_input[0].set_value(tr_date(m0["kickoff_at"]))
+    at.run()
+    at.selectbox(key="mm_pick").set_value(m0["id"])
     at.run()
     assert not at.exception
     labels = [m.label for m in at.metric]

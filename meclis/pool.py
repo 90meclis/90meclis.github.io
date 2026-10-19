@@ -13,8 +13,14 @@ from datetime import date, timedelta
 from . import names
 from .timeutil import now_utc, parse_dt, to_iso
 
-PRIORITY = ["api-football", "the-odds-api", "football-data.org", "thesportsdb", "football-data.co.uk"]
-NAME_PRIORITY = ["thesportsdb", "api-football", "football-data.org", "the-odds-api", "football-data.co.uk"]
+# Alan bazında öncelik (ilk dolu değer kazanır; boşlar sıradaki kaynaktan dolar)
+PRIORITY = ["api-football", "sportmonks", "football-data.org", "footystats", "sportdevs", "openligadb",
+            "the-odds-api", "oddspapi", "thesportsdb", "football-data.co.uk", "openfootball"]
+# Görünen ad önceliği (mevcut adlar kararlı kalsın diye eski kaynaklar önde)
+NAME_PRIORITY = ["thesportsdb", "api-football", "football-data.org", "sportmonks", "football-data.co.uk",
+                 "footystats", "sportdevs", "openligadb", "the-odds-api", "oddspapi", "openfootball"]
+# Oran önceliği: çok şirketli ortalama > Pinnacle > CSV ortalaması > tekil kaynaklar
+ODDS_PRIORITY = ["the-odds-api", "oddspapi", "football-data.co.uk", "footystats", "api-football", "sportmonks"]
 SCALARS = ["kickoff_at", "season", "home_goals", "away_goals", "ht_home_goals", "ht_away_goals",
            "venue", "referee", "city"]
 STAT_FIELDS = ["shots", "shots_on_target", "corners", "fouls", "yellow", "red", "goal_kicks", "xg", "possession"]
@@ -29,6 +35,17 @@ class TeamRegistry:
 
     def add(self, league: str, key: str, display: str) -> None:
         self.keys.setdefault(league, {}).setdefault(key, display)
+
+    def lookup(self, league: str, name: str) -> str | None:
+        """resolve() gibi ama bilinmeyen adı EKLEMEZ (yalnızca boşluk dolduran kaynaklar için)."""
+        k = names.canonical_key(name)
+        known = self.keys.get(league, {})
+        if k in known:
+            return k
+        for kk in known:
+            if names.same_team(k, kk):
+                return kk
+        return None
 
     def resolve(self, league: str, name: str) -> str:
         k = names.canonical_key(name)
@@ -61,6 +78,11 @@ def merge_records(records: list[dict], registry: TeamRegistry | None = None,
                   key=lambda r: _prio(r["source"], PRIORITY))
     buckets: dict[tuple, list[dict]] = {}
     merged: list[dict] = []
+    ex_keys: dict[tuple, list] = {}
+    for e in existing or []:
+        ex_keys.setdefault(_bucket_key(e["league"], e["home_team_id"].split(":", 1)[1],
+                                       e["away_team_id"].split(":", 1)[1]), []).append(parse_dt(e["kickoff_at"]))
+    reg.unmatched = []  # boşluk dolduran kaynakların eşleşmeyen kayıtları (ad eşlemesi bakımı için)
 
     def find(league, hk, ak, ko):
         for m in buckets.get(_bucket_key(league, hk, ak), []):
@@ -70,8 +92,17 @@ def merge_records(records: list[dict], registry: TeamRegistry | None = None,
 
     for r in recs:
         league = r["league"]
-        hk, ak = reg.resolve(league, r["home_name"]), reg.resolve(league, r["away_name"])
         ko = parse_dt(r["kickoff_at"])
+        if r.get("fill_only"):
+            # Topluluk/gecikmeli kaynak: yalnızca var olan maçın boşluklarını doldurur, yeni takım/maç açmaz
+            hk, ak = reg.lookup(league, r["home_name"]), reg.lookup(league, r["away_name"])
+            known = hk and ak and (find(league, hk, ak, ko) is not None or any(
+                abs((t - ko).total_seconds()) <= 36 * 3600 for t in ex_keys.get(_bucket_key(league, hk, ak), [])))
+            if not known:
+                reg.unmatched.append(f"{r['source']}:{league}:{r['home_name']}–{r['away_name']}")
+                continue
+        else:
+            hk, ak = reg.resolve(league, r["home_name"]), reg.resolve(league, r["away_name"])
         m = find(league, hk, ak, ko)
         if m is None:
             m = {"league": league, "home_team_id": f"{league}:{hk}", "away_team_id": f"{league}:{ak}",
@@ -106,9 +137,10 @@ def merge_records(records: list[dict], registry: TeamRegistry | None = None,
             if v is not None and k not in m["ext_ids"]:
                 m["ext_ids"][k] = v
         for k, v in (r.get("odds") or {}).items():
-            if k not in m["odds"]:
+            cur = m["sources"].setdefault("odds", {}).get(k)
+            if k not in m["odds"] or _prio(src, ODDS_PRIORITY) < _prio(cur or "", ODDS_PRIORITY):
                 m["odds"][k] = v
-                m["sources"].setdefault("odds", {})[k] = src
+                m["sources"]["odds"][k] = src
         for side in ("home", "away"):
             for f, v in ((r.get("stats") or {}).get(side) or {}).items():
                 if v is not None and m["stats"][side].get(f) is None:
@@ -214,20 +246,41 @@ class DataPool:
         from .sources.api_football import ApiFootball
         from .sources.football_data_org import FootballDataOrg
         from .sources.odds_api import OddsApi
+        from .sources.footystats import FootyStats
+        from .sources.oddspapi import OddsPapi
+        from .sources.sportdevs import SportDevs
+        from .sources.sportmonks import Sportmonks
         from .sources.thesportsdb import TheSportsDB
 
         self.store = store
         self.s = settings
+        self.sportmonks = Sportmonks(settings.sportmonks_key)
+        self.footystats = FootyStats(settings.footystats_key)
+        self.sportdevs = SportDevs(settings.sportdevs_key)
+        self.oddspapi = OddsPapi(settings.oddspapi_key)
         self.fdorg = FootballDataOrg(settings.football_data_token)
         self.apif = ApiFootball(settings.api_football_key, store, settings.apif_daily_budget)
         self.tsdb = TheSportsDB(settings.thesportsdb_key)
         self.oddsapi = OddsApi(settings.odds_api_key)
         self.log: list[str] = []
 
-    def _note(self, source: str, ok: bool, msg: str) -> None:
+    def _waiting_key(self, source: str, env: str, what: str) -> None:
+        """Anahtar yoksa kaynak atlanır ama bu GİZLENMEZ: durum tablosunda 'anahtar bekleniyor' görünür."""
+        self._note(source, False, f"anahtar bekleniyor: {env} tanımlı değil — {what} bu kaynaktan gelmiyor")
+
+    def _daily_once(self, source: str) -> bool:
+        """Aylık kotası küçük kaynaklar için: bugün başarıyla çağrıldıysa tekrar çağırma."""
+        try:
+            st = self.store.get("source_status", source=source) or {}
+        except Exception:
+            return True
+        return not (st.get("ok") and st.get("calls_date") == now_utc().date().isoformat()
+                    and int(st.get("calls_today") or 0) > 0)
+
+    def _note(self, source: str, ok: bool, msg: str, calls: int = 0) -> None:
         self.log.append(("✅ " if ok else "⚠️ ") + f"{source}: {msg}")
         try:
-            self.store.set_source_status(source, ok, msg)
+            self.store.set_source_status(source, ok, msg, add_calls=calls)
         except Exception:
             pass
 
@@ -274,7 +327,7 @@ class DataPool:
             except Exception as e:
                 self._note("football-data.org", False, str(e))
         else:
-            self._note("football-data.org", False, "FOOTBALL_DATA_TOKEN yok — atlandı")
+            self._waiting_key("football-data.org", "FOOTBALL_DATA_TOKEN", "fikstür/sonuç/hakem (büyük Avrupa ligleri)")
         if self.apif.available:
             season = today.year if today.month >= 7 else today.year - 1
             for lg in leagues:
@@ -286,7 +339,7 @@ class DataPool:
                     self._note("api-football", False, f"{lg}: {e}")
                     break
         else:
-            self._note("api-football", False, "API_FOOTBALL_KEY yok — sakatlık/kadro/ileri istatistik kapalı")
+            self._waiting_key("api-football", "API_FOOTBALL_KEY", "ilk 11, sakat/cezalı, oyuncu dakikaları, hakem, maç istatistiği")
         if self.oddsapi.available:
             for lg in leagues:
                 try:
@@ -297,10 +350,159 @@ class DataPool:
                     self._note("the-odds-api", False, f"{lg}: {e}")
                     break
         else:
-            self._note("the-odds-api", False, "ODDS_API_KEY yok — oranlar yalnızca football-data.co.uk fikstüründen")
+            self._waiting_key("the-odds-api", "ODDS_API_KEY", "çok şirketli 1X2/Alt-Üst oranları")
+        self._collect_extra(recs, today, days_back, days_ahead, history)
         return recs
 
+    def _collect_extra(self, recs: list[dict], today, days_back: int, days_ahead: int, history: bool) -> None:
+        from .sources import openfootball, openligadb
+
+        leagues = self.s.leagues
+        lo = now_utc() - timedelta(days=days_back + 1)
+        hi = now_utc() + timedelta(days=days_ahead + 1)
+
+        def in_window(rows):
+            return rows if history else [r for r in rows if lo <= parse_dt(r["kickoff_at"]) <= hi]
+
+        for lg in leagues:
+            if lg in openligadb.LEAGUE_MAP:
+                try:
+                    rows = in_window(openligadb.fetch_league(lg, today))
+                    recs += rows
+                    self._note("openligadb", True, f"{lg} ({openligadb.LEAGUE_MAP[lg][0]}): {len(rows)} maç", calls=1)
+                except Exception as e:
+                    self._note("openligadb", False, f"{lg}: {e}")
+        n_of = 0
+        for lg in leagues:
+            try:
+                rows = in_window(openfootball.fetch_league(lg, today))
+                recs += rows
+                n_of += len(rows)
+            except Exception as e:
+                self._note("openfootball", False, f"{lg}: {e}")
+        self._note("openfootball", True, f"{n_of} maç (yalnızca boşluk doldurur)")
+        if self.sportmonks.available:
+            try:
+                rows = self.sportmonks.fixtures(leagues, today - timedelta(days=days_back), today + timedelta(days=days_ahead))
+                recs += rows
+                self._note("sportmonks", True, f"{len(rows)} maç (abonelikteki ligler)", calls=1)
+            except Exception as e:
+                self._note("sportmonks", False, str(e))
+        else:
+            self._waiting_key("sportmonks", "SPORTMONKS_KEY", "fikstür/sonuç/stadyum/hakem/istatistik")
+        if self.footystats.available:
+            n = 0
+            try:
+                for i in range(-min(days_back, 2), min(days_ahead, 2) + 1):
+                    rows = self.footystats.matches_on(today + timedelta(days=i))
+                    recs += rows
+                    n += len(rows)
+                self._note("footystats", True, f"{n} maç (hesapta seçili ligler)", calls=1)
+            except Exception as e:
+                self._note("footystats", False, str(e))
+        else:
+            self._waiting_key("footystats", "FOOTYSTATS_KEY", "korner/kart/şut istatistikleri ve oranlar")
+        if self.sportdevs.available:
+            try:
+                rows = self.sportdevs.matches(today - timedelta(days=days_back), today + timedelta(days=days_ahead))
+                recs += rows
+                self._note("sportdevs", True, f"{len(rows)} maç", calls=1)
+            except Exception as e:
+                self._note("sportdevs", False, str(e))
+        else:
+            self._waiting_key("sportdevs", "SPORTDEVS_KEY", "fikstür/sonuç/İY skoru")
+        if self.oddspapi.available:
+            if self._daily_once("oddspapi"):
+                try:
+                    rows = self.oddspapi.odds(leagues)
+                    recs += rows
+                    self._note("oddspapi", True, f"{len(rows)} maç oranı (Pinnacle)", calls=1)
+                except Exception as e:
+                    self._note("oddspapi", False, str(e))
+            else:
+                self.log.append("ℹ️ oddspapi: bugünkü oran çağrısı yapıldı (aylık 250 istek kotası korunuyor)")
+        else:
+            self._waiting_key("oddspapi", "ODDSPAPI_KEY", "Pinnacle 1X2 oranı")
+
+    def elo_priors(self, league: str) -> dict[str, float]:
+        """Club Elo başlangıç puanları (API erişilebilirse). Erişilemezse boş — Meclis Elo yine çalışır."""
+        from .sources import clubelo
+
+        if getattr(self, "_clubelo_failed", False):
+            return {}
+        cache = getattr(self, "_clubelo_rows", None)
+        if cache is None:
+            try:
+                cache = clubelo.ratings(now_utc().date(), self.s.clubelo_key)
+                self._clubelo_rows = cache
+                self._note("clubelo", True, f"{len(cache)} kulüp puanı")
+            except Exception as e:
+                self._clubelo_failed = True
+                hint = "" if self.s.clubelo_key else " (CLUBELO_KEY bekleniyor; API Eylül 2026'dan beri kimlik istiyor)"
+                self._note("clubelo", False, f"{e}{hint} — Meclis Elo iç hesabı kullanılıyor")
+                return {}
+        country = clubelo.COUNTRY.get(league)
+        reg = TeamRegistry()
+        for t in self.store.select("teams", [("league", "eq", league)]):
+            reg.add(league, t["id"].split(":", 1)[1], t["name"])
+        out = {}
+        for r in cache:
+            if r["country"] != country:
+                continue
+            k = reg.lookup(league, r["club"])
+            if k:
+                out[f"{league}:{k}"] = r["elo"]
+        return out
+
+    def enrich_teams(self, max_lookups: int = 200) -> int:
+        """Wikidata'dan stadyum/şehir/kapasite/koordinat/teknik direktör doldurur (takım başına 14 günde bir)."""
+        from .sources import wikidata
+
+        today = now_utc().date().isoformat()
+        rows, done = [], 0
+        for t in self.store.select("teams"):
+            if t["league"] not in self.s.leagues:
+                continue
+            ext = dict(t.get("ext_ids") or {})
+            checked = ext.get("wikidata_checked")
+            if checked and (now_utc().date() - parse_dt(checked + "T00:00:00+00:00").date()).days < 14:
+                continue
+            if done >= max_lookups:
+                break
+            done += 1
+            try:
+                info = None
+                for q in dict.fromkeys([names.display_name(t["name"]), t["name"]]):
+                    info = wikidata.team_info(q, t["league"])
+                    if info:
+                        break
+            except Exception as e:
+                self._note("wikidata", False, f"{t['name']}: {e}")
+                break
+            ext["wikidata_checked"] = today
+            if info:
+                ext["wikidata"] = info["wikidata"]
+                for f in ("stadium", "city", "coach", "capacity"):
+                    if info.get(f) and not t.get(f):
+                        t[f] = info[f]
+                if info.get("lat") is not None:  # stadyum noktası, şehir merkezinden daha doğru
+                    t["lat"], t["lon"] = info["lat"], info["lon"]
+            t["ext_ids"] = ext
+            t["updated_at"] = to_iso(now_utc())
+            rows.append(t)
+        if rows:
+            self.store.upsert("teams", rows)
+            found = sum(1 for r in rows if (r.get("ext_ids") or {}).get("wikidata"))
+            self._note("wikidata", True, f"{len(rows)} takım sorgulandı, {found} eşleşti", calls=len(rows))
+        return len(rows)
+
     def refresh(self, days_back: int = 3, days_ahead: int = 3, history: bool = False) -> dict:
+        from .store import seed_sources
+
+        try:
+            seed_sources(self.store)
+        except Exception as e:
+            self.log.append(f"⚠️ sources tablosu güncellenemedi: {e}")
         recs = self.collect(days_back, days_ahead, history)
         lo = to_iso(now_utc() - timedelta(days=days_back + 2))
         hi = to_iso(now_utc() + timedelta(days=days_ahead + 2))
@@ -311,8 +513,37 @@ class DataPool:
         for t in self.store.select("teams"):
             reg.add(t["league"], t["id"].split(":", 1)[1], t["name"])
         merged = merge_records(recs, reg, existing)
+        if getattr(reg, "unmatched", None):
+            self.log.append(f"ℹ️ boşluk dolduran kaynaklarda eşleşmeyen {len(reg.unmatched)} kayıt atlandı "
+                            f"(ör. {', '.join(reg.unmatched[:3])})")
         self.save(merged)
-        return {"records": len(recs), "matches": len(merged), "log": list(self.log)}
+        try:
+            self.enrich_teams()
+        except Exception as e:
+            self._note("wikidata", False, str(e))
+        self.fill_venues()
+        return {"records": len(recs), "matches": len(merged), "log": list(self.log),
+                "unmatched": list(getattr(reg, "unmatched", []))}
+
+    def fill_venues(self) -> int:
+        """Stadyumu boş maçlara ev sahibinin (Wikidata/TheSportsDB) stadını yazar; kaynağı açıkça işaretlenir."""
+        teams = {t["id"]: t for t in self.store.select("teams") if t.get("stadium")}
+        if not teams:
+            return 0
+        lo = to_iso(now_utc() - timedelta(days=7))
+        rows = []
+        for m in self.store.select("matches", [("kickoff_at", "gte", lo), ("venue", "is_null", True)]):
+            t = teams.get(m["home_team_id"])
+            if not t:
+                continue
+            src = dict(m.get("sources") or {})
+            src["venue"] = "wikidata (ev sahibi stadı)" if (t.get("ext_ids") or {}).get("wikidata") else "thesportsdb (ev sahibi stadı)"
+            mm = dict(m, venue=t["stadium"], city=m.get("city") or t.get("city"), sources=src)
+            mm["missing_fields"] = [f for f in (m.get("missing_fields") or []) if f != "stadyum"]
+            rows.append(mm)
+        if rows:
+            self.store.upsert("matches", rows)
+        return len(rows)
 
     def save(self, merged: list[dict]) -> None:
         ts = to_iso(now_utc())

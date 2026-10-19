@@ -155,8 +155,8 @@ değişkeninden** okur (sıra: ortam değişkeni → `.streamlit/secrets.toml` �
 
 | Nerede | Ne için |
 |---|---|
-| **GitHub → Settings → Secrets and variables → Actions** | Zamanlanmış bot: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `API_FOOTBALL_KEY`, `FOOTBALL_DATA_TOKEN`, `ODDS_API_KEY` |
-| **Streamlit Cloud → App → Settings → Secrets** | Herkese açık uygulama: `SUPABASE_URL`, `SUPABASE_KEY` (= **anon**), isteğe bağlı veri anahtarları |
+| **GitHub → Settings → Secrets and variables → Actions** | Zamanlanmış bot: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` + tüm veri anahtarları (`API_FOOTBALL_KEY`, `FOOTBALL_DATA_TOKEN`, `ODDS_API_KEY`, `ODDSPAPI_KEY`, `SPORTMONKS_KEY`, `FOOTYSTATS_KEY`, `SPORTDEVS_KEY`, `CLUBELO_KEY`, `THESPORTSDB_KEY`; liste: docs/kaynaklar.md) |
+| **Streamlit Cloud → App → Settings → Secrets** | Herkese açık uygulama: `SUPABASE_URL`, `SUPABASE_KEY` (= **anon**). Veri anahtarları uygulamada yalnızca "tanımlı / anahtar bekleniyor" durumunu göstermek için okunur |
 | **Supabase Vault** | Anahtarları veritabanında şifreli saklamak (ör. ileride Edge Function / sunucu tarafı kullanım) |
 | **Supabase Edge Function secrets** | Edge Function yazılırsa: `supabase secrets set API_FOOTBALL_KEY=...` (değer yalnızca terminalde) |
 

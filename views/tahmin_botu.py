@@ -15,12 +15,15 @@ with st.expander("Bot nasıl çalışır?", expanded=False):
     st.markdown(f"""
 1. **Bülten taraması:** Seçili liglerde (**{', '.join(ui.league_name(x) for x in s.leagues)}**) önümüzdeki
    **{s.horizon_hours:.0f} saat** içindeki maçlar alınır. Maç asla elenmez.
-2. **Veri toplama:** Birleşik havuz (football-data.co.uk, TheSportsDB, Open-Meteo; anahtar varsa football-data.org,
-   API-Football, The Odds API). Eksik alan bir kaynaktan diğerine tamamlanır.
+2. **Veri toplama:** Birleşik havuz: 16 kaynak (anahtarsız: football-data.co.uk, OpenLigaDB, openfootball,
+   TheSportsDB, Wikidata, Open-Meteo, RSS, Meclis Elo; anahtarlı: API-Football, Sportmonks, football-data.org,
+   FootyStats, SportDevs, The Odds API, OddsPapi, Club Elo). Eksik alan bir kaynaktan diğerine tamamlanır.
+   Anahtarı gelmemiş kaynaklar aşağıdaki tabloda **🔑 anahtar bekleniyor** diye görünür.
 3. **Tamlık kapısı:** Tamlık puanı **{s.completeness_min:.0f}/100** altındaysa veya takım geçmişi
    **{s.min_team_matches}** maçtan azsa tahmin **Karar Bekliyor** olur ve yeniden denenir. Maçtan
    **{s.min_minutes_before_kickoff:.0f} dk** önce hâlâ eksikse **Karar Verilmedi** olarak kayıtta kalır.
-4. **Modeller:** Gol/skor için zaman ağırlıklı **Dixon-Coles** (Poisson skor matrisi); korner, kart, isabetli şut,
+4. **Modeller:** Gol/skor için zaman ağırlıklı **Dixon-Coles** (Poisson skor matrisi), Elo önseliyle (%45)
+   harmanlanır; korner, kart, isabetli şut,
    kale vuruşu için takım oranları + **negatif binom/Poisson**. Sakatlıklar **Eksik Etkisi (0–100)** ile λ'ya işlenir.
 5. **Seçim:** Maç başına tek **Meclis Görüşü** (piyasa oranı varsa değer ≥ %{100 * s.value_edge_min:.0f};
    yoksa olasılık ≥ %{100 * s.no_odds_min_prob:.0f}). **Günün Kararı**: 2–3 maç, toplam oran
@@ -84,14 +87,28 @@ else:
     ui.empty_state("Kuyruk boş. Botu çalıştırınca bültendeki maçlar burada görünür.")
 
 st.subheader("Veri kaynakları")
-src = store.select("sources")
+from meclis.sources.registry import SOURCES as _REG, key_state  # noqa: E402
+
+db_src = {x["name"]: x for x in store.select("sources")}
 status = {x["source"]: x for x in store.select("source_status") if not x["source"].startswith("injuries:")}
-keys = {"FOOTBALL_DATA_TOKEN": s.football_data_token, "API_FOOTBALL_KEY": s.api_football_key,
-        "ODDS_API_KEY": s.odds_api_key, "THESPORTSDB_KEY": s.thesportsdb_key}
-st.dataframe(pd.DataFrame([{
-    "Kaynak": x["name"], "Anahtar (ad)": x.get("api_key_secret") or "gerekmez",
-    "Anahtar tanımlı mı": ("—" if not x.get("api_key_secret") else ("evet" if keys.get(x["api_key_secret"]) else "hayır")),
-    "Günlük limit": x.get("daily_limit"), "Doldurduğu alanlar": ", ".join(x.get("fills_fields") or []),
-    "Son durum": (("✅ " if status[x["name"]]["ok"] else "⚠️ ") + (status[x["name"]]["message"] or "")) if x["name"] in status else "—",
-} for x in src]), hide_index=True, width="stretch")
+_KEY_ICON = {"gerekmez": "✅ gerekmez", "tanımlı": "✅ tanımlı", "ücretsiz anahtar (123)": "✅ ücretsiz anahtar (123)",
+             "anahtar bekleniyor": "🔑 anahtar bekleniyor"}
+_rows = []
+for d in _REG:
+    ks = key_state(d, s)
+    st_row = status.get(d.name)
+    _rows.append({
+        "Kaynak": d.title, "Anahtar durumu": _KEY_ICON.get(ks, ks), "Ortam değişkeni": d.api_key_secret or "—",
+        "Ücretsiz katman": d.free_tier, "Kayıt / bilgi": d.signup_url or "—",
+        "Doldurduğu alanlar": ", ".join(d.fills_fields),
+        "Son durum": ((("✅ " if st_row["ok"] else "⚠️ ") + (st_row.get("message") or "")) if st_row else "—"),
+        "Depoda kayıtlı": "evet" if d.name in db_src else "hayır (şema/tohum güncellenmeli)",
+    })
+waiting = [r["Ortam değişkeni"] for r in _rows if r["Anahtar durumu"].startswith("🔑")]
+if waiting:
+    st.warning(f"🔑 {len(waiting)} kaynak anahtar bekliyor: " + ", ".join(waiting)
+               + ". Anahtar gelene kadar bu kaynakların alanları boş kalır (uydurma veri konmaz). "
+               "Kayıt bağlantıları tabloda.")
+st.dataframe(pd.DataFrame(_rows), hide_index=True, width="stretch",
+             column_config={"Kayıt / bilgi": st.column_config.LinkColumn("Kayıt / bilgi")})
 st.caption("Anahtar değerleri hiçbir yerde gösterilmez; yalnızca ortam değişkeni adı tutulur.")

@@ -64,6 +64,16 @@ ALIASES: dict[str, str] = {
     "eintrachtfrankfurt": "frankfurt", "rbleipzig": "leipzig", "leipzig": "leipzig",
     "parissg": "psg", "parissaintgermain": "psg", "psg": "psg", "marseille": "marseille",
     "olympiquemarseille": "marseille", "lyon": "lyon", "olympiquelyonnais": "lyon",
+    # OpenLigaDB / openfootball resmî adları
+    "athletic": "athleticbilbao", "deportivolacoruna": "lacoruna", "deportivoacoruna": "lacoruna",
+    "lacoruna": "lacoruna", "espanyolbarcelona": "espanyol", "espanyoldebarcelona": "espanyol",
+    "realbetisbalompie": "realbetis", "realracingsantander": "santander", "racingsantander": "santander",
+    "internazionalemilano": "inter", "genoacfc": "genoa", "sslazio": "lazio", "uslecce": "lecce",
+    "lilleosc": "lille", "ogcnice": "nice", "racinglens": "lens", "stadebrestois": "brest",
+    "stadebrestois29": "brest", "staderennais": "rennes", "07elversberg": "elversberg",
+    "paderborn07": "paderborn", "scpaderborn07": "paderborn", "fsvmainz05": "mainz", "mainz05": "mainz",
+    "hamburger": "hamburg", "hamburgersv": "hamburg", "hsv": "hamburg",
+    "caosasuna": "osasuna", "villareal": "villarreal",
 }
 
 # Kanonik anahtar -> Türkçe görünen ad (yalnızca karakterleri bozulan isimler için)
@@ -85,9 +95,10 @@ def strip_accents(text: str) -> str:
 
 def basic_key(name: str) -> str:
     s = strip_accents(name).lower()
+    s = re.sub(r"\b([a-z])\.([a-z])\.", r"\1\2", s)  # "F.C." -> "fc"
     s = s.replace("&", " ").replace("'", "").replace(".", " ")
     tokens = [t for t in re.split(r"[^a-z0-9]+", s) if t]
-    tokens = [t for t in tokens if t not in _DROP_TOKENS]
+    tokens = [t for t in tokens if t not in _DROP_TOKENS and not re.fullmatch(r"(18|19|20)\d\d", t)]
     return "".join(tokens)
 
 

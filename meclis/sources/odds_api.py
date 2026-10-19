@@ -1,4 +1,4 @@
-"""The Odds API (the-odds-api.com) v4 — ODDS_API_KEY gerekir (opsiyonel).
+"""The Odds API (the-odds-api.com) v4 — ODDS_API_KEY gerekir (yoksa "anahtar bekleniyor").
 Ücretsiz Starter: ayda 500 kredi. Kredi = pazar sayısı × bölge sayısı (burada h2h+totals × eu = 2 kredi/lig).
 Türk bayisi (İddaa) oranı YOK; EU bölgesi şirketleri (Pinnacle, Betfair vb.) döner."""
 from __future__ import annotations

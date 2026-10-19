@@ -13,7 +13,7 @@ s, store, pool = ui.resources()
 
 if not store.select("matches", limit=1):
     ui.empty_state("Veri havuzu boş. İlk kurulumda geçmiş sezonlar ve fikstür çekilir (anahtarsız kaynaklar: "
-                   "football-data.co.uk, TheSportsDB, Open-Meteo). Bu işlem 1–2 dakika sürebilir.")
+                   "football-data.co.uk, OpenLigaDB, openfootball, TheSportsDB, Wikidata, Open-Meteo). Bu işlem 1–2 dakika sürebilir.")
     if st.button("📥 Veri havuzunu doldur", type="primary"):
         with st.spinner("Kaynaklar taranıyor..."):
             r = pool.refresh(history=True)
@@ -28,8 +28,9 @@ leagues = c2.multiselect("Ligler", s.leagues, default=s.leagues, format_func=ui.
 lo, hi = day_bounds_utc(day)
 matches = pool.matches_between(lo, hi, leagues or s.leagues)
 if not matches:
-    ui.empty_state("Bu tarihte seçili liglerde maç bulunamadı. (Fikstür kaynakları: football-data.co.uk fikstürü, "
-                   "TheSportsDB; anahtar varsa football-data.org ve API-Football.)")
+    ui.empty_state("Bu tarihte seçili liglerde maç bulunamadı. Fikstür; football-data.co.uk, OpenLigaDB, TheSportsDB, "
+                   "openfootball ve anahtarı tanımlı API'lerden birleştirilir — kaynak durumu için Tahmin Botu → "
+                   "Veri kaynakları.")
     st.stop()
 
 bot = ui.bot()

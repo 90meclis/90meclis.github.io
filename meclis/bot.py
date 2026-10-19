@@ -54,7 +54,11 @@ class Bot:
     def context(self, league: str) -> LeagueContext:
         if league not in self.contexts:
             ms, stats = self.pool.history(league)
-            self.contexts[league] = LeagueContext.build(league, ms, stats)
+            try:
+                priors = self.pool.elo_priors(league) if league != "DEMO" else {}
+            except Exception:
+                priors = {}
+            self.contexts[league] = LeagueContext.build(league, ms, stats, elo_priors=priors)
         return self.contexts[league]
 
     def analyze(self, match: dict, fetch_extras: bool = True) -> dict:

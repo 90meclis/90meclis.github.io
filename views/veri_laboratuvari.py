@@ -19,7 +19,7 @@ if not ctx.matches:
     ui.empty_state("Bu lig için havuzda bitmiş maç yok. Tahmin Botu sayfasından 'Havuzu yenile' çalıştır.")
     st.stop()
 st.caption(f"Havuzda {len(ctx.matches)} bitmiş maç (son iki sezon). İstatistik kaynağı: football-data.co.uk "
-           "(+ anahtar varsa API-Football). Kale vuruşu ücretsiz kaynaklarda yok; veri gelirse tablo açılır.")
+           "(+ API-Football, Sportmonks, FootyStats anahtarları gelince). Kale vuruşu ücretsiz kaynaklarda yok; veri gelirse tablo açılır.")
 
 tables = market_tables(ctx, scope, last_n)
 tabs = st.tabs(list(tables) + ["📉 Takım serisi (maç maç)", "🔥 Seriler"])

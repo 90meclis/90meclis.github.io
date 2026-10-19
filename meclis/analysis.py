@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from . import MODEL_VERSION
 from .markets import attach_odds
 from .model.counts import STATS, CountModel, count_markets, fit_count_model
+from .model.elo import BLEND_WEIGHT, EloModel, blend, fit_elo
 from .model.goals import GoalModel, fit_dixon_coles, goal_markets, most_likely_scores, score_matrix
 from .model.injuries import injury_adjustment
 from .timeutil import now_utc, parse_dt, to_iso
@@ -17,11 +18,13 @@ class LeagueContext:
     matches: list[dict]
     stats: dict[str, dict]
     goal_model: GoalModel | None = None
+    elo_model: EloModel | None = None
     count_models: dict[str, CountModel | None] = field(default_factory=dict)
     error: str | None = None
 
     @classmethod
-    def build(cls, league: str, matches: list[dict], stats: dict[str, dict]) -> "LeagueContext":
+    def build(cls, league: str, matches: list[dict], stats: dict[str, dict],
+              elo_priors: dict[str, float] | None = None) -> "LeagueContext":
         ctx = cls(league, matches, stats)
         now = now_utc()
         rows = []
@@ -35,6 +38,12 @@ class LeagueContext:
             ctx.goal_model = fit_dixon_coles(rows)
         except Exception as e:
             ctx.error = f"Gol modeli kurulamadı: {e}"
+        try:
+            ctx.elo_model = fit_elo(rows, elo_priors)
+            if elo_priors:
+                ctx.elo_model.source = "clubelo+meclis-elo"
+        except Exception:
+            ctx.elo_model = None  # az maç: yalnızca Dixon-Coles
         for stat in STATS:
             crow = []
             for m in matches:
@@ -151,11 +160,18 @@ def analyze_match(match: dict, ctx: LeagueContext, settings, injuries: list[dict
     payload["weather"] = weather
     odds = match.get("odds") or {}
     if not missing:
-        lh0, la0 = gm.lambdas(hid, aid)
+        dc = gm.lambdas(hid, aid)
+        el = ctx.elo_model.lambdas(hid, aid) if ctx.elo_model else None
+        lh0, la0 = blend(dc, el)
         lh, la = lh0 * adj["home_mult"], la0 * adj["away_mult"]
         mtx = score_matrix(lh, la, gm.rho)
         payload["lambdas"] = {"home": round(lh, 3), "away": round(la, 3), "base_home": round(lh0, 3),
-                              "base_away": round(la0, 3), "rho": round(gm.rho, 4), "ht_ratio": round(gm.ht_ratio, 3)}
+                              "base_away": round(la0, 3), "rho": round(gm.rho, 4), "ht_ratio": round(gm.ht_ratio, 3),
+                              "dc_home": round(dc[0], 3), "dc_away": round(dc[1], 3),
+                              "elo_weight": BLEND_WEIGHT if el else 0.0}
+        if el and ctx.elo_model:
+            payload["elo"] = {"home": round(ctx.elo_model.ratings[hid]), "away": round(ctx.elo_model.ratings[aid]),
+                              "source": ctx.elo_model.source}
         payload["top_scores"] = most_likely_scores(mtx, 5)
         markets = goal_markets(mtx, lh, la, gm.ht_ratio)
         for stat, (mk, label) in STATS.items():

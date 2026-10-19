@@ -26,6 +26,12 @@ jobs:
       FOOTBALL_DATA_TOKEN: ${{ secrets.FOOTBALL_DATA_TOKEN }}
       API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
       ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+      ODDSPAPI_KEY: ${{ secrets.ODDSPAPI_KEY }}
+      SPORTMONKS_KEY: ${{ secrets.SPORTMONKS_KEY }}
+      FOOTYSTATS_KEY: ${{ secrets.FOOTYSTATS_KEY }}
+      SPORTDEVS_KEY: ${{ secrets.SPORTDEVS_KEY }}
+      CLUBELO_KEY: ${{ secrets.CLUBELO_KEY }}
+      THESPORTSDB_KEY: ${{ secrets.THESPORTSDB_KEY }}
       LEAGUES: ${{ vars.LEAGUES || 'T1,E0,SP1,I1,D1,F1' }}
     steps:
       - uses: actions/checkout@v4
