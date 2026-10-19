@@ -80,7 +80,7 @@ def team_info(name: str, league: str) -> dict | None:
     _last = time.monotonic()
     safe = name.replace('"', " ").replace("\\", " ")
     r = get(ENDPOINT, params={"query": QUERY % safe, "format": "json"},
-            headers={"User-Agent": USER_AGENT + " https://github.com/ebrarmutlu3434-afk/90-meclis",
+            headers={"User-Agent": USER_AGENT + " https://github.com/90meclis/90meclis.github.io",
                      "Accept": "application/sparql-results+json"}, timeout=60)
     if r.status_code != 200:
         raise SourceError(f"Wikidata HTTP {r.status_code}")

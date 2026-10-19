@@ -206,7 +206,7 @@ tahmini ilk 11, piyasa oranından gol beklentisi, altı sayfanın açılışı (
 
 ## Streamlit Community Cloud'a yayınlama
 
-1. https://share.streamlit.io → **Create app** → depo `ebrarmutlu3434-afk/90-meclis`, dal `main`, **Main file path: `app.py`**.
+1. https://share.streamlit.io → **Create app** → depo `90meclis/90meclis.github.io`, dal `main`, **Main file path: `app.py`**.
 2. **Advanced settings → Secrets** alanına yalnızca şu ikisini yazın (bkz. `.streamlit/secrets.toml.example`):
    `SUPABASE_URL` ve `SUPABASE_KEY` (anon / publishable anahtar — service_role değil).
 3. Uygulama yerel dosyaya ihtiyaç duymaz; veriyi Supabase'den okur. Veri toplama, kadro/eksik/ilk 11 güncellemesi

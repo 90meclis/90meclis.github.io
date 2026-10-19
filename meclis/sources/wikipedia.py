@@ -15,7 +15,7 @@ from .http import SourceError, get
 SOURCE = "wikipedia"
 API = "https://en.wikipedia.org/w/api.php"
 WD_API = "https://www.wikidata.org/w/api.php"
-UA = {"User-Agent": "90MeclisBot/1.0 (https://github.com/ebrarmutlu3434-afk/90-meclis) python-requests"}
+UA = {"User-Agent": "90MeclisBot/1.0 (https://github.com/90meclis/90meclis.github.io) python-requests"}
 MIN_INTERVAL = 0.5
 _last = [0.0]
 
