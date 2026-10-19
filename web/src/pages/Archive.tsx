@@ -2,11 +2,12 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import * as api from "../lib/data";
 import { useAsync } from "../lib/useAsync";
-import { dateShort, dateTime, hoursBefore, num, pct, signed, time, trDay } from "../lib/format";
+import { dateLong, dateShort, dateTime, hoursBefore, num, pct, signed, time, trDay } from "../lib/format";
 import { MARKET_LABELS, STATUS_LABELS, TAG_LABELS, league, pickLabel } from "../lib/labels";
 import { matchPath } from "../lib/match";
 import { usePageMeta, ROUTES } from "../lib/seo";
-import { CouponCard } from "../components/CouponCard";
+import { CouponCard, CouponHero } from "../components/CouponCard";
+import { PickCard } from "../components/PickCard";
 import { Disclaimer, Empty, Gate, PageHead, StatusPill, TagPill } from "../components/ui";
 import type { PredStatus, Tag } from "../lib/types";
 
@@ -33,7 +34,8 @@ export default function Archive() {
     return (!from || day >= from) && (!to || day <= to);
   };
   const [n, setN] = useState(PAGE);
-  const [view, setView] = useState<"kayit" | "kupon">("kayit");
+  const [view, setView] = useState<"masa" | "kayit" | "kupon">("masa");
+  const [pickDay, setPickDay] = useState("");
 
   const preds = useMemo(() => d.data?.preds ?? [], [d.data]);
   const leagues = useMemo(() => [...new Set(preds.map((p) => p.league ?? ""))].filter(Boolean).sort((a, b) => league(a).order - league(b).order), [preds]);
@@ -44,22 +46,63 @@ export default function Archive() {
     (!qText || `${p.home_name} ${p.away_name}`.toLocaleLowerCase("tr-TR").includes(qText.toLocaleLowerCase("tr-TR"))),
   );
 
+  // Masa: seçilen günün küratörlü içeriği
+  const allCoupons = d.data?.coupons ?? [];
+  const contentDays = useMemo(() => [...new Set([...preds.map((p) => trDay(p.kickoff_at)), ...(d.data?.coupons ?? []).map((c) => c.coupon_date)])].sort().reverse(), [preds, d.data]);
+  const today = trDay();
+  const autoDay = [...contentDays].reverse().find((x) => x >= today) ?? contentDays[0] ?? today;
+  const day = pickDay || autoDay;
+  const dayCoupons = allCoupons.filter((c) => c.coupon_date === day);
+  const gk = dayCoupons.filter((c) => c.tag === "gunun_karari");
+  const kb = dayCoupons.filter((c) => c.tag === "karar_birligi");
+  const legsOf = (id: string) => preds.filter((p) => p.coupon_id === id);
+  const gkMatches = new Set(gk.flatMap((c) => legsOf(c.id).map((p) => p.match_id)));
+  const daySingles = preds.filter((p) => p.tag === "meclis_gorusu" && trDay(p.kickoff_at) === day && !gkMatches.has(p.match_id))
+    .sort((a, b) => a.kickoff_at.localeCompare(b.kickoff_at));
+
   return (
     <>
-      <PageHead kicker="Değiştirilemez defter" title="Tahmin Arşivi">
+      <PageHead kicker="Masanın kararları · değiştirilemez defter" title="Tahmin Arşivi">
         Her karar maç başlamadan önce kilitlenir. Kayıt anı sunucu saatiyle damgalanır; seçim, oran ve olasılık sonradan değiştirilemez, hiçbir kayıt silinemez.
       </PageHead>
       <div className="seg" role="tablist" aria-label="Arşiv görünümü">
-        {([["kayit", "Kayıtlar"], ["kupon", "Kuponlar"]] as const).map(([k, l]) => (
+        {([["masa", "Günün masası"], ["kayit", "Geçmiş kayıtlar"], ["kupon", "Geçmiş kuponlar"]] as const).map(([k, l]) => (
           <button key={k} role="tab" aria-selected={view === k} className={view === k ? "on" : ""} onClick={() => setView(k)}>{l}</button>
         ))}
       </div>
-      <div className="filters dates">
+      {view !== "masa" && <div className="filters dates">
         <label><span>Başlangıç (TSİ)</span><input type="date" value={from} max={to || undefined} onChange={(e) => { setFrom(e.target.value); setN(PAGE); }} /></label>
         <label><span>Bitiş (TSİ)</span><input type="date" value={to} min={from || undefined} onChange={(e) => { setTo(e.target.value); setN(PAGE); }} /></label>
         {(from || to) && <button className="btn ghost" onClick={() => { setFrom(""); setTo(""); }}>Tarihi temizle</button>}
-      </div>
+      </div>}
       <Gate loading={d.loading} error={d.error} rows={6}>
+        {view === "masa" && (
+          <div className="masa">
+            <div className="masa-day">
+              <h2 className="day-title">{day === today ? "Bugünün masası" : dateLong(day + "T12:00:00+03:00")}</h2>
+              {contentDays.length > 1 && (
+                <label><span className="muted small">Gün</span>
+                  <select value={day} onChange={(e) => setPickDay(e.target.value)}>
+                    {contentDays.map((x) => <option key={x} value={x}>{dateLong(x + "T12:00:00+03:00")}</option>)}
+                  </select>
+                </label>
+              )}
+            </div>
+            {gk.length ? gk.map((c) => <CouponHero key={c.id} c={c} legs={legsOf(c.id)} />) : (
+              <div className="coupon-hero empty"><span className="kicker">Günün Kararı</span><p className="muted">Bu gün için Günün Kararı kurulmadı: 2,30–4,00 bandında yeterince değerli 2–3 maçlık kombinasyon çıkmadı.</p></div>
+            )}
+            <h3 className="sub">Meclis Görüşleri <span className="muted">· {daySingles.length} tekli</span></h3>
+            {daySingles.length ? <div className="picks grid">{daySingles.map((p) => <PickCard key={p.id} p={p} />)}</div>
+              : <p className="muted">Bu gün için Günün Kararı dışında tekli görüş yok.</p>}
+            {kb.length > 0 && (
+              <>
+                <h3 className="sub">Karar Birliği</h3>
+                <div className="coupons">{kb.map((c) => <CouponCard key={c.id} c={c} legs={legsOf(c.id)} />)}</div>
+              </>
+            )}
+            <p className="muted tiny">Günün Kararı'ndaki bir maç Meclis Görüşleri arasında ayrıca gösterilmez. Botun bütün değer seçimleri için <Link to="/tahmin-botu">Tahmin Botu</Link>.</p>
+          </div>
+        )}
         {view === "kayit" && (
           <>
             <div className="filters">

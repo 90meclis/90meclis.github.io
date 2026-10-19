@@ -2,7 +2,6 @@ import pandas as pd
 import streamlit as st
 
 from meclis import ui
-from meclis.markets import QUEUE_LABELS
 from meclis.store import StoreError
 from meclis.timeutil import tr_str
 
@@ -80,17 +79,74 @@ if st.session_state.get("is_admin"):
     if run_log:
         st.code("\n".join(run_log), language=None)
 
-st.subheader("Analiz kuyruğu")
-q = store.select("analysis_queue")
-if q:
-    mm = {m["id"]: m for m in store.select("matches", [("id", "in", [x["match_id"] for x in q])])}
-    df = pd.DataFrame([{
-        "Başlama": tr_str(mm.get(x["match_id"], {}).get("kickoff_at")),
-        "Maç": f"{mm.get(x['match_id'], {}).get('home_name', '?')} – {mm.get(x['match_id'], {}).get('away_name', '?')}",
-        "Durum": QUEUE_LABELS.get(x["status"], x["status"]), "Not": x.get("note"),
-        "Eksik": ", ".join(x.get("missing") or []), "Deneme": x.get("attempts"),
-        "Sonraki deneme": tr_str(x.get("next_retry_at")), "_ko": mm.get(x["match_id"], {}).get("kickoff_at") or "",
-    } for x in q]).sort_values("_ko", ascending=False).drop(columns="_ko")
-    st.dataframe(df, hide_index=True, width="stretch")
+st.subheader("📋 Bülten çıktısı: değer kuralını geçen bütün seçimler")
+st.caption("Botun ham çıktısı. Masanın seçtiği kararlar (Günün Kararı, Meclis Görüşleri, Karar Birliği) **Tahmin Arşivi**'nde.")
+from datetime import timedelta as _td  # noqa: E402
+
+from meclis.markets import TAG_LABELS, pick_label  # noqa: E402
+from meclis.pool import today_tr  # noqa: E402
+from meclis.timeutil import day_bounds_utc  # noqa: E402
+
+_t0 = today_tr()
+_day = st.radio("Gün", [_t0, _t0 + _td(days=1), _t0 + _td(days=2)], horizontal=True,
+                format_func=lambda d: "Bugün" if d == _t0 else ("Yarın" if d == _t0 + _td(days=1) else d.strftime("%d.%m")))
+_lo, _hi = day_bounds_utc(_day)
+_ms = store.select("matches", [("kickoff_at", "gte", _lo), ("kickoff_at", "lt", _hi)], order="kickoff_at")
+_ids = [m["id"] for m in _ms]
+_an: dict = {}
+for i in range(0, len(_ids), 50):
+    for r in store.select("analyses", [("match_id", "in", _ids[i:i + 50])], order="created_at", desc=True):
+        _an.setdefault(r["match_id"], r.get("payload") or {})
+_pub: dict = {}
+for p in store.select("predictions", [("kickoff_at", "gte", _lo), ("kickoff_at", "lt", _hi)]):
+    _pub.setdefault((p["match_id"], p["market"], p["selection"], p.get("line")), p["tag"])
+
+
+def value_picks(pl: dict) -> list[dict]:
+    """Botun değer kuralı (analysis.select_single ile aynı eşikler); maç başına bütün adaylar."""
+    if not pl.get("ready"):
+        return []
+    model_based = str(pl.get("basis") or "").startswith("model")
+    mm = pl.get("model_matches") or {}
+    if model_based and min(mm.get("home", 0), mm.get("away", 0)) < pl.get("min_team_matches", 4):
+        return []
+    out = []
+    for m in pl.get("markets") or []:
+        pr = m["probability"]
+        if m["market"] == "CS":
+            continue
+        if m.get("odds"):
+            if pr >= 0.40 and m.get("edge") is not None and m["edge"] >= s.value_edge_min and m["odds"] <= 3.2:
+                out.append(m)
+        elif model_based and s.no_odds_min_prob <= pr <= 0.86 and m["market"] != "DC":
+            out.append(m)
+    return sorted(out, key=lambda x: -(x["probability"] * (1 + min(x.get("edge") or 0, 0.25))))
+
+
+rows_ = []
+for m in _ms:
+    pl = _an.get(m["id"]) or {}
+    top = max((x for x in pl.get("scenarios") or [] if x.get("olasılık") is not None), key=lambda x: x["olasılık"], default=None)
+    for v in value_picks(pl):
+        why = f"Model %{100 * v['probability']:.0f}"
+        if v.get("odds"):
+            why += f", piyasa %{100 / v['odds']:.0f} → değer %{100 * v['edge']:+.1f}"
+        if top:
+            why += f" · akış: {top['ad'].lower()}"
+        rows_.append({"Lig": ui.league_name(m["league"]), "Saat": tr_str(m["kickoff_at"], "%H:%M"),
+                      "Maç": f"{m['home_name']} – {m['away_name']}",
+                      "Pazar": pick_label(v["market"], v["selection"], v.get("line"), m["home_name"], m["away_name"]),
+                      "Oran": v.get("odds") or v.get("fair_odds"), "Model %": round(100 * v["probability"], 1),
+                      "Değer %": round(100 * v["edge"], 1) if v.get("edge") is not None else None,
+                      "Masada": TAG_LABELS.get(_pub.get((m["id"], v["market"], v["selection"], v.get("line"))), ""),
+                      "Kısa gerekçe": why})
+k1, k2, k3 = st.columns(3)
+k1.metric("Bültendeki maç", len(_ms))
+k2.metric("Analiz edilen", len(_an))
+k3.metric("Değer seçimi", len(rows_))
+if rows_:
+    st.dataframe(pd.DataFrame(rows_).sort_values(["Lig", "Saat"]), hide_index=True, width="stretch")
+elif _ms:
+    ui.empty_state("Bot bu bültende henüz değer bulmadı. Maçlar her çalışmada güncel veriyle yeniden hesaplanır.")
 else:
-    ui.empty_state("Kuyruk boş. Botu çalıştırınca bültendeki maçlar burada görünür.")
+    ui.empty_state("Bu gün bültende maç yok.")

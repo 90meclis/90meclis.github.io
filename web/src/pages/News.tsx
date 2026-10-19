@@ -5,6 +5,7 @@ import { useAsync } from "../lib/useAsync";
 import { dateTime, relTime } from "../lib/format";
 import { matchPath } from "../lib/match";
 import { usePageMeta, ROUTES } from "../lib/seo";
+import { dedupNews } from "../lib/news";
 import { Empty, Gate, PageHead } from "../components/ui";
 
 const CAT_ORDER = ["sakatlık", "teknik direktör", "kadro", "transfer", "genel"];
@@ -24,7 +25,7 @@ export default function News() {
   const [linked, setLinked] = useState(false);
   const [text, setText] = useState("");
   const [n, setN] = useState(PAGE);
-  const items = useMemo(() => q.data ?? [], [q.data]);
+  const items = useMemo(() => dedupNews(q.data ?? []), [q.data]);
   const cats = useMemo(() => {
     const c: Record<string, number> = {};
     for (const x of items) c[x.category ?? "genel"] = (c[x.category ?? "genel"] ?? 0) + 1;
@@ -60,7 +61,7 @@ export default function News() {
               <li key={x.id} className="news-item">
                 <div className="news-meta">
                   <span className={`cat cat-${(x.category ?? "genel").replace(/\s/g, "-")}`}>{CAT_LABEL[x.category ?? "genel"] ?? x.category}</span>
-                  <span className="muted small">{x.source}</span>
+                  <span className="muted small">{x.source}{x.alsoIn.length ? ` · ayrıca ${x.alsoIn.join(", ")}` : ""}</span>
                   <time className="muted small" dateTime={x.published_at ?? undefined} title={dateTime(x.published_at)}>{relTime(x.published_at)}</time>
                 </div>
                 <a className="news-title" href={x.link} target="_blank" rel="noopener noreferrer">{x.title}</a>

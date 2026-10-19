@@ -518,3 +518,40 @@ html, body { overflow-x: clip; }
 .approach h3 { font-size: 14px; margin: 0 0 6px; }
 .approach ul { margin: 0; padding-left: 18px; font-size: 14px; color: var(--muted); }
 .approach li { margin: 3px 0; }
+/* Tahmin Botu bülteni */
+.bot-kpis { margin: 12px 0 16px; }
+.bot-league { margin-bottom: 18px; }
+.bot-list { display: grid; gap: 10px; }
+.bot-match { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); padding: 10px 12px; }
+.bot-head { display: flex; align-items: baseline; gap: 10px; color: var(--text); text-decoration: none; margin-bottom: 6px; }
+.bot-head strong { flex: 1; }
+.bot-time { font-family: var(--display); font-size: 18px; color: var(--lime); min-width: 48px; }
+.bot-picks tr.on td:first-child { box-shadow: inset 3px 0 0 var(--lime); }
+.bot-pass { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; font-size: 14px; }
+/* Günün Kararı vitrini */
+.coupon-hero { background: linear-gradient(135deg, rgba(215,255,63,.12), rgba(56,225,255,.05) 60%), var(--card); border: 1px solid rgba(215,255,63,.5); border-radius: 20px; padding: 18px 20px; margin: 10px 0 18px; box-shadow: var(--shadow); }
+.coupon-hero.empty { background: var(--card); border-style: dashed; border-color: var(--line-2); }
+.coupon-hero header { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.coupon-hero h2 { font-family: var(--display); font-size: clamp(24px, 4vw, 34px); text-transform: uppercase; margin: 2px 0; }
+.coupon-hero .kicker { color: var(--lime); }
+.ch-odds { display: grid; justify-items: center; background: var(--lime); color: #0b0f14; border-radius: 14px; padding: 8px 16px; }
+.ch-odds b { font-family: var(--display); font-size: 40px; line-height: 1; }
+.ch-odds small, .ch-odds em { font-size: 11px; font-weight: 700; opacity: .75; }
+.ch-legs { list-style: none; padding: 0; margin: 14px 0; display: grid; gap: 8px; }
+.ch-legs li { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) auto auto; gap: 10px; align-items: center; background: var(--card-2); border-radius: var(--r-sm); padding: 8px 10px; }
+.ch-match { display: grid; color: var(--text); text-decoration: none; }
+.ch-pick { font-weight: 700; }
+.ch-o { font-family: var(--display); font-size: 20px; }
+.coupon-hero footer { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; font-size: 14px; color: var(--muted); }
+.masa-day { display: flex; justify-content: space-between; align-items: end; gap: 10px; flex-wrap: wrap; }
+.masa-day label { display: grid; gap: 4px; }
+@media (max-width: 640px) { .ch-legs li { grid-template-columns: minmax(0, 1fr) auto; } .coupon-hero header { flex-direction: column; align-items: flex-start; } }
+/* Açılış */
+.land-top { margin-bottom: 16px; }
+.gk-head { display: flex; justify-content: space-between; align-items: center; }
+.gk-odds { display: grid; justify-items: end; }
+.gk-odds b { font-family: var(--display); font-size: 34px; color: var(--lime); line-height: 1; }
+.gk-legs { list-style: none; padding: 0; margin: 10px 0; display: grid; gap: 6px; }
+.gk-legs li { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+.gk-legs a { color: var(--text); text-decoration: none; }
+.kpis.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }

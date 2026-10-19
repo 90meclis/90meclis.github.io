@@ -19,6 +19,29 @@ if st.session_state.get("is_admin") and not getattr(store, "read_only", False) a
 st.caption("Akışlar: " + " · ".join(s.news_feeds) + " — yalnızca başlık, kısa özet ve bağlantı saklanır.")
 
 news = store.select("agenda", order="published_at", desc=True, limit=500)
+
+
+def _toks(t: str) -> set:
+    import re
+
+    t = re.sub(r"\s[-|–]\s[^-|–]+$", "", (t or "").lower())
+    return {w for w in re.findall(r"\w+", t) if len(w) > 1}
+
+
+def dedup(items: list[dict]) -> list[dict]:
+    """Aynı haberi veren farklı siteleri tek satırda toplar (sunucu tekilleştirmesine ek, ekranda)."""
+    out: list[tuple[set, dict]] = []
+    for n in items:
+        tk = _toks(n.get("title"))
+        hit = next((o for t, o in out if o.get("link") == n.get("link") or (tk and t and len(tk & t) / len(tk | t) >= 0.6)), None)
+        if hit is None:
+            out.append((tk, dict(n, _also=[])))
+        elif n.get("source") and n.get("source") != hit.get("source") and n["source"] not in hit["_also"]:
+            hit["_also"].append(n["source"])
+    return [o for _, o in out]
+
+
+news = dedup(news)
 if not news:
     ui.empty_state("Henüz haber yok. Gündem her sabah otomatik taranır.")
     st.stop()
@@ -51,7 +74,7 @@ if not any_:
 st.subheader("Tüm gündem")
 rows = [n for n in news if (n.get("category") or "genel") in sel and (not only_linked or n.get("match_ids"))]
 st.dataframe(pd.DataFrame([{"Zaman": tr_str(n.get("published_at")), "Kategori": n.get("category"), "Başlık": n["title"],
-                            "Kaynak": n.get("source"), "Bağlı maç": len(n.get("match_ids") or []), "Bağlantı": n["link"]}
+                            "Kaynak": n.get("source") + (f" (+{len(n['_also'])})" if n.get("_also") else ""), "Bağlı maç": len(n.get("match_ids") or []), "Bağlantı": n["link"]}
                            for n in rows]), hide_index=True, width="stretch",
              column_config={"Bağlantı": st.column_config.LinkColumn("Bağlantı")})
 st.caption("Eşleştirme otomatik ve basittir (takım adı geçiyor mu); yanlış bağlantı olabilir. Haberler model girdisi değildir; "

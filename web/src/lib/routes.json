@@ -12,12 +12,12 @@
  {
   "path": "/tahmin-botu",
   "title": "Tahmin Botu",
-  "description": "Günün Kararı, Meclis Görüşü ve Karar Birliği: maçtan saatler önce yayımlanan ve kilitlenen, güven göstergeli tahminler."
+  "description": "Botun günlük bülten çıktısı: bültendeki her maç taranır, değer kuralını geçen bütün seçimler pazar, oran, değer ve kısa gerekçeyle maç maç listelenir."
  },
  {
   "path": "/tahmin-arsivi",
   "title": "Tahmin Arşivi",
-  "description": "Değiştirilemez tahmin defteri: her kayıt maçtan önce kilitlenir, kayıplar dahil hiçbir şey silinmez."
+  "description": "Masanın kararları: Günün Kararı kuponu, Meclis Görüşleri ve Karar Birliği; kilitli, silinemeyen tahmin defteri ve kâr/zarar."
  },
  {
   "path": "/guven-panosu",

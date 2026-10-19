@@ -162,3 +162,27 @@ export async function predictionsForMatches(ids: string[]): Promise<Prediction[]
   return out;
 }
 
+
+/** Tahmin Botu bülteni: günün maçları ve her maçın son analizi (yalnızca botun seçim için gereken alanları). */
+export interface BotAnalysis {
+  match_id: string; created_at: string; ready: boolean | null; basis: string | null;
+  markets: import("./types").MarketRow[] | null; scenarios: { ad: string; anlatım: string; olasılık: number | null }[] | null;
+  model_matches: { home?: number; away?: number } | null; min_team_matches: number | null;
+}
+export async function bulletin(day: string): Promise<{ matches: Match[]; analyses: Record<string, BotAnalysis> }> {
+  const matches = await matchesOnDay(day);
+  const ids = matches.map((m) => m.id);
+  const analyses: Record<string, BotAnalysis> = {};
+  for (let i = 0; i < ids.length; i += 40) {
+    const rows = await run<BotAnalysis>(
+      db().from("analyses")
+        .select("match_id,created_at,ready:payload->ready,basis:payload->>basis,markets:payload->markets,scenarios:payload->scenarios,model_matches:payload->model_matches,min_team_matches:payload->min_team_matches")
+        .in("match_id", ids.slice(i, i + 40)).order("created_at", { ascending: false }),
+    );
+    for (const r of rows) if (!analyses[r.match_id]) analyses[r.match_id] = r;
+  }
+  return { matches, analyses };
+}
+
+export const predictionsBetween = (fromIso: string, toIso: string) =>
+  all<Prediction>(() => db().from("predictions").select("*").gte("kickoff_at", fromIso).lt("kickoff_at", toIso).order("kickoff_at"));
