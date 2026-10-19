@@ -18,6 +18,6 @@ function dropSentences(line: string, re: RegExp): string {
 export function cleanLine(line: string, published: boolean): string {
   let out = dropSentences(line, EXCUSE).replace(/[;,·]?\s*(?:veri\s+)?tamlı(?:k|ğı)\s*:?\s*\d+(?:[.,]\d+)?\s*\/\s*100/giu, "");
   if (!published) out = dropSentences(out, CALL);
-  else if (PASS.test(out)) out = ""; // yayımlanmış karar varken eski "pas" notu çelişki yaratır
+  else if (PASS.test(out) || /meclis'?in kararı/iu.test(out)) out = ""; // karar yukarıdaki blokta; tekrar ya da eski "pas" notu gösterilmez
   return out.replace(/^\s*(form|eksik etkisi|hava):\s*$/iu, "");
 }

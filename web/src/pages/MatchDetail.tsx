@@ -209,6 +209,19 @@ function PreAnalysis({ m }: { m: Match }) {
   );
 }
 
+/** Kararın gerekçesi, kaydedilmiş sayılardan düz Türkçe cümleyle (teknik kısaltma yok). */
+function why(p: Prediction, a: AnalysisPayload | undefined, m: Match): string {
+  const out: string[] = [];
+  out.push(`Meclis bu sonuca ${pct(p.probability)} olasılık veriyor${p.fair_odds ? `; adil oranı ${num(p.fair_odds)}` : ""}.`);
+  if (p.odds && p.edge != null) out.push(`Piyasa ${num(p.odds)} ödüyor: beklenen değer ${signed(p.edge * 100, 1)}%.`);
+  else out.push("Kayıt anında piyasa oranı yoktu; karar modelin olasılığına dayanıyor.");
+  if (a?.lambdas) out.push(`Gol beklentisi ${m.home_name} ${num(a.lambdas.home)}, ${m.away_name} ${num(a.lambdas.away)}.`);
+  const ie = (a?.injury_effect ?? {}) as Record<string, number | string>;
+  if (typeof ie.home_tee === "number" && typeof ie.away_tee === "number" && (ie.home_tee >= 25 || ie.away_tee >= 25))
+    out.push(`Eksikler hesaba katıldı (Eksik Etkisi ${num(ie.home_tee, 0)} / ${num(ie.away_tee, 0)}).`);
+  return out.join(" ");
+}
+
 /** Yayımlanmış karar: Meclis kararını net ve kararlı bir sesle söyler. */
 function Verdict({ picks, a, m }: { picks: Prediction[]; a?: AnalysisPayload; m: Match }) {
   const p = picks[0];
@@ -237,10 +250,10 @@ function Verdict({ picks, a, m }: { picks: Prediction[]; a?: AnalysisPayload; m:
         {p.profit !== null && !live && <span>K/Z <b className={p.profit >= 0 ? "pos" : "neg"}>{signed(p.profit)}</b></span>}
       </div>
       {p.confidence !== null && <Meter value={p.confidence * 100} label={`Meclis güveni ${num(p.confidence * 100, 0)}/100`} />}
-      {p.rationale && <div className="v-why"><h3>Neden?</h3><MiniMd text={p.rationale} published /></div>}
+      <div className="v-why"><h3>Neden?</h3><p>{why(p, a, m)}</p></div>
       {(p.scenario_note || scen.length > 0) && (
         <div className="v-scn"><h3>Maçın akışı</h3>
-          {p.scenario_note && <p>{p.scenario_note}</p>}
+          {p.scenario_note && !scen.length && <p>{p.scenario_note}</p>}
           {scen.length > 0 && <ul>{scen.map((x) => <li key={x.ad}><b>{x.ad}</b> ({pct(x.olasılık)}): {x.anlatım}</li>)}</ul>}
         </div>
       )}

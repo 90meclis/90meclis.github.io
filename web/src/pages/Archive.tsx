@@ -66,7 +66,7 @@ export default function Archive() {
         Her karar maç başlamadan önce kilitlenir. Kayıt anı sunucu saatiyle damgalanır; seçim, oran ve olasılık sonradan değiştirilemez, hiçbir kayıt silinemez.
       </PageHead>
       <div className="seg" role="tablist" aria-label="Arşiv görünümü">
-        {([["masa", "Günün masası"], ["kayit", "Geçmiş kayıtlar"], ["kupon", "Geçmiş kuponlar"]] as const).map(([k, l]) => (
+        {([["masa", "Masa"], ["kayit", "Kayıtlar"], ["kupon", "Kuponlar"]] as const).map(([k, l]) => (
           <button key={k} role="tab" aria-selected={view === k} className={view === k ? "on" : ""} onClick={() => setView(k)}>{l}</button>
         ))}
       </div>

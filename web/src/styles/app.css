@@ -566,3 +566,12 @@ html, body { overflow-x: clip; }
   .bot-picks tr.on { border-left: 3px solid var(--lime); padding-left: 8px; }
   .bot-head { flex-wrap: wrap; }
 }
+.detail-grid { grid-template-columns: minmax(0, 1fr); }
+.col-main, .col-side, .verdict, .verdict * { min-width: 0; }
+.verdict { overflow-wrap: anywhere; }
+@media (max-width: 640px) {
+  .verdict { padding: 14px; }
+  .verdict .v-main { align-items: flex-start; }
+  .verdict .v-odds { min-width: 70px; padding: 6px 10px; }
+  .verdict .v-odds b { font-size: 26px; }
+}
