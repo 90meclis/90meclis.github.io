@@ -1,7 +1,7 @@
 # 90 Meclis — web sitesi
 
 Herkese açık, statik site (Vite + React + TypeScript). Veriler tarayıcıda, Supabase'den **publishable (anon)**
-anahtarla okunur; RLS nedeniyle salt okunurdur. Yayın: GitHub Pages → https://ebrarmutlu3434-afk.github.io/90-meclis/
+anahtarla okunur; RLS nedeniyle salt okunurdur. Yayın: GitHub Pages → https://90meclis.github.io/
 
 ## Bölümler
 Maç Merkezi · Tahmin Botu · Tahmin Arşivi · Güven Panosu · Gündem Masası · Veri Laboratuvarı (+ Yöntem ve Sorumlu Oyun)

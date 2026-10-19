@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const dist = join(root, "dist");
-const SITE = "https://ebrarmutlu3434-afk.github.io/90-meclis";
+const SITE = "https://90meclis.github.io";
 const routes = JSON.parse(readFileSync(join(root, "src/lib/routes.json"), "utf8"));
 const html = readFileSync(join(dist, "index.html"), "utf8");
 const esc = (s) => s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");

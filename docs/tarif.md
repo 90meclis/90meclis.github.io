@@ -13,7 +13,7 @@ Her madde kontrol edilebilir bir gereksinimdir. Kimlikler (`TA-3` gibi) `docs/ek
 - [ ] KM-5 Ses: kendinden emin ama dürüst, olasılık dili. "Garanti", "kesin", "banko" yok. Kayıp ihtimali açıkça söylenir.
 - [ ] KM-6 Bölüm adları (kesin): Maç Merkezi, Tahmin Botu, Tahmin Arşivi, Veri Laboratuvarı, Gündem Masası, Güven Panosu (+ Yöntem ve Sorumlu Oyun).
 - [ ] KM-7 Misafirlerin yüzü profesyonel bir web sitesidir; Streamlit misafire ana ürün olarak sunulmaz ("ben bu yüzden stremlit kullanmak istememiştim", t29u).
-- [ ] KM-8 [AÇIK] "kullanıcı tarafı olsun. Misafir tarafı olsun" (t25u): ayrı bir kullanıcı (Ebraar) tarafı mı isteniyor? Şu an yalnızca misafir yüzü + gizli yönetim.
+- [ ] KM-8 [AÇIK] "kullanıcı tarafı olsun. Misafir tarafı olsun" (t25u): ayrı bir kullanıcı  tarafı mı isteniyor? Şu an yalnızca misafir yüzü + gizli yönetim.
 - [ ] KM-9 Süreç: her şeyi biz hazırlarız; kullanıcıya yalnızca kendisinin yapması şart işler, tek listede sorulur; aynı şey tekrar sorulmaz (t30u, t35u).
 
 ## 2. Tahmin anlayışı (TA) — en kritik bölüm
@@ -146,7 +146,7 @@ Her madde kontrol edilebilir bir gereksinimdir. Kimlikler (`TA-3` gibi) `docs/ek
 - [ ] TS-4 Hızlı: statik site, Supabase'den doğrudan okuma, uyuyan sunucu yok.
 
 ## 17. Bizim önerilerimiz (kullanıcı istemedi; onay olmadan kural değildir)
-- YH-1 Maç sonrası "neden tuttu/tutmadı" kartı. YH-2 Bot vs Ebraar vs topluluk karşılaştırması (araştırma raporu önerisi; bölüm/etiket adları değiştirilmez). YH-3 Haftalık şeffaflık raporu. YH-4 StatsBomb Open Data ile eğitim içerikleri. YH-5 xG ve aut atışı için lisanslı kaynak. YH-6 Çift kaynak doğrulama rozeti.
+- YH-1 Maç sonrası "neden tuttu/tutmadı" kartı. YH-2 Bot vs kullanıcı vs topluluk karşılaştırması (araştırma raporu önerisi; bölüm/etiket adları değiştirilmez). YH-3 Haftalık şeffaflık raporu. YH-4 StatsBomb Open Data ile eğitim içerikleri. YH-5 xG ve aut atışı için lisanslı kaynak. YH-6 Çift kaynak doğrulama rozeti.
 
 ## 18. Açık noktalar
 - A1 (TA-13) Maç başına tek Meclis Görüşü mü?

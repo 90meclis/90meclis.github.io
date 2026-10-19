@@ -1,6 +1,6 @@
 # 90 Meclis — Kullanıcının kendi sözleriyle istekleri
 
-Hazırlanma: 20.10.2026. Amaç: kullanıcının (Ebraar) söylediklerini kendi kelimeleriyle kayda geçirmek, bizim
+Hazırlanma: 20.10.2026. Amaç: kullanıcının söylediklerini kendi kelimeleriyle kayda geçirmek, bizim
 yorumumuzu yanına yazmak ve özetlerimizin nerede saptığını göstermek. Kural: **kullanıcının sözü özetimizden
 üstündür; sonra söylenen önce söyleneni geçersiz kılar.**
 
@@ -23,7 +23,7 @@ kural gibi yazmışız · **[BELİRSİZ]** söz iki türlü okunabiliyor · **[U
 Yorum: Kullanıcı bizi projenin ortağı olarak görüyor. Kararları onun yerine verip işi bitirmemiz bekleniyor (t11u, t15u ve t30u ile tutarlı).
 
 #### t1u
-> Ebraar'ın 90 Meclis projesi için araştırma görevi. Amaç: piyasadaki futbol tahmin/analiz sitelerini ve uygulamalarını gözlemleyip incelemek, ne yaptıklarını, ne yapamadıklarını bulmak ve 90 Meclis'in farklı bakış açısıyla (her şeyin tek masada olduğu, kazanç-kayıp şeffaf kayıt, veri laboratuvarı, maç merkezi, tahmin botu, tahmin arşivi) neler yapılabileceğini çıkarmak.
+> [Kullanıcının] 90 Meclis projesi için araştırma görevi. Amaç: piyasadaki futbol tahmin/analiz sitelerini ve uygulamalarını gözlemleyip incelemek, ne yaptıklarını, ne yapamadıklarını bulmak ve 90 Meclis'in farklı bakış açısıyla (her şeyin tek masada olduğu, kazanç-kayıp şeffaf kayıt, veri laboratuvarı, maç merkezi, tahmin botu, tahmin arşivi) neler yapılabileceğini çıkarmak.
 >
 > Araştırılacak konular:
 > 1. Popüler futbol tahmin siteleri ve uygulamaları (Türk ve uluslararası): hangi özellikleri var, nasıl çalışıyorlar, arayüzleri nasıl, hangi verileri gösteriyorlar.
@@ -101,7 +101,7 @@ Ben (uygulamada) hiçbir şey görmüyorum. Her şeyi hallet, **havuz çalışm�
 işi kullanıcıya yıkmadan biz yapalım, uygulama görünür olsun. **[UYUMLU]**
 
 ### t22u – t24u (giriş işleri)
-> "Şifrem yok galiba mail ile girmeyi dene şifre istemeyi dene ebrarmutlu3434@gmail.com" ·
+> "Şifrem yok galiba mail ile girmeyi dene şifre istemeyi dene [e-posta adresi]" ·
 > "Tamam hallettim gönder" · "Citri-Mit. Eee hesabım zaten. Getayp hesabımdı. Bağlı."
 
 Yorum: Streamlit hesabı zaten GitHub'a bağlı. Gereksinim değil, süreç bilgisi.
@@ -111,7 +111,7 @@ Yorum: Streamlit hesabı zaten GitHub'a bağlı. Gereksinim değil, süreç bilg
 
 Yorum: "(Repo) herkese açık kalabilir, o ayarı ben yapamam." Ardından **"kullanıcı tarafı olsun, misafir tarafı
 olsun"**. **[BELİRSİZ]** İki okuma var: (a) site misafirlere açık olsun ("kullanıcı tarafı = misafir tarafı");
-(b) iki ayrı yüz olsun: kullanıcının (Ebraar'ın) kendi tarafı ve misafir tarafı. Biz yalnızca (a)'yı uyguladık,
+(b) iki ayrı yüz olsun: kullanıcının kendi tarafı ve misafir tarafı. Biz yalnızca (a)'yı uyguladık,
 yönetimi de gizli bir sayfaya koyduk. **Geçerli okuma (§1.1):** misafir/herkese açık erişim.
 
 ### t26u – t28u (Streamlit kurulumu)
@@ -200,7 +200,7 @@ Yorum: Tarifte birden çok eksik var. Kullanıcı bize güveniyor. **Yanıltmaya
 | S7 | "Her maçı veriyor olacak" → "her maça tahmin" | t33u ile düzeltildi: kastedilen veri | Belgelerde "her maçın verisi eksiksiz olacak" olarak yazılmalı |
 | S8 | Değer eşikleri (edge ≥ %3, p ≥ 0,40, oran ≤ 3,20; oransızda 0,72–0,86), "maç başına tek seçim", "adil oran" seçimleri | Kullanıcı bu sayıları okuduğumuz kısımda söylemedi. "Bizim tahmin anlayışımız" v1'de olabilir | **EKLEME / doğrulanamadı**: v1 talimatıyla karşılaştırılmalı |
 | S9 | En az 3 saat önce yayın | "saatler öncesinde paylaşacağız" (t32u) | Uyumlu sayılır. 3 saat alt sınırı bizim seçimimiz |
-| S10 | `docs/tarif.md` yol haritası: "Bot vs Ebraar vs topluluk", "Oybirliği/Oyçokluğu/Şerhli", "Tutanak/Sicil" ad önerileri | Kullanıcı bunları istemedi; bölüm ve etiket adları kullanıcının | **EKLEME**: bizim önerimiz olarak ayrıldı |
+| S10 | `docs/tarif.md` yol haritası: "Bot vs kullanıcı vs topluluk", "Oybirliği/Oyçokluğu/Şerhli", "Tutanak/Sicil" ad önerileri | Kullanıcı bunları istemedi; bölüm ve etiket adları kullanıcının | **EKLEME**: bizim önerimiz olarak ayrıldı |
 | S11 | Ana sayfa içeriği ("dünün kararları" vb.), tasarım paleti, SEO | Kullanıcı "profesyonel" dedi, detay vermedi | Bizim tasarımımız. Kural değil, öneri |
 | S12 | "18+ / garanti değildir" notu; 6deba6c'de "bunu oyna" türü ifadelerin silinmesi | v1 (t2u): "maç konuşsun, kullanıcıya 'bunu oyna' hissi versin". 18+ notu v1'de yok | **SAPMA giderildi**: yayımlanmış kararda kararlı ses geri geldi. Küçük 18+ notu bizim eklememiz olarak kalıyor |
 

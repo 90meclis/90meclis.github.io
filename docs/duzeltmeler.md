@@ -28,7 +28,7 @@ football-data.org, The Odds API, OddsPapi ve SportDevs ücretsiz anahtarlarla a�
 ## P1
 
 **D5 — "Kullanıcı tarafı / misafir tarafı" belirsizliği (K).** "kullanıcı tarafı olsun. Misafir tarafı olsun" (t25u).
-Şu an misafir yüzü ve ADMIN_TOKEN'lı yönetim var. Ayrı bir kullanıcı (Ebraar) tarafı isteniyorsa kapsam değişir. Tek soru olarak sorulmalı.
+Şu an misafir yüzü ve ADMIN_TOKEN'lı yönetim var. Ayrı bir kullanıcı  tarafı isteniyorsa kapsam değişir. Tek soru olarak sorulmalı.
 
 **D6 — "Sürekli çalışan sistem" (P).** "burada sürekli çalışabilecek bir şey olması lazım… saatler öncesi… hazırlanması gerekiyor" (t32u).
 GitHub Actions cron'u yoğun saatlerde gecikebilir ya da düşebilir. 60 gün commit olmazsa zamanlanmış işler kapanır (`meclis.yml` commit atmıyor). → Kalp atışı/yedek commit'i ve kaçan çalışmayı yakalama mantığı eklenmeli.
