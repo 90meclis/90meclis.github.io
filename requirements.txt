@@ -1,0 +1,10 @@
+streamlit>=1.50
+supabase>=2.10
+pandas>=2.2
+numpy>=1.26
+scipy>=1.12
+requests>=2.31
+feedparser>=6.0
+python-dotenv>=1.0
+tzdata>=2024.1
+pytest>=8.0
