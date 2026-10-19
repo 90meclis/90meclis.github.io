@@ -3,8 +3,11 @@
 Ücretsiz futbol planı: tüm v2 uç noktaları, kota yok (IP başına 10 istek/sn). Lisans (Data usage & license v4.0):
 iç kullanım için saklama ve kendi uygulamanda gösterme serbest; ham verinin yeniden satışı yasak; kaynak gösterilir.
 
-Sağladıkları (6 ligin hepsi): fikstür/sonuç/İY, maç başına sakat-cezalı-şüpheli listesi (unavailable_players),
-resmî ilk 11 (~1 saat önce) ve AI tahmini ilk 11 (maç öncesi, `confidence`), kadro + oyuncu uygunluğu.
+Sağladıkları (6 ligin hepsi, 19.10.2026'da anahtarla canlı doğrulandı; günlük kota başlığı: 7.500 istek):
+fikstür/sonuç/İY, hakem (ad + kart ortalaması), stadyum (ad, şehir, kapasite, koordinat), konsensüs oranları
+(1X2, Alt/Üst 1.5/2.5/3.5, KG Var/Yok; 4 saatte bir güncellenir), biten maç istatistiği (şut, isabetli şut, korner,
+faul, kart, kale vuruşu, xG, topla oynama), maç başına sakat-cezalı-şüpheli listesi (unavailable_players), resmî ilk 11
+(~1 saat önce) ve AI tahmini ilk 11 (maç öncesi, `confidence`), kadro + oyuncu uygunluğu.
 """
 from __future__ import annotations
 
@@ -59,6 +62,47 @@ def parse_events(results: list[dict], league_map: dict[int, str]) -> list[dict]:
     return out
 
 
+def parse_odds(data: dict) -> dict:
+    """/events/{id}/odds/ → iç oran sözlüğü (boş piyasa yazılmaz)."""
+    o = (data or {}).get("odds") or {}
+    src = f"{SOURCE}:konsensüs"
+    out = {}
+    if all(o.get(k) for k in ("home_win", "draw", "away_win")):
+        out["1X2"] = {"1": o["home_win"], "X": o["draw"], "2": o["away_win"], "src": src}
+    for line, k in ((1.5, "15"), (2.5, "25"), (3.5, "35")):
+        if o.get(f"over_{k}_goals") and o.get(f"under_{k}_goals"):
+            out[f"OU_GOALS_{line:g}"] = {"ÜST": o[f"over_{k}_goals"], "ALT": o[f"under_{k}_goals"], "src": src}
+    if o.get("btts_yes") and o.get("btts_no"):
+        out["BTTS"] = {"VAR": o["btts_yes"], "YOK": o["btts_no"], "src": src}
+    return out
+
+
+def _num(v):
+    if isinstance(v, dict):
+        v = v.get("actual") if "actual" in v else v.get("value")
+    try:
+        return None if v is None else float(v)
+    except (TypeError, ValueError):
+        return None
+
+
+def parse_stats(data: dict) -> dict:
+    """/events/{id}/stats/ → {'home': {...}, 'away': {...}} (yalnızca dolu alanlar)."""
+    out = {}
+    for side in ("home", "away"):
+        st = ((data or {}).get("stats") or {}).get(side) or {}
+        vals = {"shots": _num(st.get("total_shots")), "shots_on_target": _num(st.get("shots_on_target")),
+                "corners": _num(st.get("corner_kicks")), "fouls": _num(st.get("fouls")),
+                "yellow": _num(st.get("yellow_cards")), "red": _num(st.get("red_cards")),
+                "goal_kicks": _num(st.get("goal_kicks")),
+                "xg": _num(st.get("expected_goals")) if st.get("expected_goals") is not None else _num(st.get("xg")),
+                "possession": _num(st.get("ball_possession"))}
+        vals = {k: (v if k in ("xg", "possession") else int(v)) for k, v in vals.items() if v is not None}
+        if vals:
+            out[side] = vals
+    return out
+
+
 def _side_players(side: dict | None, key: str) -> list[dict]:
     return [{"name": p.get("name"), "number": p.get("jersey_number"), "pos": p.get("position"),
              **({"ai_score": p["ai_score"]} if p.get("ai_score") is not None else {})}
@@ -103,6 +147,9 @@ class BSD:
     def __init__(self, key: str | None):
         self.key = key
         self._leagues: dict[int, str] | None = None
+        self._ref: dict[int, str | None] = {}
+        self._venue: dict[int, dict] = {}
+        self.calls = 0
 
     @property
     def available(self) -> bool:
@@ -111,6 +158,7 @@ class BSD:
     def _get(self, path: str, params: dict | None = None) -> dict:
         if not self.key:
             raise SourceError("BSD_API_KEY tanımlı değil.")
+        self.calls += 1
         r = get(f"{BASE}{path}", params=params, headers={"Authorization": f"Token {self.key}"})
         if r.status_code in (401, 403):
             raise SourceError(f"BSD yetki hatası (HTTP {r.status_code}) — BSD_API_KEY geçersiz olabilir")
@@ -135,20 +183,58 @@ class BSD:
             self._leagues = out
         return self._leagues
 
-    def events(self, d_from: date, d_to: date, leagues: list[str]) -> list[dict]:
+    def events(self, d_from: date, d_to: date, leagues: list[str], enrich: bool = True) -> list[dict]:
+        """Maç kayıtları; enrich=True ise oynanacak maçlara oran, bitenlere istatistik, hepsine hakem ve stadyum
+        eklenir (maç başına 1–2 istek; günlük kota 7.500)."""
         lm = {k: v for k, v in self.league_map().items() if v in leagues}
         out = []
+        raw: dict[int, dict] = {}
         for lid in lm:
             offset = 0
             for _ in range(5):
                 data = self._get("/events/", {"league_id": lid, "date_from": d_from.isoformat(),
                                               "date_to": (d_to + timedelta(days=1)).isoformat(),
                                               "limit": 200, "offset": offset})
+                for e in data.get("results") or []:
+                    raw[e.get("id")] = e
                 out += parse_events(data.get("results") or [], lm)
                 if not data.get("next"):
                     break
                 offset += 200
+        if enrich:
+            for rec in out:
+                e = raw.get(rec["ext_ids"]["bsd"]) or {}
+                self._enrich(rec, e)
         return out
+
+    def _enrich(self, rec: dict, e: dict) -> None:
+        eid = rec["ext_ids"]["bsd"]
+        try:
+            if rec["status"] in ("planlandi", "basladi"):
+                odds = parse_odds(self._get(f"/events/{eid}/odds/"))
+                if odds:
+                    rec["odds"] = odds
+            elif rec["status"] == "bitti":
+                st = parse_stats(self._get(f"/events/{eid}/stats/"))
+                if st:
+                    rec["stats"] = st
+            if e.get("referee_id"):
+                rec["referee"] = self.referee(e["referee_id"])
+            if e.get("venue_id"):
+                v = self.venue(e["venue_id"])
+                rec["venue"], rec["city"] = v.get("name"), v.get("city")
+        except SourceError:
+            pass
+
+    def referee(self, rid: int) -> str | None:
+        if rid not in self._ref:
+            self._ref[rid] = (self._get(f"/referees/{int(rid)}/") or {}).get("name")
+        return self._ref[rid]
+
+    def venue(self, vid: int) -> dict:
+        if vid not in self._venue:
+            self._venue[vid] = self._get(f"/venues/{int(vid)}/") or {}
+        return self._venue[vid]
 
     def lineups(self, event_id: int) -> dict:
         return parse_lineups(self._get(f"/events/{int(event_id)}/lineups/"))

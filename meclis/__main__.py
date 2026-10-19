@@ -23,7 +23,7 @@ def main(argv=None) -> int:
     ap.add_argument("komut", choices=["yenile", "gundem", "bot", "sonuclandir", "sabah", "durum", "kadro",
                                         "gecmis"])
     ap.add_argument("--zorla", action="store_true", help="kadro: 7 günlük önbelleği yok say")
-    ap.add_argument("--saat", type=float, default=72, help="kadro: kaç saat sonrasına kadarki maçlar (varsayılan 72)")
+    ap.add_argument("--saat", type=float, default=168, help="kadro: kaç saat sonrasına kadarki maçlar (varsayılan 168 = 7 gün)")
     ap.add_argument("--gecmis", action="store_true", help="geçmiş sezon verisini de çek")
     ap.add_argument("--kuru", action="store_true", help="bot: kayda yazmadan çalıştır")
     ap.add_argument("--ligler", help="virgülle lig kodları (ör. T1,E0)")
@@ -77,6 +77,11 @@ def main(argv=None) -> int:
         print(f"  maç: {len(store.select('matches'))}, tahmin: {len(store.select('predictions'))}, "
               f"oyuncu: {len(store.select('players'))}, sakat/cezalı: {len(store.select('injuries'))}, "
               f"ilk 11: {len(store.select('lineups'))}")
+        from .coverage import format_coverage, upcoming_coverage
+
+        print("  Önümüzdeki 7 günün kapsamı (maç sayısı / ilgili alanı dolu maç sayısı):")
+        for line in format_coverage(upcoming_coverage(store, s.leagues)):
+            print("   ", line)
     for line in out_logs:
         print(line)
     return 0

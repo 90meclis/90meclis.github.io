@@ -27,7 +27,7 @@ Supabase Vault içinde durur; kodda, depoda veya tabloda yalnızca değişkenin 
 | Kaynak | Anahtar (ortam değişkeni) | Ücretsiz katman | Doldurduğu alanlar | Kayıt / bilgi |
 |---|---|---|---|---|
 | **API-Football (api-sports.io)** | `API_FOOTBALL_KEY` ✅ tanımlı | Ücretsiz: 100 istek/gün, 10/dk; sezonluk sorgu yalnızca 2022–2024, tarih sorgusu dün–yarın, fikstür sorgusu güncel sezonda açık | güncel sakat/cezalı (dün–yarın), maç öncesi resmî ilk 11, geçmiş fikstür ve sakatlık (2022–2024), oyuncu dakika/ilk 11/gol/asist (2024) | https://dashboard.api-football.com/register |
-| **Bzzoiro Sports Data (BSD)** | `BSD_API_KEY` | Ücretsiz futbol planı, kota yok (IP başına 10 istek/sn); 6 ligin hepsi | maç başına sakat/cezalı/şüpheli, resmî ilk 11 (~1 saat önce), tahmini ilk 11 (AI), kadro + uygunluk, fikstür/sonuç | https://sports.bzzoiro.com/register/ |
+| **Bzzoiro Sports Data (BSD)** | `BSD_API_KEY` | Ücretsiz futbol planı, günlük 7.500 istek (IP başına 10 istek/sn); 6 ligin hepsi (19.10.2026 canlı doğrulandı) | maç başına sakat/cezalı/şüpheli (7 gün önceden), resmî ilk 11 (~1 saat önce), tahmini ilk 11 (AI), kadro + uygunluk, fikstür/sonuç/İY, konsensüs oranları (1X2, A/Ü 1.5/2.5/3.5, KG Var/Yok; 4 saatte bir), biten maç istatistiği (şut, isabetli şut, korner, faul, kart, kale vuruşu, xG, topla oynama), hakem, stadyum | https://sports.bzzoiro.com/register/ |
 | **football-data.org** | `FOOTBALL_DATA_TOKEN` | Ücretsiz: 12 turnuva, 10 istek/dk (Süper Lig yok) | fikstür, sonuç, İY skoru, hakem, stadyum | https://www.football-data.org/client/register |
 | **The Odds API** | `ODDS_API_KEY` | Ücretsiz: ayda 500 kredi (h2h+totals × eu = 2 kredi/lig) | 1X2 oranı, Alt/Üst oranı, Pinnacle oranı | https://the-odds-api.com/#get-access |
 | **OddsPapi** | `ODDSPAPI_KEY` | Ücretsiz: ayda 250 istek (bot günde en çok 1 oran çağrısı yapar) | 1X2 oranı (Pinnacle dahil 300+ bahis şirketi) | https://oddspapi.io/en/register |
@@ -61,9 +61,9 @@ Kural: kaynak sınırı yok; hepsi havuza girer, biri boşsa diğeri doldurur. K
 
 | Veri | Kaynak sırası (ilk dolu kazanır, kaynaklar satırda birlikte yazılır) |
 |---|---|
-| **Güncel kadro** (`players`, `player_key = k:<ad>`) | Wikipedia A takım kadrosu → BSD kadrosu (eksik oyuncuları ekler, forma no/mevki tamamlar). Takım başına 7 günde bir. |
+| **Güncel kadro** (`players`, `player_key = k:<ad>`) | Wikipedia A takım kadrosu → BSD kadrosu (eksik oyuncuları ekler, forma no/mevki tamamlar). Takım başına 7 günde bir; yeni bir kaynak devreye girerse (ör. BSD anahtarı) önbellek beklenmeden hemen yenilenir. |
 | **Oyuncu önemi istatistiği** | Aynı kulüpte son açık API-Football sezonu (ücretsiz plan: 2024) ad eşleştirmesiyle (`stats_source` = "api-football 2024"). Eşleşmeyen oyuncu "bilinmiyor" (önem 0,15 × kesinlik) sayılır, uydurma değer yok. |
-| **Sakat / cezalı / şüpheli** (`injuries`) | BSD maç listesi → BSD kadro uygunluğu → API-Football (dün/bugün/yarın günlük liste; 36 saatten yakın maçta fikstür sorgusu) → SportDevs kadro eksikleri. Her kayıt Eksik Etkisi formülüyle (0–100) oyuncu önemine göre ağırlıklanır. En az bir kaynak geçerli yanıt verdiyse liste "biliniyor" sayılır; boş yanıt = bildirilen eksik yok. |
+| **Sakat / cezalı / şüpheli** (`injuries`) | BSD maç listesi → BSD kadro uygunluğu → API-Football (dün/bugün/yarın günlük liste; 36 saatten yakın maçta fikstür sorgusu). Önümüzdeki 7 günün bütün maçları her `kadro` çalışmasında taranır (liste 8 saat önbellekte) → SportDevs kadro eksikleri. Her kayıt Eksik Etkisi formülüyle (0–100) oyuncu önemine göre ağırlıklanır. En az bir kaynak geçerli yanıt verdiyse liste "biliniyor" sayılır; boş yanıt = bildirilen eksik yok. |
 | **İlk 11** (`lineups`, `lineup_status`) | BSD resmî → API-Football → SportDevs → TheSportsDB (Patreon anahtarı) → BSD tahmini. Resmî ilk 11 her zaman tahmini ezer; **tahmini ilk 11 "Açıklanan ilk 11" tamlık maddesini doldurmaz**, arayüzde "tahmini" etiketiyle görünür. |
 
 Eski kayıtlar silinmez: bir takımın güncel kadrosu en son yenilemenin damgasını taşıyan satırlardır; bir maçın güncel

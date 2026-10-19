@@ -26,18 +26,29 @@ _FS = re.compile(r"\{\{\s*(?:fs player|football squad player)\s*\|((?:[^{}]|\{\{
 _POS = {"GK": "Goalkeeper", "DF": "Defender", "MF": "Midfielder", "FW": "Attacker"}
 
 
-def _get_json(url: str, params: dict) -> dict:
-    wait = _last[0] + MIN_INTERVAL - time.monotonic()
-    if wait > 0:
-        time.sleep(wait)
-    _last[0] = time.monotonic()
-    r = get(url, params={**params, "format": "json", "formatversion": 2, "maxlag": 5}, headers=UA, timeout=30)
-    if r.status_code != 200:
-        raise SourceError(f"Wikipedia HTTP {r.status_code}")
-    data = r.json()
-    if "error" in data:
-        raise SourceError(f"Wikipedia: {data['error'].get('info') or data['error']}")
-    return data
+def _get_json(url: str, params: dict, retries: int = 4) -> dict:
+    for attempt in range(retries):
+        wait = _last[0] + MIN_INTERVAL - time.monotonic()
+        if wait > 0:
+            time.sleep(wait)
+        _last[0] = time.monotonic()
+        r = get(url, params={**params, "format": "json", "formatversion": 2, "maxlag": 5}, headers=UA, timeout=30)
+        if r.status_code != 200:
+            raise SourceError(f"Wikipedia HTTP {r.status_code}")
+        data = r.json()
+        err = data.get("error")
+        if err and err.get("code") == "maxlag" and attempt < retries - 1:
+            # sunucu yükü: Wikimedia kuralı gereği bekleyip yeniden dene (Retry-After başlığı saniye cinsinden)
+            try:
+                delay = float(r.headers.get("Retry-After") or 5)
+            except ValueError:
+                delay = 5.0
+            time.sleep(min(max(delay, 1.0), 15.0))
+            continue
+        if err:
+            raise SourceError(f"Wikipedia: {err.get('info') or err}")
+        return data
+    raise SourceError("Wikipedia: sunucu gecikmesi (maxlag) sürüyor")
 
 
 def _clean_name(raw: str) -> str:

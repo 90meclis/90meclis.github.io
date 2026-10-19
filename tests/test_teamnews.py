@@ -340,3 +340,32 @@ def test_apif_team_query_ignores_other_clubs_stats():
     it["statistics"].append({"team": {"id": 645}, "league": {"id": 203}, "games": {"minutes": 90, "appearences": 1},
                              "goals": {"total": 0}})
     assert parse_player(it, team_apif=645)["minutes"] == 90
+
+
+def test_bsd_odds_and_stats_parsers():
+    from meclis.sources import bsd
+    o = bsd.parse_odds({"odds": {"home_win": 1.9, "draw": 3.32, "away_win": 4.13, "over_25_goals": 2.24,
+                                 "under_25_goals": 1.64, "over_15_goals": None, "under_15_goals": 2.85,
+                                 "btts_yes": 1.98, "btts_no": 1.74}})
+    assert o["1X2"]["1"] == 1.9 and o["OU_GOALS_2.5"]["ÜST"] == 2.24 and o["BTTS"]["VAR"] == 1.98
+    assert "OU_GOALS_1.5" not in o
+    assert bsd.parse_odds({"odds": {"home_win": None, "draw": None, "away_win": None}}) == {}
+    st = bsd.parse_stats({"stats": {"home": {"total_shots": 13, "shots_on_target": 8, "corner_kicks": 4,
+                                             "expected_goals": 2.35, "ball_possession": 38, "yellow_cards": 1},
+                                    "away": {"xg": {"actual": None}, "total_shots": None}}})
+    assert st == {"home": {"shots": 13, "shots_on_target": 8, "corners": 4, "yellow": 1, "xg": 2.35,
+                           "possession": 38.0}}
+
+
+def test_btts_market_odds_attached():
+    from meclis.markets import attach_odds
+    p = attach_odds({"market": "BTTS", "selection": "VAR", "line": None, "probability": 0.55},
+                    {"BTTS": {"VAR": 1.98, "YOK": 1.74, "src": "bsd:konsensüs"}})
+    assert p["odds"] == 1.98 and p["odds_source"] == "bsd:konsensüs"
+
+
+def test_bsd_aliases():
+    from meclis.names import canonical_key
+    assert canonical_key("Borussia M'gladbach") == "gladbach"
+    assert canonical_key("Amed Sportif Faaliyetler") == "amedspor"
+    assert canonical_key("Real Racing Club") == "santander"

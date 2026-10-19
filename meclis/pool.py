@@ -20,7 +20,7 @@ PRIORITY = ["api-football", "sportmonks", "football-data.org", "footystats", "sp
 NAME_PRIORITY = ["thesportsdb", "api-football", "football-data.org", "sportmonks", "football-data.co.uk",
                  "footystats", "sportdevs", "openligadb", "the-odds-api", "oddspapi", "openfootball", "bsd"]
 # Oran önceliği: çok şirketli ortalama > Pinnacle > CSV ortalaması > tekil kaynaklar
-ODDS_PRIORITY = ["the-odds-api", "oddspapi", "football-data.co.uk", "footystats", "api-football", "sportmonks"]
+ODDS_PRIORITY = ["the-odds-api", "oddspapi", "bsd", "football-data.co.uk", "footystats", "api-football", "sportmonks"]
 SCALARS = ["kickoff_at", "season", "home_goals", "away_goals", "ht_home_goals", "ht_away_goals",
            "venue", "referee", "city"]
 STAT_FIELDS = ["shots", "shots_on_target", "corners", "fouls", "yellow", "red", "goal_kicks", "xg", "possession"]
@@ -290,7 +290,7 @@ class DataPool:
             pass
 
     # ---------------------------------------------------------------- toplama
-    def collect(self, days_back: int = 3, days_ahead: int = 3, history: bool = False) -> list[dict]:
+    def collect(self, days_back: int = 3, days_ahead: int = 7, history: bool = False) -> list[dict]:
         from .sources import football_data_co_uk as fdcuk
 
         today = now_utc().date()
@@ -529,7 +529,7 @@ class DataPool:
             self._note("wikidata", True, f"{len(rows)} takım sorgulandı, {found} eşleşti", calls=len(rows))
         return len(rows)
 
-    def refresh(self, days_back: int = 3, days_ahead: int = 3, history: bool = False) -> dict:
+    def refresh(self, days_back: int = 3, days_ahead: int = 7, history: bool = False) -> dict:
         from .store import seed_sources
 
         try:

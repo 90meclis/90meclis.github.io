@@ -49,6 +49,8 @@ def attach_odds(pick: dict, odds: dict) -> dict:
         key = f"OU_GOALS_{pick['line']:g}"
         if key in odds:
             o, src = odds[key].get(pick["selection"]), odds[key].get("src")
+    elif pick["market"] == "BTTS" and "BTTS" in odds:
+        o, src = odds["BTTS"].get(pick["selection"]), odds["BTTS"].get("src")
     elif pick["market"] == "DC" and "1X2" in odds:
         # Çifte şans piyasa oranı ayrı yoksa 1X2'den TÜRETİLMEZ (marj belirsiz) — adil oranla kalır.
         o = None

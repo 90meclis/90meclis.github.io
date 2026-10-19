@@ -54,11 +54,21 @@ def banner():
     if not s.supabase_enabled:
         st.warning("Supabase bağlı değil (SUPABASE_URL / SUPABASE_KEY yok). Veriler bu makinedeki yerel SQLite "
                    "dosyasında tutuluyor; paylaşılmaz ve Streamlit Cloud'da kalıcı değildir.", icon="🗄️")
-    missing = [n for n, v in (("FOOTBALL_DATA_TOKEN", s.football_data_token), ("API_FOOTBALL_KEY", s.api_football_key),
-                              ("ODDS_API_KEY", s.odds_api_key)) if not v]
+    # Anahtarlar veri toplayan işte (GitHub Actions) tanımlıdır; arayüz yalnızca okur. Bu yüzden eksik anahtar
+    # bilgisi uygulamanın kendi ortamından değil, havuzun yazdığı kaynak durumundan okunur.
+    missing = _waiting_keys(store)
     if missing:
-        st.caption("🔑 Tanımsız anahtarlar: " + ", ".join(missing) +
-                   " — bu kaynakların verisi (ör. sakatlık, ilk 11, ek oranlar) gösterilmez; yerine uydurma veri KONMAZ.")
+        st.caption("🔑 Anahtar bekleyen kaynaklar: " + ", ".join(missing) +
+                   " — bu kaynakların verisi gelmiyor, yerine uydurma veri KONMAZ (diğer kaynaklar boşluğu doldurur).")
+
+
+@st.cache_data(ttl=600, show_spinner=False)
+def _waiting_keys(_store) -> list[str]:
+    try:
+        rows = _store.select("source_status")
+    except Exception:
+        return []
+    return sorted({r["source"] for r in rows if str(r.get("message") or "").startswith("anahtar bekleniyor")})
 
 
 def league_name(code: str) -> str:

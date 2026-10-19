@@ -173,3 +173,11 @@ Verilmedi akışı, altı sayfanın açılışı (Streamlit AppTest) ve başsız
 - Takım adı eşleştirme muhafazakârdır; yeni bir ad varyantı ayrı takım sanılabilir (`meclis/names.py` → `ALIASES`).
 - Haber–maç eşleşmesi takım adına dayanır; yanlış pozitif/negatif olabilir.
 - Kaynakların kullanım koşulları değişebilir; ticari kullanımdan önce hukuki kontrol önerilir.
+
+## Streamlit Community Cloud'a yayınlama
+
+1. https://share.streamlit.io → **Create app** → depo `ebrarmutlu3434-afk/90-meclis`, dal `main`, **Main file path: `app.py`**.
+2. **Advanced settings → Secrets** alanına yalnızca şu ikisini yazın (bkz. `.streamlit/secrets.toml.example`):
+   `SUPABASE_URL` ve `SUPABASE_KEY` (anon / publishable anahtar — service_role değil).
+3. Uygulama yerel dosyaya ihtiyaç duymaz; veriyi Supabase'den okur. Veri toplama, kadro/eksik/ilk 11 güncellemesi
+   ve tahmin defteri GitHub Actions'taki zamanlanmış iş (`.github/workflows/meclis.yml`) tarafından yapılır.

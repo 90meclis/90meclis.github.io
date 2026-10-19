@@ -131,10 +131,17 @@ class TeamNews:
                     bsd_ids[m[f"{side}_team_id"]] = ext[f"bsd_{side}"]
         teams = [t for t in teams if t["id"] in active]
         today = now_utc().date()
+        bsd = getattr(self.pool, "bsd", None)
         due = []
         for t in teams:
-            chk = (t.get("ext_ids") or {}).get("squad_checked")
-            if force or not chk or (today - parse_dt(chk + "T00:00:00+00:00").date()).days >= SQUAD_MAX_AGE_DAYS:
+            ext0 = t.get("ext_ids") or {}
+            chk = ext0.get("squad_checked")
+            # yeni bir kaynak devreye girdiyse (ör. BSD anahtarı sonradan eklendi) 7 günlük önbellek beklenmez
+            have = set(ext0.get("squad_sources") or [])
+            new_src = (bsd is not None and bsd.available and bsd_ids.get(t["id"]) and "bsd" not in have) or \
+                      ("squad_sources" not in ext0)
+            if force or not chk or new_src or \
+                    (today - parse_dt(chk + "T00:00:00+00:00").date()).days >= SQUAD_MAX_AGE_DAYS:
                 due.append(t)
         due = due[:max_teams]
         stats = {"teams": len(teams), "due": len(due), "wikipedia": 0, "bsd": 0, "players": 0, "with_stats": 0,
@@ -147,7 +154,6 @@ class TeamNews:
         except Exception as e:
             titles = {}
             self._note("wikipedia", False, f"Wikidata→Wikipedia bağlantısı: {e}")
-        bsd = getattr(self.pool, "bsd", None)
         for t in due:
             ext = dict(t.get("ext_ids") or {})
             squad, src = [], []
@@ -176,6 +182,7 @@ class TeamNews:
                                 squad.append(dict(p, _src="bsd"))
                 except Exception as e:
                     self._note("bsd", False, f"kadro {t['name']}: {e}")
+            ext["squad_sources"] = src
             if not squad:
                 stats["failed"].append(t["name"])
                 ext["squad_checked"] = today.isoformat()
@@ -391,7 +398,7 @@ class TeamNews:
         return rows
 
     # ------------------------------------------------------------------ toplu
-    def run_upcoming(self, hours_ahead: float = 72, leagues: list[str] | None = None) -> dict:
+    def run_upcoming(self, hours_ahead: float = 168, leagues: list[str] | None = None) -> dict:
         leagues = leagues or self.s.leagues
         now = now_utc()
         ms = self.pool.matches_between(to_iso(now - timedelta(hours=2)), to_iso(now + timedelta(hours=hours_ahead)),

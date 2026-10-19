@@ -1,3 +1,5 @@
+from datetime import date, timedelta
+
 import pandas as pd
 import streamlit as st
 
@@ -22,15 +24,38 @@ if not store.select("matches", limit=1):
         st.write("\n".join(f"- {x}" for x in r["log"]))
     st.stop()
 
+@st.cache_data(ttl=300, show_spinner=False)
+def match_days(leagues: tuple, start_iso: str, end_iso: str) -> dict:
+    """Önümüzdeki günlerde (TR saatiyle) maç olan günler → maç sayısı."""
+    from collections import Counter
+
+    rows = pool.matches_between(start_iso, end_iso, list(leagues))
+    return dict(sorted(Counter(tr_str(m["kickoff_at"], "%Y-%m-%d") for m in rows).items()))
+
+
 c1, c2 = st.columns([1, 3])
-day = c1.date_input("Tarih", value=today_tr(), format="DD.MM.YYYY")
 leagues = c2.multiselect("Ligler", s.leagues, default=s.leagues, format_func=ui.league_name)
+today = today_tr()
+lo0, _ = day_bounds_utc(today)
+_, hi0 = day_bounds_utc(today + timedelta(days=14))
+days = match_days(tuple(leagues or s.leagues), lo0, hi0)
+# Bugün maç yoksa varsayılan tarih ilk maç günü olur (boş ekranla açılmasın)
+nxt = next((date.fromisoformat(d) for d in days if date.fromisoformat(d) >= today), today)
+if "mm_day" not in st.session_state:
+    st.session_state["mm_day"] = today if today.isoformat() in days else nxt
+day = c1.date_input("Tarih", key="mm_day", format="DD.MM.YYYY")
+if days:
+    st.caption("📅 Önümüzdeki maç günleri: " + " · ".join(
+        f"{date.fromisoformat(d):%d.%m} ({n})" for d, n in list(days.items())[:10]))
 lo, hi = day_bounds_utc(day)
 matches = pool.matches_between(lo, hi, leagues or s.leagues)
 if not matches:
-    ui.empty_state("Bu tarihte seçili liglerde maç bulunamadı. Fikstür; football-data.co.uk, OpenLigaDB, TheSportsDB, "
-                   "openfootball ve anahtarı tanımlı API'lerden birleştirilir — kaynak durumu için Tahmin Botu → "
-                   "Veri kaynakları.")
+    ui.empty_state("Bu tarihte seçili liglerde maç bulunamadı" + (f" — sıradaki maç günü {nxt:%d.%m.%Y}." if days else ".")
+                   + " Fikstür; football-data.co.uk, OpenLigaDB, TheSportsDB, BSD, openfootball ve anahtarı tanımlı "
+                   "API'lerden birleştirilir — kaynak durumu için Tahmin Botu → Veri kaynakları.")
+    if days:
+        st.button(f"➡️ {nxt:%d.%m.%Y} maçlarına git", type="primary",
+                  on_click=lambda: st.session_state.update(mm_day=nxt))
     st.stop()
 
 bot = ui.bot()
