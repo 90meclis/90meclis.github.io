@@ -11,10 +11,10 @@ import { Card, Chips, Disclaimer, Empty, Gate, PageHead, Stat, TagPill } from ".
 import type { Match, Prediction } from "../lib/types";
 
 function reason(p: BotPick, top?: string): string {
-  const bits = [`Model ${pct(p.probability)}`];
-  if (p.odds) bits.push(`piyasa ${pct(1 / p.odds)} (oran ${num(p.odds)})`, `değer ${signed((p.edge ?? 0) * 100, 1)}%`);
-  else bits.push(`adil oran ${num(p.fair_odds)}`, "piyasa oranı yok");
-  if (top) bits.push(`akış: ${top.toLocaleLowerCase("tr-TR")}`);
+  const bits: string[] = [];
+  if (p.odds) bits.push(`Piyasa ${pct(1 / p.odds)} görüyor, Meclis ${pct(p.probability)}`);
+  else bits.push("Piyasa oranı yok; yalnızca adil oran, arşive girmez");
+  if (top) bits.push(`beklenen akış: ${top.toLocaleLowerCase("tr-TR")}`);
   return bits.join(" · ");
 }
 
@@ -26,8 +26,8 @@ export default function PredictionBot() {
   const [showPass, setShowPass] = useState(false);
   const d = useAsync(`bot:bulletin:${day}`, async () => {
     const [lo, hi] = dayBoundsUtc(day);
-    const [b, preds] = await Promise.all([api.bulletin(day), api.predictionsBetween(lo, hi)]);
-    return { ...b, preds };
+    const [b, preds, saved] = await Promise.all([api.bulletin(day), api.predictionsBetween(lo, hi), api.botBulten(day)]);
+    return { ...b, preds, saved: saved && saved.length ? saved : null };
   }, [day]);
 
   const rows = useMemo(() => {
@@ -37,14 +37,18 @@ export default function PredictionBot() {
     return d.data.matches.map((m) => {
       const a = d.data!.analyses[m.id];
       const top = (a?.scenarios ?? []).filter((x) => x.olasılık !== null).sort((x, y) => (y.olasılık ?? 0) - (x.olasılık ?? 0))[0]?.ad;
-      return { m, a, picks: valuePicks(a), pub: pub.get(m.id) ?? [], top };
+      const saved = d.data!.saved?.filter((x) => x.match_id === m.id).map((x) => ({
+        market: x.market, selection: x.selection, line: x.line, probability: x.probability, odds: x.odds, fair_odds: x.fair_odds,
+        edge: x.edge, kind: x.kind ?? "değer", score: x.confidence ?? 0, status: x.arsiv_durumu,
+      } as BotPick));
+      return { m, a, picks: saved ?? valuePicks(a), pub: pub.get(m.id) ?? [], top };
     });
   }, [d.data]);
   const withValue = rows.filter((r) => r.picks.length || r.pub.length);
   const pass = rows.filter((r) => !r.picks.length && !r.pub.length);
   const analysed = rows.filter((r) => r.a).length;
   const nPicks = withValue.reduce((a, r) => a + r.picks.length, 0);
-  const last = rows.map((r) => r.a?.created_at).filter(Boolean).sort().pop();
+  const last = [...rows.map((r) => r.a?.created_at), ...(d.data?.saved ?? []).map((x) => x.computed_at)].filter(Boolean).sort().pop();
   const byLeague = groupLeague(withValue);
   const days = [0, 1, 2].map((i) => addDays(today, i));
 
@@ -59,8 +63,8 @@ export default function PredictionBot() {
         <div className="kpis bot-kpis">
           <Stat label="Bültendeki maç" value={rows.length} />
           <Stat label="Analiz edilen" value={analysed} sub={last ? `son tarama ${relTime(last)}` : undefined} />
-          <Stat label="Değer bulunan maç" value={withValue.length} />
-          <Stat label="Değer seçimi" value={nPicks} sub="kuralı geçen tüm pazarlar" />
+          <Stat label="Değerli maç" value={withValue.length} />
+          <Stat label="Değer seçimi" value={nPicks} sub="kuralı geçen pazarlar" />
         </div>
         {!rows.length ? (
           <Empty title="Bu gün bültende maç yok" icon="◆" />
@@ -74,6 +78,7 @@ export default function PredictionBot() {
             </div>
           </section>
         ))}
+        {withValue.length > 0 && <p className="muted tiny"><sup>a</sup> Piyasa oranı yok; modelin adil oranı. Vurgulu satırlar masaya alınan (Tahmin Arşivi) seçimlerdir.</p>}
         {pass.length > 0 && (
           <Card title={`Değer çıkmayan maçlar · ${pass.length}`} aside={<button className="btn ghost small" onClick={() => setShowPass(!showPass)}>{showPass ? "Gizle" : "Göster"}</button>}>
             {showPass ? (
@@ -90,7 +95,7 @@ export default function PredictionBot() {
           <li><b>Bülten taraması.</b> Önümüzdeki maçlar çok kaynaklı veri havuzundan alınır; her maç analiz edilir.</li>
           <li><b>Veri.</b> Bu sezonun maçları, maç maç istatistik, oranlar, ağırlıklı eksikler, hakem, hava ve Meclis tahmini 11.</li>
           <li><b>Modeller.</b> Gol için zaman ağırlıklı Dixon-Coles (Poisson) ve Meclis Elo; korner, kart, isabetli şut ve kale vuruşu için negatif binom/Poisson.</li>
-          <li><b>Değer kuralı.</b> Piyasa oranlı pazarda olasılık ≥ %40, değer ≥ %3, oran ≤ 3,20; oransız pazarda modelin olasılığı %72–86.</li>
+          <li><b>Değer kuralı.</b> Bütün pazarlar adaydır; sıralama olasılığa değil değere göre yapılır. Model olasılığı piyasanın marjsız olasılığıyla kalibre edilir; değer ≥ %3 ve oran 1,50–5,00 olan seçim listeye girer. Piyasa oranı olmayan pazarlar "adil oran" olarak görünür, arşive girmez.</li>
           <li><b>Masa.</b> Bu listeden <i>Günün Kararı</i> (2–3 maç, 2,30–4,00), <i>Meclis Görüşü</i> (tekli) ve <i>Karar Birliği</i> (5+ görüş varsa) seçilir, maçtan saatler önce kilitlenir.</li>
         </ol>
       </Card>
@@ -122,7 +127,8 @@ function BotMatch({ m, picks, pub, top }: Row) {
         <tbody>
           {picks.map((p, i) => {
             const k = `${p.market}|${p.selection}|${p.line ?? ""}`;
-            const tag = pub.find((x) => `${x.market}|${x.selection}|${x.line ?? ""}` === k)?.tag;
+            const st = p.status === "gunun_karari" || p.status === "meclis_gorusu" ? p.status : undefined;
+            const tag = pub.find((x) => `${x.market}|${x.selection}|${x.line ?? ""}` === k)?.tag ?? st;
             return (
               <tr key={i} className={pubKey.has(k) ? "on" : ""}>
                 <td data-label="Pazar"><b>{pickLabel(p.market, p.selection, p.line, m.home_name, m.away_name)}</b>{tag && <> <TagPill tag={tag} /></>}</td>

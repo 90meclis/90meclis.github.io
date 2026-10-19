@@ -103,31 +103,34 @@ for p in store.select("predictions", [("kickoff_at", "gte", _lo), ("kickoff_at",
 
 
 def value_picks(pl: dict) -> list[dict]:
-    """Botun değer kuralı (analysis.select_single ile aynı eşikler); maç başına bütün adaylar."""
-    if not pl.get("ready"):
-        return []
-    model_based = str(pl.get("basis") or "").startswith("model")
-    mm = pl.get("model_matches") or {}
-    if model_based and min(mm.get("home", 0), mm.get("away", 0)) < pl.get("min_team_matches", 4):
-        return []
-    out = []
-    for m in pl.get("markets") or []:
-        pr = m["probability"]
-        if m["market"] == "CS":
-            continue
-        if m.get("odds"):
-            if pr >= 0.40 and m.get("edge") is not None and m["edge"] >= s.value_edge_min and m["odds"] <= 3.2:
-                out.append(m)
-        elif model_based and s.no_odds_min_prob <= pr <= 0.86 and m["market"] != "DC":
-            out.append(m)
-    return sorted(out, key=lambda x: -(x["probability"] * (1 + min(x.get("edge") or 0, 0.25))))
+    """Botun değer kuralı: meclis.analysis.rank_picks (maç başına bütün adaylar, değere göre sıralı)."""
+    from meclis.analysis import rank_picks
 
+    if not pl.get("ready") or not pl.get("markets"):
+        return []
+    mm = pl.get("model_matches") or {}
+    if str(pl.get("basis") or "").startswith("model") and min(mm.get("home", 0), mm.get("away", 0)) < pl.get("min_team_matches", 4):
+        return []
+    try:
+        return rank_picks(pl, s)
+    except (KeyError, TypeError):
+        return []
+
+
+# Kaynak: bot_picks (botun kaydettiği bülten); yoksa son analizlerden aynı kuralla türetilir.
+try:
+    _bp = store.select("bot_picks", [("kickoff_at", "gte", _lo), ("kickoff_at", "lt", _hi)], order="kickoff_at")
+except Exception:
+    _bp = []
+_bp_by: dict = {}
+for x in _bp:
+    _bp_by.setdefault(x["match_id"], []).append(x)
 
 rows_ = []
 for m in _ms:
     pl = _an.get(m["id"]) or {}
     top = max((x for x in pl.get("scenarios") or [] if x.get("olasılık") is not None), key=lambda x: x["olasılık"], default=None)
-    for v in value_picks(pl):
+    for v in (_bp_by.get(m["id"]) if _bp_by else value_picks(pl)) or []:
         why = f"Model %{100 * v['probability']:.0f}"
         if v.get("odds"):
             why += f", piyasa %{100 / v['odds']:.0f} → değer %{100 * v['edge']:+.1f}"
@@ -138,12 +141,14 @@ for m in _ms:
                       "Pazar": pick_label(v["market"], v["selection"], v.get("line"), m["home_name"], m["away_name"]),
                       "Oran": v.get("odds") or v.get("fair_odds"), "Model %": round(100 * v["probability"], 1),
                       "Değer %": round(100 * v["edge"], 1) if v.get("edge") is not None else None,
-                      "Masada": TAG_LABELS.get(_pub.get((m["id"], v["market"], v["selection"], v.get("line"))), ""),
+                      "Masada": TAG_LABELS.get(_pub.get((m["id"], v["market"], v["selection"], v.get("line"))) or v.get("status"), ""),
                       "Kısa gerekçe": why})
 k1, k2, k3 = st.columns(3)
 k1.metric("Bültendeki maç", len(_ms))
 k2.metric("Analiz edilen", len(_an))
 k3.metric("Değer seçimi", len(rows_))
+st.caption("Kaynak: botun kaydettiği bülten (bot_picks)." if _bp_by else
+           "Kaynak: son analizler, botun değer kuralıyla (kalibre olasılık, değer ≥ %3, oran 1,50–5,00).")
 if rows_:
     st.dataframe(pd.DataFrame(rows_).sort_values(["Lig", "Saat"]), hide_index=True, width="stretch")
 elif _ms:

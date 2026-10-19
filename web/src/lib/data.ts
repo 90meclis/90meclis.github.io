@@ -186,3 +186,18 @@ export async function bulletin(day: string): Promise<{ matches: Match[]; analyse
 
 export const predictionsBetween = (fromIso: string, toIso: string) =>
   all<Prediction>(() => db().from("predictions").select("*").gte("kickoff_at", fromIso).lt("kickoff_at", toIso).order("kickoff_at"));
+
+/** Botun kaydettiği bülten (v_bot_bulten). Görünüm henüz yoksa null döner; sayfa analizlerden türetir. */
+export interface BotBultenRow {
+  id: string; match_id: string; kickoff_at: string; league: string | null; home_name: string | null; away_name: string | null;
+  market: string; selection: string; line: number | null; probability: number; odds: number | null; fair_odds: number | null;
+  edge: number | null; confidence: number | null; kind: string | null; arsiv_durumu: string | null; computed_at: string;
+}
+let botBultenMissing = false;
+export async function botBulten(day: string): Promise<BotBultenRow[] | null> {
+  if (botBultenMissing) return null;
+  const [lo, hi] = dayBoundsUtc(day);
+  const { data, error } = await db().from("v_bot_bulten").select("*").gte("kickoff_at", lo).lt("kickoff_at", hi).order("kickoff_at");
+  if (error) { botBultenMissing = true; return null; }
+  return (data ?? []) as BotBultenRow[];
+}

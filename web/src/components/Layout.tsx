@@ -37,7 +37,7 @@ export function Layout() {
       </header>
       <nav className="tabbar" aria-label="Hızlı erişim">
         {NAV.slice(0, 4).map((n) => (
-          <NavLink key={n.to} to={n.to} className="tab"><span aria-hidden="true">{n.icon}</span>{n.label.split(" ")[0]}</NavLink>
+          <NavLink key={n.to} to={n.to} className="tab"><span aria-hidden="true">{n.icon}</span>{n.short}</NavLink>
         ))}
         <NavLink to="/gundem-masasi" className="tab"><span aria-hidden="true">◉</span>Gündem</NavLink>
       </nav>

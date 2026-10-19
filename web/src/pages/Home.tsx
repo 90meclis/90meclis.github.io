@@ -95,7 +95,7 @@ export default function Home() {
             <div className="kpis two">
               <Stat label="Kilitli karar" value={preds.length} />
               <Stat label="Tekli isabet" value={pct(S.hit, 1)} sub={`${S.won}/${S.won + S.lost} sonuçlanan`} />
-              <Stat label="Toplam kâr (birim)" value={T.profit !== null ? signed(T.profit) : "—"} tone={(T.profit ?? 0) > 0 ? "pos" : (T.profit ?? 0) < 0 ? "neg" : "muted"} sub="tekliler + kuponlar" />
+              <Stat label="Toplam kâr" value={T.profit !== null ? signed(T.profit) : "—"} tone={(T.profit ?? 0) > 0 ? "pos" : (T.profit ?? 0) < 0 ? "neg" : "muted"} sub="birim · tekliler + kuponlar" />
               <Stat label="Toplam ROI" value={T.roi !== null ? `${signed(T.roi * 100, 1)}%` : "—"} sub={`${T.priced} piyasa oranlı bahis`} />
             </div>
           )}
