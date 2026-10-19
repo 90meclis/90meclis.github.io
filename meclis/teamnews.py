@@ -299,6 +299,8 @@ class TeamNews:
         fetched_ok = self.store.get("source_status", source=f"injuries:{match['id']}")
         if fetched_ok and (now_utc() - parse_dt(fetched_ok["updated_at"])).total_seconds() < max_age_h * 3600:
             return cached, True
+        if getattr(self.store, "read_only", False):  # arayüz (anon): yalnızca botun yazdığını okur
+            return cached, bool(fetched_ok) or bool(cached)
         raw, known, _log = self.collect_injuries(match)
         if not known and not raw:
             return cached, bool(fetched_ok)
@@ -334,7 +336,7 @@ class TeamNews:
     # ------------------------------------------------------------------ ilk 11
     def lineups(self, match: dict) -> list[dict]:
         cached = self.store.select("lineups", [("match_id", "eq", match["id"])])
-        if cached and all(is_confirmed(x) for x in cached):
+        if (cached and all(is_confirmed(x) for x in cached)) or getattr(self.store, "read_only", False):
             return cached
         ko = parse_dt(match["kickoff_at"])
         now = now_utc()

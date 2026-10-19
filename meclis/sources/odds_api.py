@@ -13,7 +13,11 @@ BASE = "https://api.the-odds-api.com/v4"
 SPORT_KEYS = {"T1": "soccer_turkey_super_league", "E0": "soccer_epl", "E1": "soccer_efl_champ",
               "SP1": "soccer_spain_la_liga", "I1": "soccer_italy_serie_a", "D1": "soccer_germany_bundesliga",
               "F1": "soccer_france_ligue_one", "N1": "soccer_netherlands_eredivisie",
-              "P1": "soccer_portugal_primeira_liga"}
+              "P1": "soccer_portugal_primeira_liga", "E2": "soccer_england_league1",
+              "SP2": "soccer_spain_segunda_division", "I2": "soccer_italy_serie_b",
+              "D2": "soccer_germany_bundesliga2", "F2": "soccer_france_ligue_two", "B1": "soccer_belgium_first_div",
+              "SC0": "soccer_spl", "G1": "soccer_greece_super_league", "CL": "soccer_uefa_champs_league",
+              "EL": "soccer_uefa_europa_league", "ECL": "soccer_uefa_europa_conference_league"}
 
 
 def parse_events(events: list[dict], league: str) -> list[dict]:

@@ -24,6 +24,7 @@ ODDS_PRIORITY = ["the-odds-api", "oddspapi", "bsd", "football-data.co.uk", "foot
 SCALARS = ["kickoff_at", "season", "home_goals", "away_goals", "ht_home_goals", "ht_away_goals",
            "venue", "referee", "city"]
 STAT_FIELDS = ["shots", "shots_on_target", "corners", "fouls", "yellow", "red", "goal_kicks", "xg", "possession"]
+TSDB_DAY_LEAGUES = {"T1", "E0", "SP1", "I1", "D1", "F1"}
 STATUS_RANK = {"planlandi": 1, "basladi": 2, "ertelendi": 3, "iptal": 3, "bitti": 4}
 
 
@@ -32,13 +33,26 @@ class TeamRegistry:
 
     def __init__(self):
         self.keys: dict[str, dict[str, str]] = {}  # league -> {key: display name}
+        self.alias: dict[str, dict[str, str]] = {}  # league -> {farklı yazımın anahtarı: takım anahtarı}
+        self.learned: dict[str, dict[str, str]] = {}  # bu çalıştırmada fikstürden öğrenilenler
 
-    def add(self, league: str, key: str, display: str) -> None:
+    def add(self, league: str, key: str, display: str, aliases: list | None = None) -> None:
         self.keys.setdefault(league, {}).setdefault(key, display)
+        for a in aliases or []:
+            ak = names.canonical_key(str(a))
+            if ak and ak != key:
+                self.alias.setdefault(league, {})[ak] = key
+
+    def _alias(self, league: str, k: str) -> str:
+        seen = set()
+        while k in self.alias.get(league, {}) and k not in seen:
+            seen.add(k)
+            k = self.alias[league][k]
+        return k
 
     def lookup(self, league: str, name: str) -> str | None:
         """resolve() gibi ama bilinmeyen adı EKLEMEZ (yalnızca boşluk dolduran kaynaklar için)."""
-        k = names.canonical_key(name)
+        k = self._alias(league, names.canonical_key(name))
         known = self.keys.get(league, {})
         if k in known:
             return k
@@ -48,7 +62,7 @@ class TeamRegistry:
         return None
 
     def resolve(self, league: str, name: str) -> str:
-        k = names.canonical_key(name)
+        k = self._alias(league, names.canonical_key(name))
         known = self.keys.setdefault(league, {})
         if k in known:
             return k
@@ -57,6 +71,84 @@ class TeamRegistry:
                 return kk
         known[k] = names.display_name(name)
         return k
+
+
+def _similar(a: str, b: str) -> bool:
+    """Fikstür eşleşmesi varken ad benzerliği için GEVŞEK ölçüt (ör. 'hearts' ~ 'heartofmidlothian',
+    'spgijon' ~ 'sportinggijon', 'forsittard' ~ 'fortunasittard')."""
+    import difflib
+
+    if not a or not b:
+        return False
+    if a[:4] == b[:4] or a in b or b in a:
+        return True
+    sm = difflib.SequenceMatcher(None, a, b)
+    lcs = sm.find_longest_match(0, len(a), 0, len(b)).size
+    # ortak uzun parça (ör. 'sittard', 'gijon', 'braunschweig') ya da yüksek benzerlik + ortak parça
+    return lcs >= 5 or (lcs >= 4 and sm.ratio() >= 0.6)
+
+
+def learn_aliases(records: list[dict], reg: "TeamRegistry", existing: list[dict] | None = None) -> int:
+    """Farklı kaynaklar aynı maçı farklı takım adlarıyla verdiğinde (ör. BSD 'Heart of Midlothian',
+    football-data.co.uk 'Hearts') adları FİKSTÜRDEN eşler: aynı lig, aynı başlama saati (±3 sa) ve bir taraf aynı
+    ise diğer taraf da aynı takımdır (ad gevşek benzerlik şartıyla). İki taraf da farklıysa saat ±15 dk ve iki ad
+    çifti de benzer olmalı. Hedef anahtar: kayıtlarda/veritabanında daha çok görülen yazım. Öğrenilen eşlemeler
+    takımın `aliases` alanına yazılır, sonraki çalıştırmalarda tek kaynak gelse bile aynı takıma bağlanır."""
+    from collections import Counter, defaultdict
+
+    def key(lg, name):
+        return reg._alias(lg, names.canonical_key(name))
+
+    rows = []
+    for r in records:
+        if r.get("kickoff_at") and r.get("home_name") and r.get("away_name"):
+            ko = parse_dt(r["kickoff_at"])
+            if ko is not None:
+                rows.append((r["league"], ko, key(r["league"], r["home_name"]), key(r["league"], r["away_name"]),
+                             r["source"]))
+    for e in existing or []:
+        ko = parse_dt(e["kickoff_at"])
+        if ko is not None:
+            rows.append((e["league"], ko, e["home_team_id"].split(":", 1)[1], e["away_team_id"].split(":", 1)[1], "_db"))
+    freq = Counter()
+    for lg, _, h, a, _src in rows:
+        freq[(lg, h)] += 1
+        freq[(lg, a)] += 1
+    for lg, keys in reg.keys.items():
+        for k in keys:
+            freq[(lg, k)] += 5  # veritabanında olan anahtar tercih edilir
+    by_day = defaultdict(list)
+    for row in rows:
+        by_day[(row[0], row[1].date())].append(row)
+    votes = Counter()
+    for (lg, _d), grp in by_day.items():
+        for i, x in enumerate(grp):
+            for y in grp[i + 1:]:
+                if x[4] == y[4] or (x[2], x[3]) == (y[2], y[3]):
+                    continue
+                dt = abs((x[1] - y[1]).total_seconds())
+                if dt > 3 * 3600:
+                    continue
+                pairs = []
+                if x[2] == y[2] and x[3] != y[3]:
+                    pairs = [(x[3], y[3])]
+                elif x[3] == y[3] and x[2] != y[2]:
+                    pairs = [(x[2], y[2])]
+                elif x[2] != y[2] and x[3] != y[3]:  # iki taraf da farklı: iki ad çifti de benzer olmalı
+                    pairs = [(x[2], y[2]), (x[3], y[3])]
+                if pairs and all(_similar(a, b) for a, b in pairs):
+                    for a, b in pairs:
+                        votes[(lg, *sorted((a, b)))] += 1
+    n = 0
+    for (lg, a, b), _v in votes.most_common():
+        a2, b2 = reg._alias(lg, a), reg._alias(lg, b)
+        if a2 == b2:
+            continue
+        tgt, var = sorted((a2, b2), key=lambda k: (-freq[(lg, k)], len(k)))
+        reg.alias.setdefault(lg, {})[var] = tgt
+        reg.learned.setdefault(lg, {})[var] = tgt
+        n += 1
+    return n
 
 
 def _prio(src: str, order: list[str]) -> int:
@@ -74,6 +166,7 @@ def merge_records(records: list[dict], registry: TeamRegistry | None = None,
     for e in existing or []:
         reg.add(e["league"], e["home_team_id"].split(":", 1)[1], e["home_name"])
         reg.add(e["league"], e["away_team_id"].split(":", 1)[1], e["away_name"])
+    learn_aliases(records, reg, existing)
     recs = sorted([r for r in records if r.get("kickoff_at") and r.get("home_name") and r.get("away_name")],
                   key=lambda r: _prio(r["source"], PRIORITY))
     buckets: dict[tuple, list[dict]] = {}
@@ -299,7 +392,11 @@ class DataPool:
         if history:
             code = fdcuk.season_code(today)
             prev = f"{(int(code[:2]) - 1) % 100:02d}{code[:2]}"
+            from .config import LEAGUES
+
             for lg in leagues:
+                if lg in LEAGUES and not LEAGUES[lg].fdcuk:
+                    continue  # football-data.co.uk'ta bu ligin CSV'si yok (kupa / TFF 1. Lig)
                 for c in (prev, code):
                     try:
                         rows = fdcuk.fetch_season(lg, c)
@@ -313,17 +410,30 @@ class DataPool:
             self._note(fdcuk.SOURCE, True, f"fikstür: {len(fx)} maç (oranlı)")
         except Exception as e:
             self._note(fdcuk.SOURCE, False, f"fikstür: {e}")
+        from .config import LEAGUES
+
         n = 0
-        for i in range(-min(days_back, 2), min(days_ahead, 2) + 1):
+        # Ücretsiz anahtar dakikada ~30 istek: günlük liste (lig başına gün başına 1 istek) yalnızca çekirdek liglerde;
+        # BSD kapsamı olmayan liglerde (TFF 1. Lig) tam hafta listesi (eventsround) kullanılır.
+        day_lgs = [lg for lg in leagues if lg in TSDB_DAY_LEAGUES]
+        for i in range(-min(days_back, 1), min(days_ahead, 1) + 1):
             d = today + timedelta(days=i)
             try:
-                rows = self.tsdb.events_day(d, leagues)
+                rows = self.tsdb.events_day(d, day_lgs)
                 recs += rows
                 n += len(rows)
             except Exception as e:
                 self._note("thesportsdb", False, f"{d}: {e}")
                 break
-        self._note("thesportsdb", True, f"{n} maç (günlük liste)")
+        for lg in leagues:
+            if lg in LEAGUES and LEAGUES[lg].bsd_id is None and LEAGUES[lg].tsdb_id:
+                try:
+                    rows = self.tsdb.events_rounds(lg)
+                    recs += rows
+                    n += len(rows)
+                except Exception as e:
+                    self._note("thesportsdb", False, f"{lg} hafta listesi: {e}")
+        self._note("thesportsdb", True, f"{n} maç (günlük liste + hafta listesi)")
         if self.fdorg.available:
             try:
                 rows = self.fdorg.matches(today - timedelta(days=days_back), today + timedelta(days=days_ahead), leagues)
@@ -543,9 +653,11 @@ class DataPool:
         if history:
             existing = self.store.select("matches", [("kickoff_at", "gte", to_iso(now_utc() - timedelta(days=800)))])
         reg = TeamRegistry()
-        for t in self.store.select("teams"):
-            reg.add(t["league"], t["id"].split(":", 1)[1], t["name"])
+        teams_all = self.store.select("teams")
+        for t in teams_all:
+            reg.add(t["league"], t["id"].split(":", 1)[1], t["name"], t.get("aliases"))
         merged = merge_records(recs, reg, existing)
+        self._save_learned_aliases(reg, teams_all)
         if getattr(reg, "unmatched", None):
             self.log.append(f"ℹ️ boşluk dolduran kaynaklarda eşleşmeyen {len(reg.unmatched)} kayıt atlandı "
                             f"(ör. {', '.join(reg.unmatched[:3])})")
@@ -557,6 +669,29 @@ class DataPool:
         self.fill_venues()
         return {"records": len(recs), "matches": len(merged), "log": list(self.log),
                 "unmatched": list(getattr(reg, "unmatched", []))}
+
+    def _save_learned_aliases(self, reg: "TeamRegistry", teams_all: list[dict]) -> None:
+        """Fikstürden öğrenilen ad eşlemelerini hedef takımın aliases listesine ekler (silme yapılmaz)."""
+        if not reg.learned:
+            return
+        by_id = {t["id"]: t for t in teams_all}
+        rows = []
+        for lg, mp in reg.learned.items():
+            tgt_vars: dict[str, list[str]] = {}
+            for var, tgt in mp.items():
+                tgt_vars.setdefault(reg._alias(lg, tgt), []).append(var)
+            for tgt, vars_ in tgt_vars.items():
+                tid = f"{lg}:{tgt}"
+                t = by_id.get(tid)
+                if not t:
+                    continue  # takım bu çalıştırmada yeni yazılıyor; sonraki çalıştırma da aynı eşlemeyi öğrenir
+                cur = list(t.get("aliases") or [])
+                add = [v for v in vars_ if v not in cur]
+                if add:
+                    rows.append(dict(t, aliases=cur + add))
+        if rows:
+            self.store.upsert("teams", rows)
+            self.log.append(f"ℹ️ fikstürden {sum(len(v) for v in reg.learned.values())} takım adı eşlemesi öğrenildi")
 
     def fill_venues(self) -> int:
         """Stadyumu boş maçlara ev sahibinin (Wikidata/TheSportsDB) stadını yazar; kaynağı açıkça işaretlenir."""

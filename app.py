@@ -11,6 +11,10 @@ pages = [
     st.Page("views/gundem_masasi.py", title="Gündem Masası", icon="📰"),
     st.Page("views/guven_panosu.py", title="Güven Panosu", icon="🛡️"),
 ]
+# Yönetim / tanılama sayfası ziyaretçi menüsünde yok: ?yonetim=1 ile açılır
+if st.query_params.get("yonetim") == "1" or st.session_state.get("yonetim"):
+    st.session_state["yonetim"] = True
+    pages.append(st.Page("views/sistem.py", title="Sistem Durumu", icon="🔧"))
 nav = st.navigation(pages)
 with st.sidebar:
     st.markdown("### ⚽ 90 Meclis")

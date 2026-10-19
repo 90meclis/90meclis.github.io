@@ -14,9 +14,8 @@ ui.banner()
 s, store, pool = ui.resources()
 
 if not store.select("matches", limit=1):
-    ui.empty_state("Veri havuzu boş. İlk kurulumda geçmiş sezonlar ve fikstür çekilir (anahtarsız kaynaklar: "
-                   "football-data.co.uk, OpenLigaDB, openfootball, TheSportsDB, Wikidata, Open-Meteo). Bu işlem 1–2 dakika sürebilir.")
-    if st.button("📥 Veri havuzunu doldur", type="primary"):
+    ui.empty_state("Maç verisi hazırlanıyor; kısa süre sonra tekrar bak.")
+    if not getattr(store, "read_only", False) and st.button("📥 Veri havuzunu doldur", type="primary"):
         with st.spinner("Kaynaklar taranıyor..."):
             r = pool.refresh(history=True)
         ui.clear_caches()
@@ -51,8 +50,7 @@ lo, hi = day_bounds_utc(day)
 matches = pool.matches_between(lo, hi, leagues or s.leagues)
 if not matches:
     ui.empty_state("Bu tarihte seçili liglerde maç bulunamadı" + (f" — sıradaki maç günü {nxt:%d.%m.%Y}." if days else ".")
-                   + " Fikstür; football-data.co.uk, OpenLigaDB, TheSportsDB, BSD, openfootball ve anahtarı tanımlı "
-                   "API'lerden birleştirilir — kaynak durumu için Tahmin Botu → Veri kaynakları.")
+                   )
     if days:
         st.button(f"➡️ {nxt:%d.%m.%Y} maçlarına git", type="primary",
                   on_click=lambda: st.session_state.update(mm_day=nxt))
@@ -204,8 +202,7 @@ for col, side in ((k1, "home"), (k2, "away")):
             st.caption(f"{label} ({lu.get('formation') or '—'}) · Teknik direktör: {lu.get('coach') or '—'} · kaynak: {lu.get('source')}")
             st.write(", ".join(p["name"] for p in lu.get("start_xi") or []))
         else:
-            st.caption("İlk 11 henüz açıklanmadı (resmî ilk 11 genelde maçtan ~1 saat önce gelir; tahmini ilk 11 için "
-                       "BSD_API_KEY gerekir).")
+            st.caption("İlk 11 henüz açıklanmadı (resmî ilk 11 genelde maçtan ~1 saat önce gelir).")
         if not s.demo_mode:
             with st.expander("Güncel kadro (Wikipedia / BSD)"):
                 from meclis.teamnews import current_players
@@ -217,8 +214,8 @@ for col, side in ((k1, "home"), (k2, "away")):
                                                 "İlk 11": p.get("lineups"), "Gol": p.get("goals"), "Asist": p.get("assists"),
                                                 "İstatistik": p.get("stats_source") or "—"} for p in sq]),
                                  hide_index=True)
-                    st.caption("Kadro: Wikipedia (CC BY-SA 4.0) / BSD. İstatistik: aynı kulüpte son açık API-Football "
-                               "sezonu (ücretsiz plan); boşsa oyuncu önemi 'bilinmiyor' sayılır.")
+                    st.caption("Kadro: Wikipedia (CC BY-SA 4.0) / BSD. İstatistik: oyuncunun bu kulüpteki son erişilebilen "
+                               "sezonu; boşsa oyuncu önemi 'bilinmiyor' sayılır.")
                 else:
                     sq = pool.squad_list(m[f"{side}_team_id"], m[f"{side}_name"])
                     if sq:
@@ -237,8 +234,7 @@ for col, side in ((k1, "home"), (k2, "away")):
             else:
                 st.caption("Bildirilen eksik yok.")
         else:
-            st.caption("Sakat/cezalı listesi henüz yok (kaynak: BSD — BSD_API_KEY bekleniyor; API-Football ücretsiz "
-                       "planı güncel sezonu kapsamıyor). Uydurma liste gösterilmez.")
+            st.caption("Sakat/cezalı listesi bu maç için henüz yayımlanmadı. Uydurma liste gösterilmez.")
 
 w1, w2 = st.columns(2)
 with w1:

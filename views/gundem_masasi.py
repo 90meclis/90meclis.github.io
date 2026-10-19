@@ -10,7 +10,7 @@ st.caption("Her sabah ücretsiz RSS akışları taranır: transfer, sakatlık, t
 ui.banner()
 s, store, pool = ui.resources()
 
-if st.button("📡 Gündemi şimdi tara", disabled=s.demo_mode):
+if not getattr(store, "read_only", False) and st.button("📡 Gündemi şimdi tara", disabled=s.demo_mode):
     from meclis.news import scan_news
 
     with st.spinner("Akışlar okunuyor..."):
@@ -20,7 +20,7 @@ st.caption("Akışlar: " + " · ".join(s.news_feeds) + " — yalnızca başlık,
 
 news = store.select("agenda", order="published_at", desc=True, limit=500)
 if not news:
-    ui.empty_state("Henüz haber yok. 'Gündemi şimdi tara' ile başla (GitHub Actions her sabah otomatik tarar).")
+    ui.empty_state("Henüz haber yok. Gündem her sabah otomatik taranır.")
     st.stop()
 cats = sorted({n.get("category") or "genel" for n in news})
 c1, c2 = st.columns([2, 1])
@@ -55,4 +55,4 @@ st.dataframe(pd.DataFrame([{"Zaman": tr_str(n.get("published_at")), "Kategori": 
                            for n in rows]), hide_index=True, width="stretch",
              column_config={"Bağlantı": st.column_config.LinkColumn("Bağlantı")})
 st.caption("Eşleştirme otomatik ve basittir (takım adı geçiyor mu); yanlış bağlantı olabilir. Haberler model girdisi değildir; "
-           "sakatlık verisi modele yalnızca API-Football listesinden girer.")
+           "sakatlık verisi modele yalnızca yapılandırılmış eksik listelerinden girer.")

@@ -58,7 +58,7 @@ Okuma sırası: ortam değişkeni → `.streamlit/secrets.toml` (Streamlit Cloud
 |---|---|---|
 | `SUPABASE_URL`, `SUPABASE_KEY` | Önerilir | Kalıcı kayıt. Yoksa yerel SQLite. |
 | Veri kaynağı anahtarları | Evet (her biri) | Aşağıdaki tablo. Tanımlı değilse kaynak atlanır ve arayüzde **🔑 anahtar bekleniyor** yazar. |
-| `LEAGUES` | Hayır | `T1,E0,SP1,I1,D1,F1` (T1 = Süper Lig; ayrıca E1, N1, P1). |
+| `LEAGUES` | Hayır | Boşsa 21 lig: `T1,E0,SP1,I1,D1,F1,CL,EL,ECL,T2,E1,N1,P1,B1,SC0,G1,E2,SP2,I2,D2,F2` (T1 = Süper Lig, T2 = TFF 1. Lig, CL/EL/ECL = UEFA kupaları). |
 | `COMPLETENESS_MIN` | Hayır | Tamlık eşiği (varsayılan 60/100). |
 | `DEMO_MODE` | Hayır | `1` = örnek veri modu. |
 
@@ -106,7 +106,7 @@ Aynı işlemler arayüzde **Tahmin Botu** sayfasından da yapılabilir (anon ana
   `SUPABASE_SERVICE_ROLE_KEY` ve yukarıdaki tablodaki tüm veri anahtarları (`API_FOOTBALL_KEY`,
   `FOOTBALL_DATA_TOKEN`, `ODDS_API_KEY`, `ODDSPAPI_KEY`, `SPORTMONKS_KEY`, `FOOTYSTATS_KEY`, `SPORTDEVS_KEY`,
   `CLUBELO_KEY`, `THESPORTSDB_KEY`, `BSD_API_KEY`). Tanımlanmayan secret boş geçer; bot o kaynağı "anahtar bekleniyor" diye raporlar.
-  **Variables**: `LEAGUES` (boşsa `T1,E0,SP1,I1,D1,F1`).
+  **Variables**: `LEAGUES` (boşsa 21 ligin tamamı — bkz. `meclis/config.py` `DEFAULT_LEAGUES`).
 
 ## Model özeti
 

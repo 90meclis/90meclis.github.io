@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://ebrarmutlu3434-afk.github.io/90-meclis/sitemap.xml

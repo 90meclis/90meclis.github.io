@@ -1,0 +1,39 @@
+import { Link } from "react-router-dom";
+import type { Prediction } from "../lib/types";
+import { pickLabel, league, sourceLabel } from "../lib/labels";
+import { dateTime, hoursBefore, num, pct, signed, time, dateShort } from "../lib/format";
+import { matchPath } from "../lib/match";
+import { StatusPill, TagPill } from "./ui";
+
+export function PickCard({ p, compact = false }: { p: Prediction; compact?: boolean }) {
+  const home = p.home_name ?? "Ev", away = p.away_name ?? "Dep";
+  return (
+    <article className={`pick st-border-${p.status} ${compact ? "compact" : ""}`}>
+      <div className="pick-top">
+        <TagPill tag={p.tag} />
+        <StatusPill status={p.status} />
+      </div>
+      <Link to={matchPath(p.match_id)} className="pick-match">
+        <span className="muted small">{league(p.league).flag} {league(p.league).name} · {dateShort(p.kickoff_at)} {time(p.kickoff_at)}</span>
+        <strong>{home} – {away}</strong>
+      </Link>
+      <div className="pick-sel">
+        <span className="pick-label">{pickLabel(p.market, p.selection, p.line, home, away)}</span>
+        <span className="pick-odds">
+          {p.odds ? <><b>{num(p.odds)}</b><small>{sourceLabel(p.odds_source)}</small></> : <><b>{num(p.fair_odds)}</b><small>adil oran</small></>}
+        </span>
+      </div>
+      <div className="pick-meta">
+        <span>Olasılık <b>{pct(p.probability)}</b></span>
+        {p.edge !== null && <span>Değer <b>{signed((p.edge ?? 0) * 100, 1)}%</b></span>}
+        {p.confidence !== null && <span>Güven <b>{pct(p.confidence)}</b></span>}
+        {p.result_value && <span>Sonuç <b>{p.result_value}</b></span>}
+        {p.profit !== null && p.status !== "bekliyor" && <span>K/Z <b className={p.profit >= 0 ? "pos" : "neg"}>{signed(p.profit)}</b></span>}
+      </div>
+      {!compact && p.scenario_note && <p className="pick-note"><span className="muted">Senaryo:</span> {p.scenario_note}</p>}
+      <p className="pick-lock" title={`Kayıt: ${dateTime(p.recorded_at)} TSİ`}>
+        <span aria-hidden="true">🔒</span> Maçtan {hoursBefore(p.recorded_at, p.kickoff_at)} kilitlendi
+      </p>
+    </article>
+  );
+}

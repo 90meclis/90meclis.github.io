@@ -495,6 +495,15 @@ class SupabaseStore(BaseStore):
 
     def select(self, table, filters=(), order=None, desc=False, limit=None):
         filters = list(filters)
+        if self.read_only and table == "source_status" and not getattr(self, "_no_status_view", False):
+            # anon anahtarı source_status tablosunu okuyamaz (RLS); temizlenmiş mesajlı görünüm herkese açıktır
+            try:
+                return self._select_raw("v_kaynak_durumu", filters, order, desc, limit)
+            except Exception:
+                self._no_status_view = True  # görünüm henüz yok (schema.sql çalıştırılmadı)
+        return self._select_raw(table, filters, order, desc, limit)
+
+    def _select_raw(self, table, filters, order=None, desc=False, limit=None):
         out: list[dict] = []
         page = 1000
         start = 0

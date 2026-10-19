@@ -73,6 +73,22 @@ class TheSportsDB:
             out += [r for r in (self._rec(e) for e in (data.get("events") or [])) if r and r["league"] == lg]
         return out
 
+    def events_rounds(self, lg: str, back: int = 1, ahead: int = 1) -> list[dict]:
+        """Ligin güncel haftası ± komşu haftalar (ücretsiz anahtarla eventsround tam hafta döner).
+        Haftayı eventsnextleague (ücretsiz: sıradaki 1 maç) verir. BSD kapsamı olmayan ligler için (ör. TFF 1. Lig)."""
+        lid = LEAGUES[lg].tsdb_id if lg in LEAGUES else None
+        if not lid:
+            return []
+        nxt = (self._get("eventsnextleague.php", {"id": lid}).get("events") or [])
+        if not nxt or not str(nxt[0].get("intRound") or "").isdigit():
+            return []
+        rnd, season = int(nxt[0]["intRound"]), nxt[0].get("strSeason")
+        out = []
+        for r in range(max(1, rnd - back), rnd + ahead + 1):
+            data = self._get("eventsround.php", {"id": lid, "r": r, "s": season})
+            out += [x for x in (self._rec(e) for e in (data.get("events") or [])) if x and x["league"] == lg]
+        return out
+
     def search_team(self, name: str) -> dict | None:
         data = self._get("searchteams.php", {"t": name})
         teams = [t for t in (data.get("teams") or []) if t.get("strSport") == "Soccer"]

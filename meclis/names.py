@@ -67,7 +67,11 @@ ALIASES: dict[str, str] = {
     # OpenLigaDB / openfootball resmî adları
     "athletic": "athleticbilbao", "deportivolacoruna": "lacoruna", "deportivoacoruna": "lacoruna",
     "lacoruna": "lacoruna", "espanyolbarcelona": "espanyol", "espanyoldebarcelona": "espanyol",
-    "realbetisbalompie": "realbetis", "realracingsantander": "santander", "racingsantander": "santander", "deportivoalaves": "alaves", "cdalaves": "alaves", "realracing": "santander", "realracingclub": "santander",
+    "realbetisbalompie": "realbetis", "realracingsantander": "santander", "racingsantander": "santander", "queensparkrangers": "qpr", "oxfordunited": "oxford",
+    "sportingcp": "splisbon", "sportingclubeportugal": "splisbon", "sportinglisbon": "splisbon", "aekathens": "aek",
+    "apsatromitosathinon": "atromitos", "royaleunionsaintgilloise": "stgilloise", "unionsaintgilloise": "stgilloise",
+    "unionsg": "stgilloise", "sinttruidensevv": "sttruiden", "sinttruiden": "sttruiden", "kaagent": "gent",
+    "krcgenk": "genk", "zultewaregem": "waregem", "royalantwerp": "antwerp", "sportingcharleroi": "charleroi", "deportivoalaves": "alaves", "cdalaves": "alaves", "realracing": "santander", "realracingclub": "santander",
     "internazionalemilano": "inter", "genoacfc": "genoa", "sslazio": "lazio", "uslecce": "lecce",
     "lilleosc": "lille", "ogcnice": "nice", "racinglens": "lens", "stadebrestois": "brest",
     "stadebrestois29": "brest", "staderennais": "rennes", "07elversberg": "elversberg",

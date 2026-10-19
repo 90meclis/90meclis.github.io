@@ -169,18 +169,11 @@ class BSD:
         return r.json() or {}
 
     def league_map(self) -> dict[int, str]:
+        """BSD lig kimliği → iç lig kodu (config.LEAGUES.bsd_id; kimlikler /leagues/ ile doğrulandı)."""
         if self._leagues is None:
-            out, offset = {}, 0
-            for _ in range(10):
-                data = self._get("/leagues/", {"limit": 200, "offset": offset})
-                for lg in data.get("results") or []:
-                    code = league_code(lg.get("country"), lg.get("name"))
-                    if code and not lg.get("is_women") and code not in out.values():
-                        out[lg["id"]] = code
-                if not data.get("next"):
-                    break
-                offset += 200
-            self._leagues = out
+            from ..config import LEAGUES
+
+            self._leagues = {lg.bsd_id: code for code, lg in LEAGUES.items() if lg.bsd_id}
         return self._leagues
 
     def events(self, d_from: date, d_to: date, leagues: list[str], enrich: bool = True) -> list[dict]:
@@ -201,10 +194,12 @@ class BSD:
                 if not data.get("next"):
                     break
                 offset += 200
-        if enrich:
-            for rec in out:
-                e = raw.get(rec["ext_ids"]["bsd"]) or {}
-                self._enrich(rec, e)
+        if enrich and out:
+            # maç başına 1–3 istek; BSD IP başına 10 istek/sn'ye izin verir → 6 paralel işçi
+            from concurrent.futures import ThreadPoolExecutor
+
+            with ThreadPoolExecutor(max_workers=6) as ex:
+                list(ex.map(lambda rec: self._enrich(rec, raw.get(rec["ext_ids"]["bsd"]) or {}), out))
         return out
 
     def _enrich(self, rec: dict, e: dict) -> None:
@@ -223,7 +218,7 @@ class BSD:
             if e.get("venue_id"):
                 v = self.venue(e["venue_id"])
                 rec["venue"], rec["city"] = v.get("name"), v.get("city")
-        except SourceError:
+        except Exception:  # zenginleştirme isteğe bağlı değil ama bir maçın hatası diğerlerini durdurmasın
             pass
 
     def referee(self, rid: int) -> str | None:

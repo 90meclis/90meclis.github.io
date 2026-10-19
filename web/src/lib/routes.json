@@ -1,0 +1,42 @@
+[
+ {
+  "path": "/",
+  "title": "90 Meclis · Futbol tahmin ve analiz masası",
+  "description": "Maç Merkezi, Tahmin Botu, değiştirilemez Tahmin Arşivi ve şeffaf kâr/zarar kaydıyla 90 Meclis: her şey tek masada."
+ },
+ {
+  "path": "/mac-merkezi",
+  "title": "Maç Merkezi",
+  "description": "Günün bülteni: form, istatistik, eksik oyuncular, ilk 11, hava durumu, oranlar ve Meclis senaryoları tek ekranda."
+ },
+ {
+  "path": "/tahmin-botu",
+  "title": "Tahmin Botu",
+  "description": "Günün Kararı, Meclis Görüşü ve Karar Birliği: her maç için saatler önce yayımlanan, güven göstergesiyle kilitlenen tahminler."
+ },
+ {
+  "path": "/tahmin-arsivi",
+  "title": "Tahmin Arşivi",
+  "description": "Değiştirilemez tahmin defteri: her kayıt maçtan önce kilitlenir, kayıplar dahil hiçbir şey silinmez."
+ },
+ {
+  "path": "/guven-panosu",
+  "title": "Güven Panosu",
+  "description": "İsabet oranı, ROI ve kasa eğrisi: 90 Meclis'in herkese açık, dürüst performans kaydı."
+ },
+ {
+  "path": "/gundem-masasi",
+  "title": "Gündem Masası",
+  "description": "Transfer, sakatlık ve teknik direktör haberleri; günün maçlarıyla eşleştirilmiş futbol gündemi."
+ },
+ {
+  "path": "/veri-laboratuvari",
+  "title": "Veri Laboratuvarı",
+  "description": "Takım serileri, maç maç korner, şut, kart ve gol değerleri, puan durumu: ortalamanın arkasındaki gerçek maçlar."
+ },
+ {
+  "path": "/hakkinda",
+  "title": "Yöntem ve Sorumlu Oyun",
+  "description": "90 Meclis tahminleri nasıl üretir, kayıtları nasıl kilitler ve neden garanti vermez."
+ }
+]

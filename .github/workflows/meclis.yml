@@ -20,7 +20,7 @@ concurrency:
 jobs:
   run:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     env:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
@@ -34,7 +34,7 @@ jobs:
       CLUBELO_KEY: ${{ secrets.CLUBELO_KEY }}
       THESPORTSDB_KEY: ${{ secrets.THESPORTSDB_KEY }}
       BSD_API_KEY: ${{ secrets.BSD_API_KEY }}
-      LEAGUES: ${{ vars.LEAGUES || 'T1,E0,SP1,I1,D1,F1' }}
+      LEAGUES: ${{ vars.LEAGUES }}  # boşsa meclis/config.py DEFAULT_LEAGUES (21 lig)
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

@@ -9,7 +9,8 @@ from .http import USER_AGENT, SourceError, get
 SOURCE = "wikidata"
 ENDPOINT = "https://query.wikidata.org/sparql"
 COUNTRY = {"T1": "Q43", "E0": "Q145", "E1": "Q145", "SP1": "Q29", "I1": "Q38", "D1": "Q183", "F1": "Q142",
-           "N1": "Q55", "P1": "Q45"}
+           "N1": "Q55", "P1": "Q45", "T2": "Q43", "E2": "Q145", "SP2": "Q29", "I2": "Q38", "D2": "Q183",
+           "F2": "Q142", "B1": "Q31", "SC0": "Q22", "G1": "Q41"}
 _EXCLUDE = ("women", "kadın", "femen", "frauen", "féminin", "u19", "u21", "u23", " b", " ii", "a2", "youth",
             "reserves", "primavera", "akademi")
 

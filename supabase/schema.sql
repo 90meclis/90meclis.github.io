@@ -544,6 +544,17 @@ end $$;
 
 grant select on v_tutanak, v_guven_haftalik, v_guven_pazar to anon, authenticated;
 
+-- Kaynak durumu (herkese açık, temizlenmiş): arayüz anon anahtarıyla source_status tablosunu okuyamaz.
+-- Bu görünüm yalnızca kaynak adı / başarı / zaman / temizlenmiş mesajı verir (URL'deki anahtar/jeton maskelenir).
+create or replace view v_kaynak_durumu as
+  select source, ok,
+         left(regexp_replace(regexp_replace(coalesce(message, ''),
+              '(key|token|apikey|api_key|access_token|apiToken)=[^&[:space:]]+', '\1=***', 'gi'),
+              '/json/[^/]+/', '/json/***/', 'g'), 300) as message,
+         calls_today, calls_date, updated_at
+  from source_status;
+grant select on v_kaynak_durumu to anon, authenticated;
+
 -- ---------------------------------------------------------------------
 -- Supabase Vault — anahtarları veritabanında şifreli saklamak için ÖRNEK.
 -- Gerçek anahtarı buraya YAZIP bu dosyayı depoya koymayın; aşağıdakini yalnızca SQL Editor'da,

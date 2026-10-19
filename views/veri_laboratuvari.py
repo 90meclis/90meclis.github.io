@@ -16,10 +16,10 @@ scope = c2.radio("Kapsam", ["tümü", "iç saha", "deplasman"], horizontal=True)
 last_n = c3.select_slider("Son kaç maç", options=[5, 10, 15, 20, 38, 76], value=10)
 ctx = bot.context(lg)
 if not ctx.matches:
-    ui.empty_state("Bu lig için havuzda bitmiş maç yok. Tahmin Botu sayfasından 'Havuzu yenile' çalıştır.")
+    ui.empty_state("Bu lig için henüz yeterli bitmiş maç verisi yok.")
     st.stop()
-st.caption(f"Havuzda {len(ctx.matches)} bitmiş maç (son iki sezon). İstatistik kaynağı: football-data.co.uk "
-           "(+ API-Football, Sportmonks, FootyStats anahtarları gelince). Kale vuruşu ücretsiz kaynaklarda yok; veri gelirse tablo açılır.")
+st.caption(f"Havuzda {len(ctx.matches)} bitmiş maç (son iki sezon). İstatistikler birden çok kaynaktan birleştirilir; "
+           "verisi olmayan pazarın tablosu gösterilmez.")
 
 tables = market_tables(ctx, scope, last_n)
 tabs = st.tabs(list(tables) + ["📉 Takım serisi (maç maç)", "🔥 Seriler"])
