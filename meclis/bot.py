@@ -108,73 +108,160 @@ class Bot:
         return [m for m in ms if m.get("status") in ("planlandi", None)]
 
     def run(self, record: bool = True, now=None, fetch_extras: bool = True, publish: bool = True) -> dict:
-        """record=False: kuru. publish=False: yalnızca analizleri kaydet (tahmin/kupon yazılmaz)."""
+        """record=False: kuru. publish=False: yalnızca analiz + bot bülteni (arşive tahmin/kupon yazılmaz).
+
+        İki katman:
+          * TAHMİN BOTU (bot_picks): botun ham çıktısı — bültendeki her maçın en değerli seçimi, her çalışmada
+            yeniden hesaplanır; maç arşive alındığında kilitlenir.
+          * TAHMİN ARŞİVİ (predictions/coupons): bot seçimlerinden EN GÜVENDİKLERİMİZLE kurulan içerik —
+            önce Günün Kararı (2-3 maç, 2.30–4.00), sonra Meclis Görüşü tekliler (Günün Kararı'ndaki maçlar o gün
+            tekli olarak yayımlanmaz), 5+ Meclis Görüşü varsa Karar Birliği. Her içerik satırı bot_pick_id taşır."""
         now = now or now_utc()
         matches = self.candidates(now)
         self.log.append(f"Bülten: {len(matches)} maç ({len(self.s.leagues)} lig; {self.s.horizon_hours:.0f} saat; "
                         f"yayın: başlamadan ≥ {self.s.publish_lead_hours:g} saat önce)")
-        analyses, recorded, waiting, nopick = [], 0, 0, 0
         ids = {m["id"] for m in matches}
         locked = {r["match_id"] for r in self.store.select(
-            "predictions", [("tag", "eq", "meclis_gorusu"), ("status", "eq", "bekliyor")]) if r["match_id"] in ids}
+            "predictions", [("status", "eq", "bekliyor")]) if r["match_id"] in ids and r.get("tag") != "karar_birligi"}
         pre = self._analyze_all([m for m in matches if m["id"] not in locked], now, fetch_extras)
+        from .analysis import select_single, slate_bias
+
+        good = [a for a in pre.values() if isinstance(a, dict)]
+        bias = slate_bias(good)
+        for a in good:  # en iyi seçim bülten geneli kalibrasyonla yeniden seçilir
+            a["bias"] = bias
+            a["best_pick"] = select_single(a, self.s)
+        if bias:
+            self.log.append("ℹ️ kalibrasyon (model − piyasa, bülten ortalaması): " + ", ".join(
+                f"{k} {v:+.3f}" for k, v in sorted(bias.items()) if abs(v) >= 0.01)[:400])
+        analyses, bot_rows, nopick = [], [], 0
         for m in matches:
-            if m["id"] in locked:  # yayımlanan seçim kilitli: yeniden hesaplanmaz
+            if m["id"] in locked:  # arşive alınmış maç kilitli: yeniden hesaplanmaz
                 a = self._latest_analysis(m["id"])
                 if a:
                     analyses.append((m, a))
                 continue
-            q = self.store.get("analysis_queue", match_id=m["id"]) or {"match_id": m["id"], "attempts": 0}
             a = pre.get(m["id"])
-            if isinstance(a, Exception) or a is None:  # analiz hatası maçı ELEMEZ; sonraki çalışmada yeniden hesaplanır
+            if isinstance(a, Exception) or a is None:  # analiz hatası maçı ELEMEZ; sonraki çalışmada yeniden
                 self.log.append(f"⚠️ analiz hatası ({m['home_name']} – {m['away_name']}): {a}")
                 continue
+            q = self.store.get("analysis_queue", match_id=m["id"]) or {"match_id": m["id"], "attempts": 0}
             attempts = int(q.get("attempts") or 0) + 1
             if record:
                 self._save_analysis(m["id"], a, now)
                 self.store.update("matches", {"completeness": a["quality"]["score"]}, [("id", "eq", m["id"])])
             analyses.append((m, a))
             bp = a.get("best_pick")
-            can_publish = self.publishable(m, now)
-            if bp and can_publish and record and publish:
-                lab = pick_label(bp["market"], bp["selection"], bp.get("line"), m["home_name"], m["away_name"])
-                why = (f"{lab}: olasılık %{bp['probability'] * 100:.1f}; λ {a['lambdas']['home']:.2f}-{a['lambdas']['away']:.2f}; "
-                       f"tür: {bp['kind']}; dayanak: {a.get('basis')}; tamlık (güven) {a['quality']['score']:.0f}/100")
-                try:
-                    sc = "; ".join(f"{x['ad']} (%{100 * x['olasılık']:.0f})" if x.get("olasılık") else x["ad"]
-                                   for x in a.get("scenarios", [])[:4])
-                    self.store.insert("predictions", [_prediction_row(m, bp, "meclis_gorusu", why, scenario_note=sc,
-                                                                      completeness=a["quality"]["score"])])
-                    recorded += 1
-                    self.log.append(f"📝 Meclis Görüşü: {m['home_name']} – {m['away_name']} → {lab}")
-                    self.store.upsert("analysis_queue", [{
-                        "match_id": m["id"], "status": "tamamlandi", "missing": a.get("missing", []),
-                        "attempts": attempts, "last_attempt_at": to_iso(now), "next_retry_at": None,
-                        "note": "yayımlandı"}])
-                    continue
-                except StoreError as e:
-                    self.log.append(f"⚠️ kayıt reddedildi ({m['home_name']} – {m['away_name']}): {e}")
-            elif bp and not record:
-                self.log.append(f"🧪 (kuru) {m['home_name']} – {m['away_name']} → "
-                                f"{pick_label(bp['market'], bp['selection'], bp.get('line'), m['home_name'], m['away_name'])}"
-                                + ("" if can_publish else " (yayın penceresi dışında)"))
             if bp:
-                waiting += 1
+                bot_rows.append(self._bot_pick_row(m, a, bp, now))
+                if not record:
+                    self.log.append(f"🧪 (kuru) {m['home_name']} – {m['away_name']} → "
+                                    f"{pick_label(bp['market'], bp['selection'], bp.get('line'), m['home_name'], m['away_name'])}"
+                                    f" [{bp['kind']}]")
             else:
                 nopick += 1
             if record:
-                note = ("değerli seçim var — yayın penceresi bekleniyor" if bp else
-                        "değer kuralını geçen seçim yok — güncel veriyle yeniden hesaplanacak")
+                note = (("değerli seçim — " if bp.get("kind") == "değer" else "adil oran seçimi (piyasa oranı yok) — ")
+                        + "yayın penceresi / arşiv seçimi bekleniyor") if bp else \
+                    "değer kuralını geçen seçim yok — güncel veriyle yeniden hesaplanacak"
                 self.store.upsert("analysis_queue", [{
                     "match_id": m["id"], "status": "bekliyor", "missing": a.get("missing", []),
                     "attempts": attempts, "last_attempt_at": to_iso(now), "next_retry_at": None, "note": note}])
-        coupons = self._coupons(analyses, now) if record and publish else []
+        if record and bot_rows:
+            try:
+                self.store.upsert("bot_picks", bot_rows)
+            except Exception as e:
+                self.log.append(f"⚠️ bot bülteni yazılamadı (bot_picks tablosu yok mu?): {e}")
+        recorded, coupons = 0, []
+        if record and publish:
+            recorded, coupons = self._publish(analyses, now)
         if record:
             self.update_trends()
-        self.log.append(f"Analiz: {len(analyses)} maç, {recorded} yeni Meclis Görüşü, {waiting} seçim yayın penceresini "
-                        f"bekliyor, {nopick} maçta değer yok (yeniden hesaplanacak), {len(coupons)} yeni kupon")
+        nval = sum(1 for r in bot_rows if r["kind"] == "değer")
+        self.log.append(f"Analiz: {len(analyses)} maç; Tahmin Botu: {len(bot_rows)} seçim ({nval} değer, "
+                        f"{len(bot_rows) - nval} adil oran), {nopick} maçta seçim yok; Arşiv: {recorded} yeni Meclis "
+                        f"Görüşü, {len(coupons)} yeni kupon")
         return {"analyzed": len(analyses), "postponed": 0, "recorded": recorded, "coupons": coupons,
-                "log": list(self.pool.log) + self.log}
+                "bot_picks": len(bot_rows), "log": list(self.pool.log) + self.log}
+
+    def _bot_pick_row(self, m: dict, a: dict, bp: dict, now) -> dict:
+        return {"id": m["id"], "match_id": m["id"], "kickoff_at": m["kickoff_at"], "league": m["league"],
+                "home_name": m["home_name"], "away_name": m["away_name"], "market": bp["market"],
+                "selection": bp["selection"], "line": bp.get("line"), "probability": bp["probability"],
+                "odds": bp.get("odds"), "fair_odds": bp.get("fair_odds"), "edge": bp.get("edge"),
+                "confidence": bp.get("confidence"), "kind": bp.get("kind"), "basis": a.get("basis"),
+                "completeness": a["quality"]["score"], "status": "aday", "computed_at": to_iso(now),
+                "model_version": MODEL_VERSION}
+
+    def _publish(self, analyses: list[tuple[dict, dict]], now) -> tuple[int, list[str]]:
+        """Arşiv katmanı: yayın penceresindeki maçların bot seçimlerinden içerik kurar."""
+        by_day: dict = {}
+        for m, a in analyses:
+            bp = a.get("best_pick")
+            if bp and bp.get("kind") == "değer" and bp.get("odds") and self.publishable(m, now):
+                by_day.setdefault(tr_date(m["kickoff_at"]), []).append((m, a, bp))
+        recorded, created = 0, []
+        for day, items in sorted(by_day.items()):
+            dstr = day.isoformat()
+            lo, hi = (to_iso(x) for x in _tr_day_bounds(day))
+            day_preds = self.store.select("predictions", [("kickoff_at", "gte", lo), ("kickoff_at", "lt", hi)])
+            singles_ids = {p["match_id"] for p in day_preds if p["tag"] == "meclis_gorusu"}
+            gk_ids = {p["match_id"] for p in day_preds if p["tag"] == "gunun_karari"}
+            mmap = {m["id"]: m for m, _, _ in items}
+            # 1) Günün Kararı — ana kupon: en değerli/güvenilen 2-3 maç, toplam oran 2.30–4.00
+            if not self.store.select("coupons", [("coupon_date", "eq", dstr), ("tag", "eq", "gunun_karari")], limit=1):
+                cands = [dict(bp, match_id=m["id"]) for m, a, bp in items
+                         if m["id"] not in singles_ids and m["id"] not in gk_ids]
+                c = build_daily_coupon(cands, self.s.coupon_min_odds, self.s.coupon_max_odds, self.s.coupon_min_ev,
+                                       rank="confidence")
+                if c:
+                    created += self._insert_coupon("gunun_karari", dstr, c, mmap, "piyasa")
+                    gk_ids |= {l["match_id"] for l in c["legs"]}
+                else:
+                    self.log.append(f"Günün Kararı ({dstr}): {self.s.coupon_min_odds:.2f}-{self.s.coupon_max_odds:.2f} "
+                                    "bandında değerli kombinasyon kurulamadı — kupon yok.")
+            # 2) Meclis Görüşü — tekliler; Günün Kararı'ndaki maç o gün tekli olarak yayımlanmaz
+            for m, a, bp in sorted(items, key=lambda x: -(x[2].get("confidence") or 0)):
+                if m["id"] in gk_ids or m["id"] in singles_ids:
+                    continue
+                if (bp.get("confidence") or 0) < self.s.single_min_trust:
+                    continue  # bot bülteninde kalır, arşive alınmaz
+                lab = pick_label(bp["market"], bp["selection"], bp.get("line"), m["home_name"], m["away_name"])
+                why = (f"{lab}: olasılık %{bp['probability'] * 100:.1f} (kalibre), oran {bp['odds']:.2f}, değer "
+                       f"{bp['edge'] * 100:+.1f}%; λ {a['lambdas']['home']:.2f}-{a['lambdas']['away']:.2f}; "
+                       f"dayanak: {a.get('basis')}; veri derinliği {a['quality']['score']:.0f}/100")
+                sc = "; ".join(f"{x['ad']} (%{100 * x['olasılık']:.0f})" if x.get("olasılık") else x["ad"]
+                               for x in a.get("scenarios", [])[:4])
+                row = _prediction_row(m, bp, "meclis_gorusu", why, scenario_note=sc, completeness=a["quality"]["score"])
+                row["bot_pick_id"] = m["id"]
+                try:
+                    self.store.insert("predictions", [row])
+                except StoreError as e:
+                    self.log.append(f"⚠️ kayıt reddedildi ({m['home_name']} – {m['away_name']}): {e}")
+                    continue
+                recorded += 1
+                singles_ids.add(m["id"])
+                self.log.append(f"📝 Meclis Görüşü: {m['home_name']} – {m['away_name']} → {lab}")
+            # bot bülteni satırlarını kilitle (arşive giren maç artık yeniden hesaplanmaz)
+            for mid, st in [(x, "gunun_karari") for x in gk_ids] + [(x, "meclis_gorusu") for x in singles_ids]:
+                try:
+                    self.store.update("bot_picks", {"status": st, "locked_at": to_iso(now)}, [("id", "eq", mid)])
+                except Exception:
+                    pass
+                self.store.upsert("analysis_queue", [{"match_id": mid, "status": "tamamlandi", "note": "yayımlandı",
+                                                      "last_attempt_at": to_iso(now)}])
+            # 3) Karar Birliği — 5+ Meclis Görüşü varsa en güvenilen 2-3'ten kombinasyon (değişmedi)
+            if not self.store.select("coupons", [("coupon_date", "eq", dstr), ("tag", "eq", "karar_birligi")], limit=1):
+                singles = self.store.select("predictions", [("tag", "eq", "meclis_gorusu"), ("kickoff_at", "gte", lo),
+                                                            ("kickoff_at", "lt", hi)])
+                future = [x for x in singles if parse_dt(x["kickoff_at"]) > now + self.lead()]
+                if len(singles) >= self.s.consensus_min_singles:
+                    c = build_consensus(future, min_singles=2)
+                    if c:
+                        for leg in c["legs"]:
+                            mmap.setdefault(leg["match_id"], self.store.get("matches", id=leg["match_id"]))
+                        created += self._insert_coupon("karar_birligi", dstr, c, mmap, c["odds_source"])
+        return recorded, created
 
     def _analyze_all(self, matches: list[dict], now, fetch_extras: bool) -> dict:
         """Analizleri paralel hesaplar (G/Ç ağırlıklı). Canlı kaynak çağrıları yalnızca yayına yakın maçlar için;
@@ -222,41 +309,6 @@ class Bot:
         except Exception as e:
             self.log.append(f"⚠️ eski analizler budanamadı ({match_id}): {e}")
 
-    def _coupons(self, analyses: list[tuple[dict, dict]], now) -> list[str]:
-        created = []
-        min_ko = now + self.lead()
-        by_day: dict = {}
-        for m, a in analyses:
-            if parse_dt(m["kickoff_at"]) > min_ko and a.get("ready") and self.publishable(m, now):
-                by_day.setdefault(tr_date(m["kickoff_at"]), []).append((m, a))
-        for day, items in sorted(by_day.items()):
-            dstr = day.isoformat()
-            mmap = {m["id"]: m for m, _ in items}
-            if not self.store.select("coupons", [("coupon_date", "eq", dstr), ("tag", "eq", "gunun_karari")], limit=1):
-                cands = []
-                for m, a in items:
-                    for mk in a["markets"]:
-                        if mk.get("odds") and mk["probability"] >= 0.45 and mk["market"] != "CS":
-                            cands.append(dict(mk, match_id=m["id"]))
-                c = build_daily_coupon(cands, self.s.coupon_min_odds, self.s.coupon_max_odds, self.s.coupon_min_ev)
-                if c:
-                    created += self._insert_coupon("gunun_karari", dstr, c, mmap, "piyasa")
-                else:
-                    self.log.append(f"Günün Kararı ({dstr}): {self.s.coupon_min_odds:.2f}-{self.s.coupon_max_odds:.2f} "
-                                    "bandında değerli kombinasyon kurulamadı — kupon yok.")
-            if not self.store.select("coupons", [("coupon_date", "eq", dstr), ("tag", "eq", "karar_birligi")], limit=1):
-                lo, hi = (to_iso(x) for x in _tr_day_bounds(day))
-                singles = self.store.select("predictions", [("tag", "eq", "meclis_gorusu"), ("kickoff_at", "gte", lo),
-                                                            ("kickoff_at", "lt", hi)])
-                future = [s for s in singles if parse_dt(s["kickoff_at"]) > min_ko]
-                if len(singles) >= self.s.consensus_min_singles:
-                    c = build_consensus(future, min_singles=2)
-                    if c:
-                        for leg in c["legs"]:
-                            mmap.setdefault(leg["match_id"], self.store.get("matches", id=leg["match_id"]))
-                        created += self._insert_coupon("karar_birligi", dstr, c, mmap, c["odds_source"])
-        return created
-
     def _insert_coupon(self, tag: str, dstr: str, c: dict, mmap: dict, odds_source: str) -> list[str]:
         cid = str(uuid.uuid4())
         first = min(parse_dt(mmap[l["match_id"]]["kickoff_at"]) for l in c["legs"])
@@ -270,7 +322,10 @@ class Bot:
             for leg in c["legs"]:
                 m = mmap[leg["match_id"]]
                 lab = pick_label(leg["market"], leg["selection"], leg.get("line"), m["home_name"], m["away_name"])
-                rows.append(_prediction_row(m, leg, tag, f"{lab} (kupon {dstr})", coupon_id=cid))
+                row = _prediction_row(m, leg, tag, f"{lab} (kupon {dstr})", coupon_id=cid)
+                if tag == "gunun_karari":
+                    row["bot_pick_id"] = leg["match_id"]
+                rows.append(row)
             self.store.insert("predictions", rows)
         except StoreError as e:
             self.log.append(f"⚠️ {tag} kuponu kaydedilemedi: {e}")

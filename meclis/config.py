@@ -139,6 +139,7 @@ class Settings:
     coupon_max_odds: float = 4.00
     coupon_min_ev: float = 0.0
     consensus_min_singles: int = 5
+    single_min_trust: float = 0.04  # Meclis Görüşü için en az güven (değer × veri kalitesi)
     local_db_path: str = str(DATA_DIR / "meclis.db")
     news_feeds: list[str] = field(default_factory=list)
     apif_daily_budget: int = 90
@@ -219,6 +220,7 @@ def load_settings() -> Settings:
         coupon_max_odds=get_float("COUPON_MAX_ODDS", 4.00),
         coupon_min_ev=get_float("COUPON_MIN_EV", 0.0),
         consensus_min_singles=int(get_float("CONSENSUS_MIN_SINGLES", 5)),
+        single_min_trust=get_float("BOT_SINGLE_MIN_TRUST", 0.04),
         local_db_path=get_setting("LOCAL_DB_PATH", str(DATA_DIR / "meclis.db")) or str(DATA_DIR / "meclis.db"),
         news_feeds=feeds,
         apif_daily_budget=int(get_float("API_FOOTBALL_DAILY_BUDGET", 90)),

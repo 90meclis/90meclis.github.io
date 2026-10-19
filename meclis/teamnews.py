@@ -5,9 +5,9 @@ Kural (kullanıcı): kaynak sınırı yok, hepsi havuza girer, biri boşsa diğe
 Kadro (players)
   1. Wikipedia güncel A takım kadrosu (anahtarsız, tüm ligler) — iskelet: ad, forma no, mevki.
   2. BSD takım kadrosu (BSD_API_KEY) — ad, mevki, forma no + oyuncunun o anki uygunluğu.
-  Oyuncu önemi için istatistik: aynı kulüpte en son erişilebilen API-Football sezonu (ücretsiz plan: 2024)
-  OKUMA ANINDA ad eşleştirmesiyle eklenir (geçmiş veri doldurma ilerledikçe kendiliğinden güncellenir);
-  hangi sezondan geldiği `stats_source` alanında yazar, eşleşmeyen oyuncunun istatistiği boş (bilinmiyor) kalır.
+  Oyuncu önemi için istatistik YALNIZCA BU SEZONDAN gelir: player_matches (BSD oyuncu istatistiği ve API-Football
+  fikstür kimliğiyle oyuncu dakikaları; bkz. meclis/season.py, meclis/backfill.py) OKUMA ANINDA ad eşleştirmesiyle
+  eklenir; `stats_source` alanında yazar. Bu sezon verisi olmayan takımda önem "bilinmiyor" kalır.
   Kadro satırları `player_key = 'k:<ad>'`, API-Football geçmiş satırları `apif:<id>:<sezon>` anahtarıyla tutulur;
   bir takımın "güncel kadrosu" en son kadro yenilemesinin damgasını taşıyan satırlardır (silme yapılmaz).
 
@@ -20,6 +20,8 @@ Sakat/cezalı (injuries) — maç başına, aynı oyuncu iki kaynakta varsa ilk 
   Tahmini ilk 11 "Açıklanan ilk 11" tamlık maddesini DOLDURMAZ; arayüzde "tahmini" etiketiyle görünür.
 """
 from __future__ import annotations
+
+import re
 
 from datetime import timedelta
 
@@ -94,7 +96,7 @@ def current_players(rows: list[dict], season: list[dict] | None = None) -> list[
 
     Esas: BU SEZON (season = season_players(); dakika, ilk 11, G+A, yedek açığı r, var/yok farkı d).
     Bu sezon verisi olan takımda kadrodaki ama bu sezon hiç oynamamış oyuncunun dakikası 0'dır (bilinen sıfır).
-    Bu sezon verisi yoksa yalnızca zayıf önsel olarak en son API-Football sezonu kullanılır (stats_source'ta yazar)."""
+    Bu sezon verisi yoksa geçmiş sezon istatistiği KULLANILMAZ; önem "bilinmiyor" kalır."""
     stat_f = ("minutes", "appearances", "lineups", "goals", "assists")
     squad = [r for r in rows if str(r.get("player_key", "")).startswith("k:")]
     if season:
@@ -112,28 +114,19 @@ def current_players(rows: list[dict], season: list[dict] | None = None) -> list[
                 r = dict(r, **{f: 0 for f in stat_f}, stats_source=label + ": bu sezon oynamadı")
             out.append(r)
         return out
-    hist = [r for r in rows if str(r.get("player_key", "")).startswith("apif:")]
-    last = max((str(r.get("season") or "") for r in hist), default="")
-    hist = [r for r in hist if str(r.get("season") or "") == last]
+    # Bu sezon verisi yok: geçmiş sezon istatistiği KULLANILMAZ (kullanıcı kuralı); önem "bilinmiyor" kalır.
     if squad:
-        cur = latest_batch(squad, "updated_at")
-        if hist:
-            out = []
-            stat_f = ("minutes", "appearances", "lineups", "goals", "assists")
-            for r in cur:
-                h = find_player(r.get("name"), hist)
-                if h:
-                    r = dict(r, **{f: h.get(f) for f in stat_f},
-                             stats_source=f"api-football {last}" if h.get("minutes") is not None else None)
-                    r["position"] = r.get("position") or h.get("position")
-                else:  # bu kulüpte son açık sezonda oynamamış → istatistik bilinmiyor
-                    r = dict(r, **{f: None for f in stat_f}, stats_source=None)
-                out.append(r)
-            return out
-        return cur
-    if hist:
-        return hist
-    return rows
+        from .analysis import season_start
+
+        cur_season = str(season_start().year)
+
+        def current(r):  # satırın istatistiği bu sezondan mı? (eski kayıtlarda 'api-football 2024' yazar)
+            yrs = re.findall(r"20\d\d", str(r.get("stats_source") or ""))
+            return str(r.get("season") or "") == cur_season and all(y == cur_season for y in yrs)
+
+        return [r if current(r) else dict(r, **{f: None for f in stat_f}, stats_source=None)
+                for r in latest_batch(squad, "updated_at")]
+    return [r for r in rows if not str(r.get("player_key", "")).startswith("apif:")]
 
 
 class TeamNews:
@@ -154,8 +147,11 @@ class TeamNews:
                 if str(r.get("player_key", "")).startswith("apif:")]
         if not rows:
             return [], None
-        last = max(str(r.get("season") or "") for r in rows)
-        return [r for r in rows if str(r.get("season") or "") == last], last
+        from .analysis import season_start
+
+        cur = str(season_start().year)  # yalnızca bu sezonun API-Football oyuncu satırları (geçmiş sezon kullanılmaz)
+        rows = [r for r in rows if str(r.get("season") or "") == cur]
+        return (rows, cur) if rows else ([], None)
 
     def refresh_squads(self, leagues: list[str] | None = None, force: bool = False, max_teams: int = 400) -> dict:
         from .sources import wikipedia

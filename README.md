@@ -58,7 +58,8 @@ Okuma sırası: ortam değişkeni → `.streamlit/secrets.toml` (Streamlit Cloud
 |---|---|---|
 | `SUPABASE_URL`, `SUPABASE_KEY` | Önerilir | Kalıcı kayıt. Yoksa yerel SQLite. |
 | Veri kaynağı anahtarları | Evet (her biri) | Aşağıdaki tablo. Tanımlı değilse kaynak atlanır ve arayüzde **🔑 anahtar bekleniyor** yazar. |
-| `LEAGUES` | Hayır | Boşsa 21 lig: `T1,E0,SP1,I1,D1,F1,CL,EL,ECL,T2,E1,N1,P1,B1,SC0,G1,E2,SP2,I2,D2,F2` (T1 = Süper Lig, T2 = TFF 1. Lig, CL/EL/ECL = UEFA kupaları). |
+| `LEAGUES` | Hayır | Boşsa 23 çekirdek lig `T1,E0,SP1,I1,D1,F1,CL,EL,ECL,T2,E1,N1,P1,B1,SC0,G1,E2,SP2,I2,D2,F2,E3,SC1` + `AUTO`: BSD'nin verdiği diğer bütün kulüp ligleri ve kupaları her çalışmada keşfedilir (kod `B<bsd_id>`, adlar `leagues` tablosunda). Milli takım, gençlik ve kadın ligleri alınmaz. `AUTO` yazılmazsa yalnızca listelenenler. |
+| `BSD_MAX_CALLS`, `BSD_ODDS_HOURS` | Hayır | BSD kota ayarı: çalışma başı istek tavanı (1200), oran istenen ufuk (48 saat). |
 | `BOT_PUBLISH_LEAD_HOURS` | Hayır | Seçim en geç başlamadan kaç saat önce yayımlanır (varsayılan 3). |
 | `BOT_PUBLISH_WINDOW_HOURS` | Hayır | TR günü dışındaki maçlar için yayın penceresi (varsayılan 12 saat). |
 | `DEMO_MODE` | Hayır | `1` = örnek veri modu. |
@@ -84,12 +85,16 @@ Diğer ayarlar için `.env.example` dosyasına bakın. **Gerçek anahtar hiçbir
 ## Bot (komut satırı)
 
 ```bash
-python -m meclis yenile [--gecmis]     # veri havuzunu güncelle (--gecmis: önceki sezonu da çek)
+python -m meclis yenile [--gecmis]     # veri havuzunu güncelle (--gecmis: bu sezonun tüm sonuç/istatistik CSV'leri)
 python -m meclis gundem                # RSS gündem taraması
 python -m meclis bot [--kuru]          # analiz + kayıt (--kuru: hiçbir şey yazmadan dene)
 python -m meclis sonuclandir           # biten maçları otomatik sonuçlandır
 python -m meclis kadro [--zorla]       # güncel kadrolar (Wikipedia+BSD) + yaklaşan maçların eksikleri ve ilk 11'i
-python -m meclis gecmis                # API-Football ücretsiz plan 2022–2024 geçmiş veri (günlük bütçe, kaldığı yerden)
+python -m meclis gecmis                # gece: BU SEZONUN eksikleri (API-Football fikstür kimliğiyle + BSD sezon işi)
+python -m meclis gunici                # yenile + kadro + bot + sonuclandir + kaçırılan adımların telafisi
+python -m meclis sezon                 # BU SEZONUN oyuncu dakikaları/ilk 11/G+A (BSD) ve eksik maç istatistikleri
+python -m meclis analiz                # yaklaşan 7 günün her maçının tam analizini yenile (tahmin/kupon yazmaz)
+python -m meclis yedek [--cikti klasör] # predictions/coupons/matches/odds_snapshots JSON+CSV yedeği
 python -m meclis sabah                 # yenile + gündem + kadro + bot + sonuçlandır
 python -m meclis durum                 # kaynak durumu / kuyruk özeti
 python -m meclis bot --ligler T1,E0    # lig seçimi
@@ -100,18 +105,22 @@ Aynı işlemler arayüzde **Tahmin Botu** sayfasından da yapılabilir (anon ana
 ### Zamanlanmış çalışma (GitHub Actions)
 
 `.github/workflows/meclis.yml`:
-- 08:00 TSİ `sabah`, gün içinde her 2 saatte bir `yenile + kadro + bot + sonuclandir`, gece `sonuclandir`,
-  03:40 TSİ `gecmis` (API-Football kotası sıfırlandıktan sonra);
+- 08:00 TSİ `sabah`, gece dahil her 2 saatte bir `gunici` (yenile + kadro + bot + sonuclandir; kaçırılan gündem /
+  sezon / gece doldurma / yedek adımlarını son başarılı çalışma zamanına bakıp telafi eder), gece `sonuclandir`,
+  03:40 TSİ `gecmis` (bu sezonun eksikleri; API-Football kotası sıfırlandıktan sonra) + yedek;
   ayrıca **Actions → Run workflow** ile elle.
 - Repo → Settings → Secrets and variables → Actions → **Secrets**: `SUPABASE_URL`,
   `SUPABASE_SERVICE_ROLE_KEY` ve yukarıdaki tablodaki tüm veri anahtarları (`API_FOOTBALL_KEY`,
   `FOOTBALL_DATA_TOKEN`, `ODDS_API_KEY`, `ODDSPAPI_KEY`, `SPORTMONKS_KEY`, `FOOTYSTATS_KEY`, `SPORTDEVS_KEY`,
   `CLUBELO_KEY`, `THESPORTSDB_KEY`, `BSD_API_KEY`). Tanımlanmayan secret boş geçer; bot o kaynağı "anahtar bekleniyor" diye raporlar.
-  **Variables**: `LEAGUES` (boşsa 21 ligin tamamı — bkz. `meclis/config.py` `DEFAULT_LEAGUES`).
+  **Variables**: `LEAGUES` (boşsa 23 çekirdek lig + AUTO keşfi — bkz. `meclis/config.py`).
+  Gece işi (03:40 TSİ) tabloları `backups` dalına JSON/CSV olarak commit'ler (defterin ikinci kopyası; düzenli
+  commit GitHub'ın 60 gün hareketsizlikte zamanlanmış işleri kapatmasını da önler).
 
 ## Model özeti
 
-- **Temel: güncel sezon (2026/27).** Geçmiş sezon maçları yalnızca zayıf önsel/kalibrasyon olarak 0.3 ağırlıkla girer.
+- **Temel: yalnızca güncel sezon (2026/27).** Geçmiş sezon maçları gol modeline, Elo'ya, sayım modellerine ve oyuncu
+  önemine girmez; geçmiş sezon verisi çekilmez.
   Takımın bu sezonki maçı 3'ten azsa piyasa oranı (varsa) gol beklentisine yarı ağırlıkla katılır; lig geçmişi
   hiç yoksa (ör. UEFA kupaları) gol beklentisi piyasa oranından türetilir (bu durumda "değer" iddiası kurulmaz).
 - **Gol / skor:** zaman ağırlıklı (ξ = 0.0019/gün) **Dixon-Coles** Poisson modeli; 10×10 skor matrisinden 1X2,
@@ -125,9 +134,23 @@ Aynı işlemler arayüzde **Tahmin Botu** sayfasından da yapılabilir (anon ana
 - **Veri tamlığı (0–100, yalnızca güven göstergesi):** fikstür 15, bu sezonki maçlar (≥6) 25, piyasa oranı 15,
   sakatlık 15, istatistik geçmişi 15, hakem 5, Meclis tahmini ilk 11 10. Tahmini durdurmaz; seçim puanını 0.85–1.0
   arasında çarpar.
-- **Seçim (yayın kuralı):** iki takımın da modelde en az 4 maçı olmalı; piyasa oranı varsa değer (edge) ≥ %3; yoksa yüksek olasılıklı, "adil oran" etiketli seçim
-  (bunlar ROI'ye katılmaz). Günün Kararı yalnızca gerçek oranlı ayaklardan, beklenen değeri ≥ 0 olan en
-  yüksek ortak olasılıklı kombinasyondur; bant tutmazsa **kupon yok** denir.
+- **CLV:** kapanış oranı önce football-data.co.uk kapanış sütunlarından, yoksa başlamadan önceki son **kendi oran
+  görüntümüzden** (`odds_snapshots`; başlamaya ≤30 saat kalan maçlarda her çalışmada, oran değiştiyse yazılır)
+  alınır — 1X2, bütün gol Alt/Üst çizgileri ve KG için.
+- **Gündem:** aynı haber tek kayıtta birleşir — normalize bağlantı (utm/fbclid/www/amp atılır), normalize başlık ve
+  bulanık başlık benzerliği (Jaccard ≥ 0.6 / dizgi ≥ 0.85); birleşen kaynaklar `sources_all`, `cluster_size`;
+  haberlere takım ve lig etiketi eklenir.
+- **Seçim (değer sıralaması):** bütün pazarlar adaydır (1X2, çifte şans, Asya handikap ±0.5/±1.5/±2.5, gol A/Ü
+  0.5–4.5, KG, İY gol, takım golü, korner, kart, isabetli şut, kale vuruşu). Olasılık piyasanın marjsız olasılığına
+  doğru kalibre edilir (0.65·model + 0.35·piyasa; ayrıca bülten genelindeki sistematik model–piyasa sapması
+  düzeltilir) ve seçimler **değere (edge × veri kalitesi)** göre sıralanır — olasılığa göre değil. Tekli oran
+  aralığı 1.50–5.00; değer ≥ %3. Piyasa oranı olmayan pazarlar yalnızca bot bülteninde "adil oran" olarak görünür
+  (adil oran ≥ 1.50), arşive girmez. İki takımın da modelde en az 4 maçı olmalı.
+- **Tahmin Botu ≠ Tahmin Arşivi:** `bot_picks` botun ham bültenidir (maç başına en değerli seçim, her çalışmada
+  yeniden hesaplanır; `v_bot_bulten`). Arşiv bu seçimlerden kurulur (`v_arsiv`, her satır `bot_pick_id` taşır):
+  önce **Günün Kararı** (en güvenilen 2–3 değer seçimi, toplam 2.30–4.00, EV ≥ 0; bant tutmazsa kupon yok), sonra
+  **Meclis Görüşü** tekliler (güven ≥ `BOT_SINGLE_MIN_TRUST`; Günün Kararı'ndaki maç o gün tekli olmaz), sonra
+  **Karar Birliği** (≥5 tekli → en güvenilen 2–3). Arşive giren maçın bot satırı kilitlenir.
 
 ## Veri kaynakları ve sınırları
 

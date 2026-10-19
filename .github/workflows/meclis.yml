@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       komut:
-        description: "Komut (sabah / bot / analiz / sonuclandir / gundem / yenile / kadro / gecmis / sezon / yedek)"
+        description: "Komut (sabah / gunici / bot / analiz / sonuclandir / gundem / yenile / kadro / gecmis / sezon / yedek)"
         required: true
         default: "sabah"
 
@@ -60,7 +60,7 @@ jobs:
         run: |
           if [ "$OLAY" = "workflow_dispatch" ]; then
             case "$GIRDI" in
-              sabah|bot|analiz|sonuclandir|gundem|yenile|durum|kadro|gecmis|sezon|yedek) komut="$GIRDI" ;;
+              sabah|gunici|bot|analiz|sonuclandir|gundem|yenile|durum|kadro|gecmis|sezon|yedek) komut="$GIRDI" ;;
               *) echo "::error::Geçersiz komut: $GIRDI"; exit 1 ;;
             esac
           elif [ "$ZAMAN" = "0 5 * * *" ]; then
@@ -77,17 +77,17 @@ jobs:
         env:
           KOMUT: ${{ steps.k.outputs.komut }}
         run: |
-          if [ "$KOMUT" = "gunici" ]; then
-            python -m meclis yenile
-            python -m meclis kadro
-            python -m meclis bot
-            python -m meclis sonuclandir
-          else
-            python -m meclis "$KOMUT"
-          fi
+          # gunici: yenile + kadro + bot + sonuclandir; kaçırılan sabah/gece adımlarını (gündem, sezon, gece doldurma,
+          # yedek) son başarılı çalışma zamanına bakarak kendisi telafi eder (meclis/__main__.py _overdue)
+          python -m meclis "$KOMUT"
       - name: Gece yedeği → backups dalı (defterin ikinci kopyası + 60 gün hareketsizlik koruması)
-        if: steps.k.outputs.komut == 'gecmis' || steps.k.outputs.komut == 'yedek'
+        if: ${{ !cancelled() }}
+        env:
+          KOMUT: ${{ steps.k.outputs.komut }}
         run: |
+          if [ "$KOMUT" != "gecmis" ] && [ "$KOMUT" != "yedek" ] && [ ! -f /tmp/meclis_yedek_gerekli ]; then
+            echo "Yedek bu çalışmada gerekmiyor."; exit 0
+          fi
           python -m meclis yedek --cikti /tmp/yedek
           git config user.name "90-meclis-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

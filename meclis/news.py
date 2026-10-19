@@ -40,6 +40,20 @@ def _tokens(title: str) -> set[str]:
     return {w for w in re.findall(r"[a-z0-9]+", t) if len(w) > 1 and w not in _STOP}
 
 
+def normalize_url(url: str) -> str:
+    """Aynı haberin farklı bağlantılarını eşler: şema/www/izleme parametreleri (utm_*, fbclid, ref…)/parça/son '/' atılır."""
+    from urllib.parse import parse_qsl, urlencode, urlsplit
+
+    if not url:
+        return ""
+    u = urlsplit(url.strip())
+    host = u.netloc.lower().removeprefix("www.").removeprefix("m.").removeprefix("amp.")
+    q = [(k, v) for k, v in parse_qsl(u.query) if not (k.lower().startswith("utm_") or k.lower() in {
+        "fbclid", "gclid", "ref", "ref_src", "cmpid", "ito", "at_medium", "at_campaign", "ocid", "src", "amp"})]
+    path = u.path.rstrip("/").removesuffix("/amp")
+    return host + path + ("?" + urlencode(sorted(q)) if q else "")
+
+
 def same_story(a: str, b: str) -> bool:
     """Başlık benzerliği: anlamlı kelimelerde Jaccard ≥ 0.6 ya da dizgi benzerliği ≥ 0.85."""
     from difflib import SequenceMatcher
@@ -58,7 +72,9 @@ def dedup_news(items: list[dict], previous: list[dict] | None = None) -> tuple[l
     for p in previous or []:
         canon.append(dict(p, sources_all=list(p.get("sources_all") or [p.get("source")]), _prev=True))
     for it in sorted(items, key=lambda x: x.get("published_at") or ""):
-        hit = next((c for c in canon if c["id"] == it["id"] or same_story(c["title"], it["title"])), None)
+        nu = normalize_url(it.get("link") or "")
+        hit = next((c for c in canon if c["id"] == it["id"] or (nu and normalize_url(c.get("link") or "") == nu)
+                    or _tokens(c["title"]) == _tokens(it["title"]) or same_story(c["title"], it["title"])), None)
         if hit is None:
             canon.append(dict(it, sources_all=[it.get("source")], cluster_size=1))
             continue

@@ -225,6 +225,21 @@ class ApiFootball:
             })
         return out
 
+    def fixture_players(self, fixture_id: int) -> list[dict]:
+        """Fikstür kimliğiyle oyuncu dakikaları (güncel sezonda fikstür bazlı uç noktalar açık)."""
+        out = []
+        for blk in self._get("/fixtures/players", {"fixture": fixture_id}):
+            tid = (blk.get("team") or {}).get("id")
+            for it in blk.get("players") or []:
+                p = it.get("player") or {}
+                st = ((it.get("statistics") or [{}])[0]) or {}
+                g, gl = st.get("games") or {}, st.get("goals") or {}
+                out.append({"team_apif": tid, "player_id": p.get("id"), "name": p.get("name"),
+                            "position": g.get("position"), "started": g.get("substitute") is False,
+                            "minutes": int(g.get("minutes") or 0), "goals": int(gl.get("total") or 0),
+                            "assists": int(gl.get("assists") or 0), "rating": g.get("rating")})
+        return out
+
     def team_players(self, team_apif: int, season: int, max_pages: int = 2) -> list[dict]:
         out = []
         for page in range(1, max_pages + 1):

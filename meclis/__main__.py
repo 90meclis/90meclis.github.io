@@ -5,8 +5,12 @@
   bot [--kuru]        Tahmin botu (--kuru: deftere yazmadan analiz)
   sonuclandir         Biten maçların tahmin/kuponlarını sonuçlandır
   kadro [--zorla]     Güncel kadrolar (Wikipedia + BSD) ve yaklaşan maçların sakat/cezalı + ilk 11 listesi
-  gecmis              API-Football ücretsiz plan (2022–2024) geçmiş veri doldurma; günlük bütçe içinde, devam eder
-  sabah               yenile --gecmis + gundem + kadro + bot + sonuclandir
+  gecmis              Gece: BU SEZONUN eksikleri (API-Football fikstür kimliğiyle + BSD sezon işi); geçmiş sezon çekilmez
+  sezon               BSD: bu sezonun oyuncu dakikaları / resmî ilk 11 / maç istatistikleri
+  analiz              Yaklaşan 7 günün her maçının tam analizini yenile (tahmin/kupon yazmaz)
+  yedek [--cikti]     predictions/coupons/matches/odds_snapshots/leagues JSON+CSV
+  gunici              yenile + kadro + bot + sonuclandir + KAÇIRILAN adımların telafisi (gündem, sezon, gece doldurma)
+  sabah               yenile (bu sezon CSV) + gundem + kadro + bot + sezon + sonuclandir
   durum               Depo ve kaynak durumunu yazdır
 """
 from __future__ import annotations
@@ -21,7 +25,7 @@ from .store import get_store
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="python -m meclis", description="90 Meclis komut satırı")
     ap.add_argument("komut", choices=["yenile", "gundem", "bot", "sonuclandir", "sabah", "durum", "kadro",
-                                        "gecmis", "analiz", "sezon", "yedek"])
+                                        "gecmis", "analiz", "sezon", "yedek", "gunici"])
     ap.add_argument("--zorla", action="store_true", help="kadro: 7 günlük önbelleği yok say")
     ap.add_argument("--saat", type=float, default=168, help="kadro: kaç saat sonrasına kadarki maçlar (varsayılan 168 = 7 gün)")
     ap.add_argument("--gecmis", action="store_true", help="geçmiş sezon verisini de çek")
@@ -43,6 +47,17 @@ def main(argv=None) -> int:
 
     pool = DataPool(store, s)
     out_logs: list[str] = []
+    STEPS = {"sabah": {"yenile_s", "gundem", "kadro", "bot", "sezon", "sonuclandir"},
+             "gunici": {"yenile", "kadro", "bot", "sonuclandir"}, "gecmis": {"gecmis", "sezon"}}
+    steps = set(STEPS.get(a.komut, {a.komut}))
+    if a.komut == "yenile" and a.gecmis:
+        steps = {"yenile_s"}
+    if a.komut == "gunici" and not s.demo_mode:
+        # Kaçırılan / geç kalan zamanlanmış işlerin telafisi: son başarılı çalışması eskiyse bu çalışmada yapılır.
+        for step, hours in (("gundem", 26), ("sezon", 30), ("gecmis", 30), ("yedek", 30)):
+            if _overdue(store, step, hours):
+                steps.add(step)
+                out_logs.append(f"ℹ️ telafi: '{step}' son {hours} saatte çalışmamış — bu çalışmada yapılıyor")
     if not a.ligler:
         from .leagues import discover
 
@@ -50,13 +65,14 @@ def main(argv=None) -> int:
         pool.bsd._leagues = None  # lig eşlemesi yeni liglerle yeniden kurulsun
         if new:
             out_logs.append(f"ℹ️ ligler: çekirdek {len(s.leagues) - len(new)} + kaynaklardan keşfedilen {len(new)} lig")
-    if a.komut in ("yenile", "sabah") and not s.demo_mode:
-        r = pool.refresh(history=a.gecmis or a.komut == "sabah")
+    if steps & {"yenile", "yenile_s"} and not s.demo_mode:
+        r = pool.refresh(history="yenile_s" in steps)
         out_logs += r["log"] + [f"Havuz: {r['records']} kaynak kaydı → {r['matches']} birleşik maç"]
         pool.log.clear()
-    if a.komut in ("gundem", "sabah") and not s.demo_mode:
+    if "gundem" in steps and not s.demo_mode:
         out_logs += scan_news(store, s)["log"]
-    if a.komut in ("kadro", "sabah") and not s.demo_mode:
+        _done(store, "gundem")
+    if "kadro" in steps and not s.demo_mode:
         sq = pool.news.refresh_squads(force=a.zorla)
         out_logs.append(f"Kadro: {sq['due']}/{sq['teams']} takım yenilendi (Wikipedia {sq['wikipedia']}, BSD {sq['bsd']}), "
                         f"{sq['players']} oyuncu, {sq['with_stats']} oyuncuda geçmiş istatistik"
@@ -67,28 +83,34 @@ def main(argv=None) -> int:
                         f"{tn['lineups_predicted']} tahmini taraf")
         out_logs += pool.log
         pool.log.clear()
-    if a.komut == "gecmis" and not s.demo_mode:
+    if "gecmis" in steps and not s.demo_mode:
         from .backfill import Backfill
 
         out_logs += Backfill(pool).run()["log"]
-    if a.komut in ("bot", "sabah"):
+        _done(store, "gecmis")
+    if "bot" in steps:
         r = Bot(store, s, pool).run(record=not a.kuru)
         out_logs += r["log"]
-    if a.komut in ("sezon", "gecmis", "sabah") and not s.demo_mode:
+    if "sezon" in steps and not s.demo_mode:
         from .season import SeasonFill
 
-        cap = {"sezon": 1500, "gecmis": 1500, "sabah": 400}[a.komut]  # BSD günlük kota 7.500
+        cap = {"sabah": 400, "gunici": 300}.get(a.komut, 1500)  # BSD günlük kota 7.500
         pool.bsd.max_calls = max(pool.bsd.max_calls, pool.bsd.calls + cap)
         out_logs += SeasonFill(pool, max_calls=cap).run()["log"]
-    if a.komut == "yedek":
-        from .backup import export_all
+        _done(store, "sezon")
+    if "yedek" in steps:
+        if a.komut == "gunici":  # telafi: yedeği iş akışının 'backups' adımı yazar (bayrak dosyası)
+            open("/tmp/meclis_yedek_gerekli", "w").write("1")
+        else:
+            from .backup import export_all
 
-        out_logs += export_all(store, a.cikti or "yedek")["log"]
+            out_logs += export_all(store, a.cikti or "yedek")["log"]
+            _done(store, "yedek")
     if a.komut == "analiz":  # tüm maçların analizini yenile; tahmin/kupon yazmaz
         r = Bot(store, s, pool).run(record=not a.kuru, publish=False)
         out_logs += r["log"]
-    if a.komut in ("sonuclandir", "sabah"):
-        if a.komut == "sonuclandir" and not s.demo_mode:
+    if "sonuclandir" in steps:
+        if a.komut in ("sonuclandir", "gunici") and not s.demo_mode:
             pool.refresh(days_back=5, days_ahead=0, history=True)
         out_logs += run_settlement(store, pool)["log"]
     if a.komut == "durum":
@@ -106,6 +128,25 @@ def main(argv=None) -> int:
     for line in out_logs:
         print(line)
     return 0
+
+
+def _overdue(store, step: str, hours: float) -> bool:
+    from datetime import timedelta
+
+    from .timeutil import now_utc, parse_dt
+
+    try:
+        st = store.get("source_status", source=f"adim:{step}")
+    except Exception:
+        return False
+    return not st or not st.get("updated_at") or now_utc() - parse_dt(st["updated_at"]) > timedelta(hours=hours)
+
+
+def _done(store, step: str) -> None:
+    try:
+        store.set_source_status(f"adim:{step}", True, "son başarılı çalışma")
+    except Exception:
+        pass
 
 
 if __name__ == "__main__":

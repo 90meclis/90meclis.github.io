@@ -62,7 +62,7 @@ Kural: kaynak sınırı yok; hepsi havuza girer, biri boşsa diğeri doldurur. K
 | Veri | Kaynak sırası (ilk dolu kazanır, kaynaklar satırda birlikte yazılır) |
 |---|---|
 | **Güncel kadro** (`players`, `player_key = k:<ad>`) | Wikipedia A takım kadrosu → BSD kadrosu (eksik oyuncuları ekler, forma no/mevki tamamlar). Takım başına 7 günde bir; yeni bir kaynak devreye girerse (ör. BSD anahtarı) önbellek beklenmeden hemen yenilenir. |
-| **Oyuncu önemi istatistiği** | Aynı kulüpte son açık API-Football sezonu (ücretsiz plan: 2024) ad eşleştirmesiyle (`stats_source` = "api-football 2024"). Eşleşmeyen oyuncu "bilinmiyor" (önem 0,15 × kesinlik) sayılır, uydurma değer yok. |
+| **Oyuncu önemi istatistiği** | YALNIZCA bu sezon: `player_matches` (BSD oyuncu istatistiği + API-Football fikstür kimliğiyle oyuncu dakikaları) ad eşleştirmesiyle (`stats_source` = "bsd 2026/27 (N maç)"); yedek açığı ve var/yok farkı da buradan. Eşleşmeyen oyuncu "bilinmiyor" (önem 0,15 × kesinlik) sayılır, uydurma değer yok. |
 | **Sakat / cezalı / şüpheli** (`injuries`) | BSD maç listesi → BSD kadro uygunluğu → API-Football (dün/bugün/yarın günlük liste; 36 saatten yakın maçta fikstür sorgusu). Önümüzdeki 7 günün bütün maçları her `kadro` çalışmasında taranır (liste 8 saat önbellekte) → SportDevs kadro eksikleri. Her kayıt Eksik Etkisi formülüyle (0–100) oyuncu önemine göre ağırlıklanır. En az bir kaynak geçerli yanıt verdiyse liste "biliniyor" sayılır; boş yanıt = bildirilen eksik yok. |
 | **İlk 11** (`lineups`, `lineup_status`) | BSD resmî → API-Football → SportDevs → TheSportsDB (Patreon anahtarı) → BSD tahmini. Resmî ilk 11 her zaman tahmini ezer; **tahmini ilk 11 "Açıklanan ilk 11" tamlık maddesini doldurmaz**, arayüzde "tahmini" etiketiyle görünür. |
 
@@ -92,12 +92,13 @@ eksik listesi son başarılı taramadaki satırlardır (listeden çıkan oyuncu 
 Sezonluk sorguda kapalı sezon bir kez görülünce `source_status` içinde `api-football:sezon:<yıl>` olarak işaretlenir ve
 7 gün boyunca o sezona sezonluk istek atılmaz (tarih ve fikstür sorguları sürer).
 
-### API-Football geçmiş veri doldurma (`python -m meclis gecmis`)
+### Gece doldurma — yalnızca BU SEZON (`python -m meclis gecmis`)
 
-Günlük bütçe (`API_FOOTBALL_DAILY_BUDGET`, varsayılan 90) içinden 45 istek güncel sezon işlerine ayrılır; kalan ~45
-istek şu sırayla harcanır: en yeni sezon her lig-sezon için fikstür (1 istek) → oyuncu istatistikleri (takım başına ≤3 sayfa) → sezonun tüm
-sakat/cezalı kayıtları (1 istek). İlerleme `source_status` tablosunda `gecmis:apif:<lig>:<sezon>:<iş>` satırlarında tutulur; iş
-yarıda kalırsa ertesi gün kaldığı sayfadan sürer (GitHub Actions: her gün 03:40 TSİ). Toplam ≈ 750 istek ≈ 17 gün; Süper Lig 2024 ilk sırada.
+Geçmiş sezonlar (2022–2024) artık çekilmez ve modele girmez. Günlük API-Football bütçesinin (`API_FOOTBALL_DAILY_BUDGET`,
+90; 45 istek gün içi maç öncesi işlere ayrılır) kalanı bu sezon biten maçlara, en yeni maç önce harcanır: maç
+istatistiği (`/fixtures/statistics`), oyuncu dakikaları (`/fixtures/players` → `player_matches`) ve resmî ilk 11
+(`/fixtures/lineups`). Aynı iş BSD'de `meclis/season.py` ile (`/events/{id}/player-stats/`, `/lineups/`, `/stats/`)
+çalışır. Eksik kalan her şey bir sonraki gece yeniden denenir.
 
 ## Haber akışları (RSS)
 

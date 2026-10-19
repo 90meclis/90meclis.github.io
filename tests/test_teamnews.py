@@ -172,10 +172,10 @@ def test_current_players_prefers_latest_squad_batch():
             {"player_key": "k:kalan", "name": "Kalan", "updated_at": new},
             {"player_key": "apif:1:2024", "name": "K. Eski", "season": "2024", "updated_at": old}]
     assert [r["name"] for r in current_players(rows)] == ["Kalan"]
-    assert [r["name"] for r in current_players(rows[2:])] == ["K. Eski"]
+    assert current_players(rows[2:]) == []  # geçmiş sezon oyuncu satırı güncel kadro sayılmaz
 
 
-def test_refresh_squads_merges_wikipedia_with_apif_history(monkeypatch):
+def test_refresh_squads_ignores_past_season_stats(monkeypatch):
     pool, store, m = _pool(None)
     pool.bsd.available = False
     store.upsert("teams", [{"id": "T1:galatasaray", "league": "T1", "name": "Galatasaray", "ext_ids": {"wikidata": "Q1"}},
@@ -190,8 +190,9 @@ def test_refresh_squads_merges_wikipedia_with_apif_history(monkeypatch):
     assert st["wikipedia"] == 1 and st["failed"] == ["Fenerbahçe"]
     cur = pool.news.team_players("T1:galatasaray")
     gk = next(p for p in cur if p["name"] == "Uğurcan Çakır")
-    assert gk["minutes"] == 3000 and gk["stats_source"] == "api-football 2024" and gk["shirt_number"] == 1
-    assert next(p for p in cur if p["name"] == "Victor Osimhen")["minutes"] is None  # istatistik yok → bilinmiyor
+    # geçmiş sezon (2024) istatistiği modele girmez: bu sezon verisi yoksa önem bilinmiyor
+    assert gk["minutes"] is None and gk["stats_source"] is None and gk["shirt_number"] == 1
+    assert next(p for p in cur if p["name"] == "Victor Osimhen")["minutes"] is None
 
 
 # ---------------------------------------------------------------------- API-Football
@@ -237,6 +238,20 @@ class FakeApif:
     def season_blocked(self, season):
         return False
 
+    def statistics(self, fid):
+        self.n += 1
+        return {"home": {"corners": 5}, "away": {"corners": 3}}
+
+    def fixture_players(self, fid):
+        self.n += 1
+        return [{"team_apif": 645, "player_id": 1, "name": "P. Oyuncu", "position": "F", "started": True,
+                 "minutes": 90, "goals": 1, "assists": 0}]
+
+    def lineups(self, fid):
+        self.n += 1
+        return [{"team_apif": 645, "formation": "4-4-2", "start_xi": [{"name": "P. Oyuncu"}], "subs": []},
+                {"team_apif": 611, "formation": "4-3-3", "start_xi": [{"name": "Q"}], "subs": []}]
+
     def season_fixtures(self, league, season):
         self.n += 1
         return [{"source": "api-football", "league": league, "kickoff_at": f"{season}-09-01T17:00:00+00:00",
@@ -256,23 +271,24 @@ class FakeApif:
                  "kind": "Missing Fixture", "reason": "Knee", "fixture_apif": 100 + season}]
 
 
-def test_backfill_is_budgeted_and_resumable():
-    from meclis.backfill import Backfill, task_key
+def test_backfill_fills_current_season_gaps_only():
+    from meclis.backfill import Backfill
     from meclis.pool import DataPool
+    from meclis.timeutil import now_utc, to_iso
 
     store = SQLiteStore(":memory:")
     pool = DataPool(store, Settings(leagues=["T1"]))
-    pool.apif = FakeApif(store, budget=3)  # rezerv 0 → bugün 3 istek
-    r1 = Backfill(pool, reserve=0, seasons=(2024,)).run()
-    assert r1["calls"] == 3 and store.get("source_status", source=task_key("T1", 2024, "fixtures"))["ok"]
-    assert "takim=1/2 sayfa=2" in store.get("source_status", source=task_key("T1", 2024, "players"))["message"]
-    pool.apif.daily_budget, pool.apif.n = 4, 0  # ertesi gün: sayfa 2-3 (en fazla 3) + sakatlıklar
-    r2 = Backfill(pool, reserve=0, seasons=(2024,)).run()
-    assert r2["pending"] == 0 and r2["calls"] == 3
-    inj = store.select("injuries")
-    assert len(inj) == 1 and inj[0]["match_id"] and inj[0]["weight_score"] > 0.5
-    assert len([p for p in store.select("players") if p["season"] == "2024"]) == 3
-    assert store.select("predictions") == []  # defter tablosuna dokunulmaz
+    pool.apif = FakeApif(store, budget=4)
+    store.upsert("teams", [{"id": "T1:a", "league": "T1", "name": "A"}, {"id": "T1:b", "league": "T1", "name": "B"}])
+    ko_now = to_iso(now_utc().replace(hour=12) - __import__("datetime").timedelta(days=2))
+    base = {"league": "T1", "home_team_id": "T1:a", "away_team_id": "T1:b", "home_name": "A", "away_name": "B",
+            "status": "bitti", "home_goals": 1, "away_goals": 0}
+    store.upsert("matches", [dict(base, id="T1:cur", kickoff_at=ko_now, ext_ids={"apif": 7, "apif_home": 645, "apif_away": 611}),
+                             dict(base, id="T1:old", kickoff_at="2024-09-01T17:00:00+00:00", ext_ids={"apif": 8})])
+    r = Backfill(pool, reserve=0).run()
+    assert r["calls"] == 3 and r["player_matches"] == 1 and r["lineups"] == 1
+    assert {x["match_id"] for x in store.select("player_matches")} == {"T1:cur"}  # geçmiş sezon çekilmez
+    assert store.select("predictions") == []
 
 
 def test_thesportsdb_and_sportdevs_lineup_parsers():
@@ -469,3 +485,43 @@ def test_backup_export(tmp_path):
     assert r["counts"]["matches"] == 1
     assert json.loads((tmp_path / "matches.json").read_text())[0]["odds"]["1X2"]["1"] == 2.0
     assert (tmp_path / "predictions.csv").exists() and (tmp_path / "meta.json").exists()
+
+
+def test_fetch_jobs_backoff_and_handover(monkeypatch):
+    from meclis.config import load_settings
+    from meclis.pool import DataPool
+    from meclis.store import SQLiteStore
+
+    st = SQLiteStore(":memory:")
+    pool = DataPool(st, load_settings())
+    for _ in range(3):
+        pool._note("the-odds-api", False, "HTTP 500")
+    j = st.get("fetch_jobs", id="the-odds-api")
+    assert j["attempts"] == 3 and j["status"] == "devredildi" and j["fallback"]
+    assert pool.backoff("the-odds-api")
+    pool._note("the-odds-api", True, "12 maç")
+    assert st.get("fetch_jobs", id="the-odds-api")["status"] == "tamam" and not pool.backoff("the-odds-api")
+
+
+def test_merge_records_field_fetch_time():
+    from meclis.pool import merge_records
+
+    recs = [{"source": "bsd", "league": "T1", "home_name": "Galatasaray", "away_name": "Fenerbahçe",
+             "kickoff_at": "2026-10-25T17:00:00+00:00", "status": "planlandi", "referee": "Hakem",
+             "odds": {"1X2": {"1": 2.0, "X": 3.4, "2": 3.6}}}]
+    m = merge_records(recs)[0]
+    f = m["sources"]["_fetched"]
+    assert "referee" in f and "odds.1X2" in f and m["sources"]["referee"] == "bsd"
+
+
+def test_news_url_normalisation_clusters_same_link():
+    from meclis.news import dedup_news, normalize_url
+
+    assert normalize_url("https://www.bbc.co.uk/sport/football/123/?utm_source=x&fbclid=y#top") == \
+        normalize_url("http://bbc.co.uk/sport/football/123")
+    items = [{"id": "a", "title": "Salah ruled out for three weeks", "link": "https://www.x.com/n/1?utm_medium=rss",
+              "source": "x", "published_at": "1"},
+             {"id": "b", "title": "Liverpool: hamstring blow", "link": "https://x.com/n/1", "source": "x2",
+              "published_at": "2"}]
+    out, dup = dedup_news(items)
+    assert len(out) == 1 and dup == 1 and out[0]["cluster_size"] == 2

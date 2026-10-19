@@ -3,6 +3,7 @@ saklanır; haberin tamamı kopyalanmaz, kullanıcı kaynağa yönlendirilir."""
 from __future__ import annotations
 
 import hashlib
+
 import re
 from datetime import datetime, timezone
 
@@ -10,6 +11,12 @@ import feedparser
 
 from ..timeutil import to_iso
 from .http import get
+
+
+def _norm(link: str) -> str:
+    from ..news import normalize_url
+
+    return normalize_url(link) or link
 
 CATEGORIES = {
     "sakatlık": ["sakat", "sakatlı", "yaralan", "ameliyat", "tedavi", "kadroda yok", "forma giyemeyecek",
@@ -54,7 +61,7 @@ def fetch_feed(url: str) -> list[dict]:
                 break
         summary = _clean_html(e.get("summary") or "")[:400]
         out.append({
-            "id": hashlib.sha1(link.encode()).hexdigest()[:20], "title": title, "link": link, "source": src,
+            "id": hashlib.sha1(_norm(link).encode()).hexdigest()[:20], "title": title, "link": link, "source": src,
             "published_at": pub, "summary": summary, "category": categorize(f"{title} {summary}"),
         })
     return out

@@ -156,7 +156,12 @@ def goal_markets(m: np.ndarray, lh: float, la: float, ht_ratio: float = 0.44) ->
         {"market": "DC", "selection": "X2", "line": None, "probability": draw + away},
         {"market": "DC", "selection": "12", "line": None, "probability": home + away},
     ]
-    for line in (1.5, 2.5, 3.5):
+    diff = g[:, None] - g[None, :]
+    for line in (-2.5, -1.5, -0.5, 0.5, 1.5, 2.5):  # Asya handikapı (yarım çizgiler: iade yok)
+        p1 = float(m[diff + line > 0].sum())
+        out.append({"market": "AH", "selection": "1", "line": line, "probability": p1})
+        out.append({"market": "AH", "selection": "2", "line": -line, "probability": 1 - p1})
+    for line in (0.5, 1.5, 2.5, 3.5, 4.5):
         over = float(m[tot > line].sum())
         out.append({"market": "OU_GOALS", "selection": "ÜST", "line": line, "probability": over})
         out.append({"market": "OU_GOALS", "selection": "ALT", "line": line, "probability": 1 - over})

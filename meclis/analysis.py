@@ -12,8 +12,8 @@ from .model.injuries import injury_adjustment
 from .timeutil import now_utc, parse_dt, to_iso
 
 
-# Model girdisi GÜNCEL sezondur; geçmiş sezon maçları yalnızca zayıf önsel/kalibrasyon olarak bu ağırlıkla girer.
-PRIOR_SEASON_WEIGHT = 0.3
+# Model girdisi YALNIZCA GÜNCEL sezondur (kullanıcı kuralı: "geçmiş sezon değil bu sezon genelinde").
+# Geçmiş sezon maçları modele hiç girmez; sezon başında veri azsa piyasa oranı devreye girer (aşağıda).
 # Takımın bu sezonki maç sayısı bundan azsa piyasa oranı (varsa) gol beklentisine yarı ağırlıkla katılır.
 THIN_CURRENT = 3
 LEAGUE_BASELINE = (1.45, 1.15)  # hiçbir model/oran yoksa (yalnızca bilgi; bu tabanla tahmin YAYIMLANMAZ)
@@ -46,8 +46,11 @@ class LeagueContext:
         s0 = season_start(now)
         rows = []
 
+        matches = [m for m in matches if parse_dt(m["kickoff_at"]) >= s0]
+        ctx.matches = matches
+
         def wt(m):
-            return 1.0 if parse_dt(m["kickoff_at"]) >= s0 else PRIOR_SEASON_WEIGHT
+            return 1.0
 
         for m in matches:
             if m.get("home_goals") is None:
@@ -285,24 +288,83 @@ def select_single(payload: dict, settings) -> dict | None:
     mm = payload.get("model_matches") or {}
     if model_based and min(mm.get("home", 0), mm.get("away", 0)) < payload.get("min_team_matches", 4):
         return None  # takım hakkında modelde hiç/az veri var: "değer" iddiası kurulamaz (sonraki çalışmada yeniden)
-    best, best_score = None, 0.0
+    ranked = rank_picks(payload, settings, model_based, q)
+    return ranked[0] if ranked else None
+
+
+# Seçim kuralı (kullanıcı: "hangi pazarda değer varsa maçın verisi söylesin; varsayılan pazar yok"):
+#  * Bütün pazarlar adaydır (1X2, çifte şans, AH, gol A/Ü tüm çizgiler, KG, İY gol, takım golü, korner, kart,
+#    isabetli şut, kale vuruşu). Sıralama OLASILIĞA göre değil DEĞERE göre yapılır.
+#  * Kalibrasyon: model olasılığı piyasanın marjsız olasılığına doğru büzülür (p_kal = 0.65·p_model + 0.35·p_piyasa)
+#    → modelin aşırı güveni değer gibi görünmez.
+#  * Tekli için alt oran sınırı SINGLE_MIN_ODDS (1.50): 1.20'lik "kesin gibi" seçimler değer üretmez.
+#  * Piyasa oranı olmayan pazarlarda değer ölçülemez: bu adaylar yalnızca bot bülteninde "adil oran" olarak görünür
+#    (adil oran ≥ 1.50 ve p ≥ 0.55), arşive (Meclis Görüşü) girmez.
+SINGLE_MIN_ODDS = 1.50
+SINGLE_MAX_ODDS = 5.00
+CAL_W = 0.65
+
+
+def _market_implied(markets: list[dict]) -> dict:
+    groups: dict = {}
+    for m in markets:
+        if m.get("odds") and m["odds"] > 1:
+            ln = m.get("line")
+            if m["market"] == "AH" and ln is not None:
+                ln = ln if m["selection"] == "1" else -ln  # aynı handikap çizgisinin iki tarafı
+            groups.setdefault((m["market"], ln), []).append(m)
+    out = {}
+    for _, ms in groups.items():
+        inv = sum(1 / x["odds"] for x in ms)
+        if len(ms) >= 2 and inv > 0:
+            for x in ms:
+                out[(x["market"], x["selection"], x.get("line"))] = (1 / x["odds"]) / inv
+    return out
+
+
+def slate_bias(payloads: list[dict], min_n: int = 20) -> dict:
+    """Bültendeki maçlarda model − piyasa (marjsız) olasılık farkının ortalaması, pazar/seçim/çizgi başına."""
+    acc: dict = {}
+    for p in payloads:
+        imp = _market_implied(p.get("markets") or [])
+        for m in p.get("markets") or []:
+            k = (m["market"], m["selection"], m.get("line"))
+            if k in imp:
+                acc.setdefault(f"{k[0]}|{k[1]}|{k[2]}", []).append(m["probability"] - imp[k])
+    return {k: round(sum(v) / len(v), 4) for k, v in acc.items() if len(v) >= min_n}
+
+
+def rank_picks(payload: dict, settings, model_based: bool | None = None, q: float | None = None) -> list[dict]:
+    """Maçın bütün pazarlarındaki adaylar, değere göre sıralı (en iyisi başta)."""
+    if q is None:
+        q = payload["quality"]["factor"]
+    if model_based is None:
+        model_based = str(payload.get("basis") or "").startswith("model")
+    implied = _market_implied(payload["markets"])
+    edge_min = getattr(settings, "value_edge_min", 0.03)
+    value, fair = [], []
+    bias = payload.get("bias") or {}
     for m in payload["markets"]:
         if m["market"] == "CS":
             continue
         p = m["probability"]
-        if m.get("odds"):
-            if p < 0.40 or m["edge"] is None or m["edge"] < settings.value_edge_min or m["odds"] > 3.2:
+        o = m.get("odds")
+        if o:
+            # bülten genelinde modelin piyasadan sistematik sapması (ör. hep "alt"a kayma) düzeltilir
+            p = min(0.99, max(0.01, p - bias.get(f"{m['market']}|{m['selection']}|{m.get('line')}", 0.0)))
+            pm = implied.get((m["market"], m["selection"], m.get("line")))
+            pc = CAL_W * p + (1 - CAL_W) * pm if pm else p
+            edge = pc * o - 1
+            if not (SINGLE_MIN_ODDS <= o <= SINGLE_MAX_ODDS) or pc < 0.30 or edge < edge_min:
                 continue
-            score = (p * q) * (1 + min(m["edge"], 0.25))
-            kind = "değer"
-        else:
-            # oransız seçim yalnızca kendi modelimizden çıkar (piyasa/taban türevi λ ile "değer" iddia edilemez)
-            if not model_based or not (settings.no_odds_min_prob <= p <= 0.86) or m["market"] == "DC":
+            score = edge * q
+            value.append(dict(m, kind="değer", probability_model=round(p, 4), probability=round(pc, 4),
+                              edge=round(edge, 4), confidence=round(score, 4)))
+        elif model_based and m["market"] != "DC":
+            fo = 1 / p if p > 0 else 99
+            if p < 0.55 or fo < SINGLE_MIN_ODDS:
                 continue
-            score = p * q * 0.97
-            kind = "yüksek olasılık (piyasa oranı yok)"
-        if score > best_score:
-            best, best_score = dict(m, kind=kind), score
-    if best:
-        best["confidence"] = round(best_score, 4)
-    return best
+            fair.append(dict(m, kind="adil oran (piyasa oranı yok)", confidence=round(p * q * 0.25, 4)))
+    value.sort(key=lambda x: -x["confidence"])
+    fair.sort(key=lambda x: -x["confidence"])
+    return value + fair

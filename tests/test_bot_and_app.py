@@ -140,7 +140,7 @@ def test_match_detail_renders(demo_env):
     at.run()
     assert not at.exception
     labels = [m.label for m in at.metric]
-    assert "Veri tamlığı" in labels
+    assert "Veri derinliği" in labels
     assert any("Maç konuşuyor" in md.value for md in at.markdown)
 
 
@@ -246,3 +246,87 @@ def test_analysis_only_run_stores_every_match_once(demo_env):
         assert len(rows) == 1  # eski sürümler budanır
         p = rows[0]["payload"]
         assert p.get("markets") and "predicted_xi" in p and "scenarios" in p
+
+
+def _mk_market(market, sel, line, p, odds):
+    return {"market": market, "selection": sel, "line": line, "probability": p, "odds": odds,
+            "fair_odds": round(1 / p, 3), "edge": (p * odds - 1) if odds else None}
+
+
+def test_value_ranking_opens_all_markets_and_avoids_low_odds():
+    from meclis.analysis import SINGLE_MIN_ODDS, rank_picks, select_single
+    from meclis.config import load_settings
+
+    s = load_settings()
+    payload = {"ready": True, "basis": "model", "quality": {"factor": 1.0}, "model_matches": {"home": 8, "away": 8},
+               "min_team_matches": 4, "markets": [
+                   # çok yüksek olasılık ama oran 1.18 → tekli için elenmeli
+                   _mk_market("OU_GOALS", "ÜST", 0.5, 0.93, 1.18), _mk_market("OU_GOALS", "ALT", 0.5, 0.07, 6.0),
+                   # 1X2'de değer: model 0.50, oran 2.40 (piyasa ~0.40)
+                   _mk_market("1X2", "1", None, 0.50, 2.40), _mk_market("1X2", "X", None, 0.25, 3.40),
+                   _mk_market("1X2", "2", None, 0.25, 3.10),
+                   # oransız korner: adil oran seçimi, değer seçimlerinin ALTINDA
+                   _mk_market("CORNERS_OU", "ÜST", 9.5, 0.60, None),
+                   _mk_market("CARDS_OU", "ALT", 4.5, 0.85, None)]}  # adil oran 1.18 → elenir
+    ranked = rank_picks(payload, s)
+    assert ranked[0]["market"] == "1X2" and ranked[0]["selection"] == "1" and ranked[0]["kind"] == "değer"
+    assert 0.40 < ranked[0]["probability"] < 0.50  # piyasaya doğru kalibre
+    assert all((r.get("odds") or 1 / r["probability"]) >= SINGLE_MIN_ODDS for r in ranked)
+    assert [r["market"] for r in ranked if r["kind"] != "değer"] == ["CORNERS_OU"]
+    assert select_single(payload, s)["market"] == "1X2"
+
+
+def test_asian_handicap_market_and_settlement():
+    from meclis.markets import settle_pick
+    from meclis.model.goals import goal_markets, score_matrix
+
+    ms = goal_markets(score_matrix(1.6, 1.0), 1.6, 1.0)
+    ah = {(m["selection"], m["line"]): m["probability"] for m in ms if m["market"] == "AH"}
+    one = {(m["selection"]): m["probability"] for m in ms if m["market"] == "1X2"}
+    assert abs(ah[("1", -0.5)] - one["1"]) < 1e-9 and abs(ah[("1", -0.5)] + ah[("2", 0.5)] - 1) < 1e-9
+    match = {"home_goals": 2, "away_goals": 1, "status": "bitti"}
+    assert settle_pick("AH", "1", -1.5, match)[0] == "kaybetti"
+    assert settle_pick("AH", "2", 1.5, match)[0] == "kazandi"
+
+
+def test_bot_bulletin_vs_archive_no_overlap():
+    from datetime import timedelta
+
+    from meclis.bot import Bot
+    from meclis.config import load_settings
+    from meclis.store import SQLiteStore
+    from meclis.timeutil import now_utc, to_iso
+
+    s = load_settings()
+    st = SQLiteStore(":memory:")
+    b = Bot(st, s)
+    now = now_utc()
+    ko = to_iso(now + timedelta(hours=4))  # yayın penceresinde (≥3 saat önce)
+    analyses, rows = [], []
+    for i, (odds, edge) in enumerate([(1.70, 0.12), (1.80, 0.10), (1.65, 0.09), (2.10, 0.08), (1.90, 0.07),
+                                      (2.20, 0.06), (1.75, 0.05)]):
+        m = {"id": f"m{i}", "kickoff_at": ko, "league": "T1", "home_name": f"Ev{i}", "away_name": f"Dep{i}"}
+        st.upsert("matches", [dict(m, status="planlandi", home_team_id=f"h{i}", away_team_id=f"a{i}")])
+        p = (1 + edge) / odds
+        bp = {"market": "1X2", "selection": "1", "line": None, "probability": p, "odds": odds, "fair_odds": 1 / p,
+              "edge": edge, "confidence": edge, "kind": "değer"}
+        a = {"best_pick": bp, "quality": {"score": 80, "factor": 1.0}, "lambdas": {"home": 1.5, "away": 1.0},
+             "basis": "model", "scenarios": []}
+        analyses.append((m, a))
+        rows.append(b._bot_pick_row(m, a, bp, now))
+    st.upsert("bot_picks", rows)
+    rec, coupons = b._publish(analyses, now)
+    preds = st.select("predictions", [])
+    gk = {p["match_id"] for p in preds if p["tag"] == "gunun_karari"}
+    mg = {p["match_id"] for p in preds if p["tag"] == "meclis_gorusu"}
+    assert 2 <= len(gk) <= 3 and mg and not (gk & mg)  # aynı gün aynı maç iki yerde yok
+    assert all(p.get("bot_pick_id") == p["match_id"] for p in preds if p["tag"] != "karar_birligi")
+    c = [x for x in st.select("coupons", []) if x["tag"] == "gunun_karari"][0]
+    assert 2.30 <= c["total_odds"] <= 4.00
+    # yayımlanan maçın bot satırı kilitli: yeniden hesaplama üzerine yazamaz
+    locked = st.get("bot_picks", id=next(iter(gk)))
+    assert locked["status"] == "gunun_karari" and locked["locked_at"]
+    st.upsert("bot_picks", [dict(rows[int(locked["id"][1:])], market="OU_GOALS", status="aday", locked_at=None)])
+    assert st.get("bot_picks", id=locked["id"])["market"] == "1X2"
+    # ham bülten: arşive girmeyenler dahil hepsi
+    assert len(st.select("bot_picks", [])) == 7

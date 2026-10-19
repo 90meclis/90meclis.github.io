@@ -163,6 +163,7 @@ def merge_records(records: list[dict], registry: TeamRegistry | None = None,
                   existing: list[dict] | None = None) -> list[dict]:
     """Kaynak kayıtlarını birleştirir. Dönen her öğe `matches` tablosuna yazılabilir bir sözlük + 'stats'."""
     reg = registry or TeamRegistry()
+    run_ts = to_iso(now_utc())
     for e in existing or []:
         reg.add(e["league"], e["home_team_id"].split(":", 1)[1], e["home_name"])
         reg.add(e["league"], e["away_team_id"].split(":", 1)[1], e["away_name"])
@@ -209,6 +210,7 @@ def merge_records(records: list[dict], registry: TeamRegistry | None = None,
         src = r["source"]
         if src not in m["sources"]["_all"]:
             m["sources"]["_all"].append(src)
+        fetched = m["sources"].setdefault("_fetched", {})  # alan → bu çalışmada çekildiği an (provenans)
         for f in SCALARS:
             v = r.get(f)
             if v is None or v == "":
@@ -216,6 +218,7 @@ def merge_records(records: list[dict], registry: TeamRegistry | None = None,
             if m[f] is None:
                 m[f] = to_iso(v) if f == "kickoff_at" else v
                 m["sources"][f] = src
+                fetched[f] = run_ts
             elif f in ("home_goals", "away_goals") and m[f] != v:
                 m["sources"]["_conflicts"].append(f"{f}: {m['sources'].get(f)}={m[f]} / {src}={v}")
         st = r.get("status") or "planlandi"
@@ -234,11 +237,13 @@ def merge_records(records: list[dict], registry: TeamRegistry | None = None,
             if k not in m["odds"] or _prio(src, ODDS_PRIORITY) < _prio(cur or "", ODDS_PRIORITY):
                 m["odds"][k] = v
                 m["sources"]["odds"][k] = src
+                fetched[f"odds.{k}"] = run_ts
         for side in ("home", "away"):
             for f, v in ((r.get("stats") or {}).get(side) or {}).items():
                 if v is not None and m["stats"][side].get(f) is None:
                     m["stats"][side][f] = v
                     m["sources"].setdefault("stats", {})[f"{side}.{f}"] = src
+                    fetched[f"stats.{side}.{f}"] = run_ts
 
     # Var olan kayıtlarla eşleştir: id'yi koru, eksik alanları eskisinden doldur
     ex_index: dict[tuple, list[dict]] = {}
@@ -272,6 +277,8 @@ def merge_records(records: list[dict], registry: TeamRegistry | None = None,
             for f, v in (prev.get("sources") or {}).items():
                 if f not in m["sources"]:
                     m["sources"][f] = v
+                elif f == "_fetched" and isinstance(v, dict):  # bu çalışmada çekilmeyen alanlar eski zamanını korur
+                    m["sources"]["_fetched"] = {**v, **m["sources"]["_fetched"]}
         else:
             m["id"] = f"{m['league']}:{ko.date().isoformat()}:{hk}:{ak}"
         m["home_name"] = names.display_name(m["home_name"])
@@ -381,6 +388,39 @@ class DataPool:
             self.store.set_source_status(source, ok, msg, add_calls=calls)
         except Exception:
             pass
+        self._job(source, ok, msg)
+
+    # Çekme işi kuyruğu: hata → üstel geri çekilme (2, 4, 8 … saat, en çok 24); 3 hatadan sonra kaynak alanlarını
+    # öncelik sırasındaki sonraki kaynaklara DEVREDER (birleştirme zaten bir sonraki kaynağı kullanır; bu kayıt
+    # devri görünür kılar ve geri çekilme süresince kotalı kaynağa boşuna istek atılmasını önler).
+    def _job(self, source: str, ok: bool, msg: str) -> None:
+        if source.startswith(("injuries:", "gecmis:", "api-football:tarih:")):
+            return
+        try:
+            cur = self.store.get("fetch_jobs", id=source) or {"id": source, "source": source, "attempts": 0}
+            now = now_utc()
+            if ok:
+                if cur.get("status") in (None, "tamam") and cur.get("attempts", 0) == 0:
+                    return  # gereksiz yazma yok
+                row = dict(cur, attempts=0, status="tamam", next_try_at=None, last_error=None, updated_at=to_iso(now))
+            else:
+                n = int(cur.get("attempts") or 0) + 1
+                fb = [s for s in PRIORITY if s != source][:3]
+                row = dict(cur, attempts=n, status="devredildi" if n >= 3 else "tekrar",
+                           next_try_at=to_iso(now + timedelta(hours=min(24, 2 ** n))), last_error=str(msg)[:300],
+                           fallback=", ".join(fb) if n >= 3 else None, updated_at=to_iso(now))
+            self.store.upsert("fetch_jobs", [row])
+        except Exception:
+            pass  # fetch_jobs tablosu yoksa sessizce geç
+
+    def backoff(self, source: str) -> bool:
+        """Kaynak geri çekilmedeyse True (bu çalışmada atlanır)."""
+        try:
+            j = self.store.get("fetch_jobs", id=source)
+        except Exception:
+            return False
+        return bool(j and j.get("status") != "tamam" and j.get("next_try_at")
+                    and parse_dt(j["next_try_at"]) > now_utc())
 
     # ---------------------------------------------------------------- toplama
     def collect(self, days_back: int = 3, days_ahead: int = 7, history: bool = False) -> list[dict]:
@@ -390,14 +430,13 @@ class DataPool:
         recs: list[dict] = []
         leagues = self.s.leagues
         if history:
-            code = fdcuk.season_code(today)
-            prev = f"{(int(code[:2]) - 1) % 100:02d}{code[:2]}"
+            code = fdcuk.season_code(today)  # yalnızca güncel sezon CSV'si (geçmiş sezon çekilmez)
             from .config import LEAGUES
 
             for lg in leagues:
                 if lg in LEAGUES and not LEAGUES[lg].fdcuk:
                     continue  # football-data.co.uk'ta bu ligin CSV'si yok (kupa / TFF 1. Lig)
-                for c in (prev, code):
+                for c in (code,):
                     try:
                         rows = fdcuk.fetch_season(lg, c)
                         recs += rows
@@ -434,7 +473,9 @@ class DataPool:
                 except Exception as e:
                     self._note("thesportsdb", False, f"{lg} hafta listesi: {e}")
         self._note("thesportsdb", True, f"{n} maç (günlük liste + hafta listesi)")
-        if self.fdorg.available:
+        if self.fdorg.available and self.backoff("football-data.org"):
+            self.log.append("⏸️ football-data.org: geri çekilmede (son hatalardan sonra); alanlar sıradaki kaynaktan doluyor")
+        elif self.fdorg.available:
             try:
                 rows = self.fdorg.matches(today - timedelta(days=days_back), today + timedelta(days=days_ahead), leagues)
                 recs += rows
@@ -476,7 +517,9 @@ class DataPool:
                     break
         else:
             self._waiting_key("api-football", "API_FOOTBALL_KEY", "ilk 11, sakat/cezalı, oyuncu dakikaları, hakem, maç istatistiği")
-        if self.oddsapi.available:
+        if self.oddsapi.available and self.backoff("the-odds-api"):
+            self.log.append("⏸️ the-odds-api: geri çekilmede (son hatalardan sonra); alanlar sıradaki kaynaktan doluyor")
+        elif self.oddsapi.available:
             for lg in leagues:
                 try:
                     rows, info = self.oddsapi.odds(lg)
@@ -550,7 +593,9 @@ class DataPool:
             except Exception as e:
                 self._note("openfootball", False, f"{lg}: {e}")
         self._note("openfootball", True, f"{n_of} maç (yalnızca boşluk doldurur)")
-        if self.sportmonks.available:
+        if self.sportmonks.available and self.backoff("sportmonks"):
+            self.log.append("⏸️ sportmonks: geri çekilmede (son hatalardan sonra); alanlar sıradaki kaynaktan doluyor")
+        elif self.sportmonks.available:
             try:
                 rows = self.sportmonks.fixtures(leagues, today - timedelta(days=days_back), today + timedelta(days=days_ahead))
                 recs += rows
@@ -559,7 +604,9 @@ class DataPool:
                 self._note("sportmonks", False, str(e))
         else:
             self._waiting_key("sportmonks", "SPORTMONKS_KEY", "fikstür/sonuç/stadyum/hakem/istatistik")
-        if self.footystats.available:
+        if self.footystats.available and self.backoff("footystats"):
+            self.log.append("⏸️ footystats: geri çekilmede (son hatalardan sonra); alanlar sıradaki kaynaktan doluyor")
+        elif self.footystats.available:
             n = 0
             try:
                 for i in range(-min(days_back, 2), min(days_ahead, 2) + 1):
@@ -571,7 +618,9 @@ class DataPool:
                 self._note("footystats", False, str(e))
         else:
             self._waiting_key("footystats", "FOOTYSTATS_KEY", "korner/kart/şut istatistikleri ve oranlar")
-        if self.sportdevs.available:
+        if self.sportdevs.available and self.backoff("sportdevs"):
+            self.log.append("⏸️ sportdevs: geri çekilmede (son hatalardan sonra); alanlar sıradaki kaynaktan doluyor")
+        elif self.sportdevs.available:
             try:
                 rows = self.sportdevs.matches(today - timedelta(days=days_back), today + timedelta(days=days_ahead))
                 recs += rows
@@ -580,7 +629,9 @@ class DataPool:
                 self._note("sportdevs", False, str(e))
         else:
             self._waiting_key("sportdevs", "SPORTDEVS_KEY", "fikstür/sonuç/İY skoru")
-        if self.oddspapi.available:
+        if self.oddspapi.available and self.backoff("oddspapi"):
+            self.log.append("⏸️ oddspapi: geri çekilmede (son hatalardan sonra); alanlar sıradaki kaynaktan doluyor")
+        elif self.oddspapi.available:
             if self._daily_once("oddspapi"):
                 try:
                     rows = self.oddspapi.odds(leagues)
@@ -677,7 +728,9 @@ class DataPool:
         hi = to_iso(now_utc() + timedelta(days=days_ahead + 2))
         existing = self.store.select("matches", [("kickoff_at", "gte", lo), ("kickoff_at", "lte", hi)])
         if history:
-            existing = self.store.select("matches", [("kickoff_at", "gte", to_iso(now_utc() - timedelta(days=800)))])
+            from .analysis import season_start
+
+            existing = self.store.select("matches", [("kickoff_at", "gte", to_iso(season_start() - timedelta(days=2)))])
         reg = TeamRegistry()
         teams_all = self.store.select("teams")
         for t in teams_all:
@@ -795,9 +848,12 @@ class DataPool:
             f.append(("league", "in", leagues))
         return self.store.select("matches", f, order="kickoff_at")
 
-    def history(self, league: str, days: int = 760) -> tuple[list[dict], dict[str, dict]]:
+    def history(self, league: str) -> tuple[list[dict], dict[str, dict]]:
+        """Ligin BU SEZON biten maçları ve istatistikleri (model girdisi yalnızca güncel sezondur)."""
+        from .analysis import season_start
+
         ms = self.store.select("matches", [("league", "eq", league), ("status", "eq", "bitti"),
-                                           ("kickoff_at", "gte", to_iso(now_utc() - timedelta(days=days)))],
+                                           ("kickoff_at", "gte", to_iso(season_start()))],
                                order="kickoff_at")
         stats = {}
         ids = [m["id"] for m in ms]

@@ -6,17 +6,20 @@ from math import prod
 
 
 def build_daily_coupon(candidates: list[dict], min_odds: float = 2.30, max_odds: float = 4.00,
-                       min_ev: float = 0.0, leg_counts=(2, 3), max_pool: int = 16) -> dict | None:
+                       min_ev: float = 0.0, leg_counts=(2, 3), max_pool: int = 16,
+                       rank: str = "probability") -> dict | None:
     """Toplam oranı [min_odds, max_odds] bandında olan, ortak olasılığı en yüksek 2-3 maçlık kombinasyon.
 
     candidates: [{'match_id','probability','odds',...}] — yalnızca PİYASA oranlı seçimler kullanılır.
     Aynı maçtan iki seçim alınmaz. Beklenen değer (ortak olasılık × toplam oran − 1) en az `min_ev` olmalı.
+    rank="confidence": bacaklar botun değer×kalite sırasına göre seçilir (Günün Kararı = en güvenilen maçlar).
     """
     pool = [c for c in candidates if c.get("odds") and c["odds"] > 1.0 and 0 < c["probability"] < 1]
     best_by_match: dict[str, list[dict]] = {}
-    for c in sorted(pool, key=lambda c: -c["probability"]):
+    sk = (lambda c: -(c.get("confidence") or 0)) if rank == "confidence" else (lambda c: -c["probability"])
+    for c in sorted(pool, key=sk):
         best_by_match.setdefault(c["match_id"], []).append(c)
-    flat = sorted((c for lst in best_by_match.values() for c in lst[:4]), key=lambda c: -c["probability"])[:max_pool]
+    flat = sorted((c for lst in best_by_match.values() for c in lst[:4]), key=sk)[:max_pool]
     best, best_key = None, None
     for k in leg_counts:
         for combo in combinations(flat, k):
@@ -29,7 +32,8 @@ def build_daily_coupon(candidates: list[dict], min_odds: float = 2.30, max_odds:
             ev = joint * total - 1
             if ev < min_ev:
                 continue
-            key = (round(joint, 6), round(ev, 6))
+            key = ((round(sum(c.get("confidence") or 0 for c in combo) / k, 6), round(ev, 6)) if rank == "confidence"
+                   else (round(joint, 6), round(ev, 6)))
             if best_key is None or key > best_key:
                 best, best_key = {"legs": list(combo), "total_odds": round(total, 3),
                                   "joint_probability": round(joint, 4), "ev": round(ev, 4)}, key

@@ -4,13 +4,13 @@ from __future__ import annotations
 import math
 
 MARKET_LABELS = {
-    "1X2": "Maç Sonucu", "DC": "Çifte Şans", "OU_GOALS": "Toplam Gol", "BTTS": "Karşılıklı Gol",
+    "1X2": "Maç Sonucu", "DC": "Çifte Şans", "AH": "Asya Handikap", "OU_GOALS": "Toplam Gol", "BTTS": "Karşılıklı Gol",
     "TEAM_GOALS_HOME": "Ev Sahibi Gol", "TEAM_GOALS_AWAY": "Deplasman Gol", "CS": "Skor",
     "HT_OU_GOALS": "İlk Yarı Gol", "CORNERS_OU": "Toplam Korner", "CARDS_OU": "Toplam Kart",
     "SOT_OU": "Toplam İsabetli Şut", "GOAL_KICKS_OU": "Toplam Kale Vuruşu",
 }
 MARKET_GROUPS = {
-    "Skor / Sonuç": ["1X2", "DC", "CS"],
+    "Skor / Sonuç": ["1X2", "DC", "AH", "CS"],
     "Gol": ["OU_GOALS", "BTTS", "TEAM_GOALS_HOME", "TEAM_GOALS_AWAY", "HT_OU_GOALS"],
     "Korner": ["CORNERS_OU"], "Kart": ["CARDS_OU"], "İsabetli Şut": ["SOT_OU"], "Kale Vuruşu": ["GOAL_KICKS_OU"],
 }
@@ -27,6 +27,8 @@ def pick_label(market: str, selection: str, line: float | None, home: str = "Ev"
         return {"1": f"MS 1 ({home})", "X": "MS X (beraberlik)", "2": f"MS 2 ({away})"}[selection]
     if market == "DC":
         return f"Çifte Şans {selection}"
+    if market == "AH" and line is not None:
+        return f"AH {home if selection == '1' else away} {line:+g}"
     if market == "BTTS":
         return f"KG {selection.title()}"
     if market == "CS":
@@ -93,6 +95,11 @@ def settle_pick(market: str, selection: str, line: float | None, r: dict) -> tup
             return ("kazandi" if yes == (selection == "VAR") else "kaybetti"), val
         if market == "CS":
             return ("kazandi" if val == selection else "kaybetti"), val
+    if market == "AH":
+        if hg is None or ag is None or line is None:
+            return None, None
+        d = (hg - ag if selection == "1" else ag - hg) + float(line)
+        return ("iade" if abs(d) < 1e-9 else "kazandi" if d > 0 else "kaybetti"), f"{hg}-{ag}"
     if market == "HT_OU_GOALS":
         h, a = r.get("ht_home_goals"), r.get("ht_away_goals")
         if h is None or a is None:

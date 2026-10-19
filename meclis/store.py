@@ -50,6 +50,7 @@ PRIMARY_KEYS: dict[str, list[str]] = {
     "leagues": ["code"],
     "odds_snapshots": ["match_id", "taken_at"],
     "fetch_jobs": ["id"],
+    "bot_picks": ["id"],
     "player_matches": ["match_id", "player_id"],
     "source_status": ["source"],
     "coupons": ["id"],
@@ -170,6 +171,13 @@ create table if not exists odds_snapshots (match_id text not null, taken_at text
   odds text not null, primary key (match_id, taken_at));
 create table if not exists fetch_jobs (id text primary key, source text not null, attempts int default 0,
   status text default 'tekrar', next_try_at text, last_error text, fallback text, updated_at text);
+create table if not exists bot_picks (id text primary key, match_id text not null, kickoff_at text not null, league text,
+  home_name text, away_name text, market text not null, selection text not null, line real, probability real not null,
+  odds real, fair_odds real, edge real, confidence real, kind text, basis text, completeness real, model_version text,
+  status text not null default 'aday' check (status in ('aday','gunun_karari','meclis_gorusu')), computed_at text,
+  locked_at text);
+create trigger if not exists bot_picks_lock before update on bot_picks when old.locked_at is not null
+begin select raise(ignore); end;
 create table if not exists source_status (source text primary key, ok int, message text, calls_today int default 0,
   calls_date text, updated_at text);
 create table if not exists coupons (id text primary key, created_at text, coupon_date text not null,
@@ -185,7 +193,8 @@ create table if not exists predictions (id text primary key, recorded_at text, m
   odds real, odds_source text, fair_odds real, edge real, confidence real, stake real not null default 1, rationale text,
   scenario_note text, completeness real, model_version text, status text not null default 'bekliyor'
   check (status in ('bekliyor','basladi','kazandi','kaybetti','iade')),
-  result_value text, profit real, closing_odds real, clv real, settled_at text, settlement_note text);
+  result_value text, profit real, closing_odds real, clv real, settled_at text, settlement_note text,
+  bot_pick_id text);
 create unique index if not exists predictions_single_unique on predictions (match_id, market, selection, coalesce(line, -1))
   where tag = 'meclis_gorusu';
 create unique index if not exists predictions_leg_unique on predictions (coupon_id, match_id) where coupon_id is not null;
