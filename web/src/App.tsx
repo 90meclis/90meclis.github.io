@@ -24,6 +24,7 @@ export default function App() {
           <Route element={<Layout />}>
             <Route index element={<Home />} />
             <Route path="mac-merkezi" element={<MatchCenter />} />
+            <Route path="mac" element={<MatchDetail />} />
             <Route path="mac/:id" element={<MatchDetail />} />
             <Route path="tahmin-botu" element={<PredictionBot />} />
             <Route path="tahmin-arsivi" element={<Archive />} />

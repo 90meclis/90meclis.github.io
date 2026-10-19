@@ -116,7 +116,7 @@ export const analysisFor = (id: string) =>
 export const predictionsForMatch = (id: string) =>
   run<Prediction>(db().from("predictions").select("*").eq("match_id", id).order("recorded_at"));
 export const newsForMatch = (id: string) =>
-  run<Agenda>(db().from("agenda").select("*").contains("match_ids", [id]).order("published_at", { ascending: false }).limit(12));
+  run<Agenda>(db().from("agenda").select("*").contains("match_ids", JSON.stringify([id])).order("published_at", { ascending: false }).limit(12));
 export const teamsIn = (ids: string[]) => run<Team>(db().from("teams").select("*").in("id", ids));
 
 export const allPredictions = () =>

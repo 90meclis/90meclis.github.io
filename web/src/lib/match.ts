@@ -1,7 +1,7 @@
 import type { Match } from "./types";
 import { DURUM_LABELS } from "./labels";
 
-export const matchPath = (id: string) => `/mac/${encodeURIComponent(id)}`;
+export const matchPath = (id: string) => `/mac/?id=${encodeURIComponent(id)}`;
 
 export function hasScore(m: Pick<Match, "home_goals" | "away_goals">) {
   return m.home_goals !== null && m.home_goals !== undefined && m.away_goals !== null && m.away_goals !== undefined;

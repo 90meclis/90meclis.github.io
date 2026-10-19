@@ -25,6 +25,9 @@ for (const r of routes) {
   mkdirSync(join(dist, r.path), { recursive: true });
   writeFileSync(join(dist, r.path, "index.html"), page);
 }
+// Maç sayfası: /mac/?id=… (200 yanıtı; maç başlığı istemcide yazılır)
+mkdirSync(join(dist, "mac"), { recursive: true });
+writeFileSync(join(dist, "mac", "index.html"), html.replace(/<link rel="canonical"[^>]*>/, ""));
 writeFileSync(join(dist, "404.html"), html.replace(/<link rel="canonical"[^>]*>/, '<meta name="robots" content="noindex" />'));
 const today = new Date().toISOString().slice(0, 10);
 writeFileSync(

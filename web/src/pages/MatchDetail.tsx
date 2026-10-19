@@ -1,4 +1,4 @@
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import * as api from "../lib/data";
 import { useAsync } from "../lib/useAsync";
 import { dateLong, dateShort, num, pct, relTime, signed, time } from "../lib/format";
@@ -12,8 +12,9 @@ import { MiniMd } from "../components/MiniMd";
 import { PickCard } from "../components/PickCard";
 
 export default function MatchDetail() {
-  const { id = "" } = useParams();
-  const mid = decodeURIComponent(id);
+  const { id } = useParams();
+  const [sp] = useSearchParams();
+  const mid = sp.get("id") ?? (id ? decodeURIComponent(id) : "");
   const mq = useAsync(`match:${mid}`, () => api.match(mid), [mid]);
   const m = mq.data;
   usePageMeta(m ? `${m.home_name} – ${m.away_name}` : "Maç", m ? `${m.home_name} – ${m.away_name} maç analizi: form, istatistik, eksikler, ilk 11, oranlar ve Meclis senaryoları.` : undefined);
@@ -295,21 +296,29 @@ function isOfficial(lu: Lineup) {
   return lu.lineup_status ? lu.lineup_status === "resmi" : !/tahmin/i.test(lu.source ?? "");
 }
 
-/** Resmî ilk 11 (varsa) + Meclis tahmini 11. Tahmini 11 lineups tablosundan ya da analiz yükünden gelir. */
+type XiPlayer = { name: string; position?: string | null; score?: number; note?: string | null };
+const POS_TR: Record<string, string> = { Goalkeeper: "K", Defender: "D", Midfielder: "O", Attacker: "F", Forward: "F", G: "K", D: "D", M: "O", F: "F" };
+const POS_ORDER: Record<string, number> = { K: 0, D: 1, O: 2, F: 3 };
+
+/** Resmî ilk 11 (açıklandıysa) + Meclis tahmini 11 (analiz yükündeki predicted_xi). */
 function Lineups({ rows, side, a }: { rows: Lineup[]; side: "home" | "away"; a?: AnalysisPayload }) {
-  const mine = rows.filter((x) => x.side === side || String(x.side).startsWith(side));
+  const mine = rows.filter((x) => x.side === side);
   const official = mine.find(isOfficial);
-  let predicted = mine.find((x) => !isOfficial(x));
-  const px = (a as { predicted_xi?: Record<string, Lineup["start_xi"] | { formation?: string; start_xi?: Lineup["start_xi"] }> } | undefined)?.predicted_xi?.[side];
-  if (!predicted && px) {
-    const list = Array.isArray(px) ? px : px.start_xi ?? [];
-    if (list.length) predicted = { match_id: "", side, formation: Array.isArray(px) ? null : px.formation ?? null, start_xi: list, subs: [], coach: null, source: "meclis" };
+  const px = (a as { predicted_xi?: Record<string, { players?: XiPlayer[] }> } | undefined)?.predicted_xi?.[side];
+  let predicted: Lineup | undefined;
+  if (px?.players?.length) {
+    const list = [...px.players]
+      .map((p) => ({ name: p.name, pos: POS_TR[p.position ?? ""] ?? (p.position ?? "").slice(0, 1), note: p.note }))
+      .sort((x, y) => (POS_ORDER[x.pos] ?? 9) - (POS_ORDER[y.pos] ?? 9));
+    predicted = { match_id: "", side, formation: null, start_xi: list.map((p) => ({ name: p.note ? `${p.name} (${p.note})` : p.name, pos: p.pos })), subs: [], coach: null, source: "meclis" };
   }
-  if (!official && !predicted) return <p className="muted small">Meclis tahmini 11 maçtan önce yayımlanır; resmî ilk 11 açıklandığında burada görünür.</p>;
+  const external = !predicted ? mine.find((x) => !isOfficial(x)) : undefined;
+  if (!official && !predicted && !external) return <p className="muted small">Meclis tahmini 11 maçtan önce yayımlanır; resmî ilk 11 açıklandığında burada görünür.</p>;
   return (
     <>
       {official && <LineupView lu={official} label="Resmî ilk 11" kind="off" />}
       {predicted && <LineupView lu={predicted} label="Meclis tahmini 11" kind="pred" collapsed={!!official} />}
+      {external && <LineupView lu={external} label="Tahmini ilk 11" kind="pred" collapsed={!!official} />}
     </>
   );
 }
