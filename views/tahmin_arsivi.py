@@ -1,8 +1,7 @@
-import pandas as pd
 import streamlit as st
 
 from meclis import ui
-from meclis.markets import QUEUE_LABELS, TAG_LABELS, pick_label
+from meclis.markets import TAG_LABELS, pick_label
 from meclis.timeutil import tr_str
 
 st.title("🗂️ Tahmin Arşivi")
@@ -16,7 +15,15 @@ c1, c2, c3 = st.columns(3)
 tags = c1.multiselect("Etiket", list(TAG_LABELS), default=list(TAG_LABELS), format_func=TAG_LABELS.get)
 statuses = c2.multiselect("Durum", ["bekliyor", "basladi", "kazandi", "kaybetti", "iade"],
                           default=["bekliyor", "basladi", "kazandi", "kaybetti", "iade"], format_func=ui.status_badge)
-show_q = False  # eski 'Karar Bekliyor / Karar Verilmedi' listesi kaldırıldı: yalnızca yayımlanan seçimler arşivdedir
+_days = sorted({tr_str(p["kickoff_at"], "%Y-%m-%d") for p in preds})
+if _days:
+    from datetime import date
+
+    _lo, _hi = date.fromisoformat(_days[0]), date.fromisoformat(_days[-1])
+    rng = c3.date_input("Tarih aralığı", value=(_lo, _hi), min_value=_lo, max_value=_hi, format="DD.MM.YYYY")
+    d_lo, d_hi = (rng[0], rng[-1]) if isinstance(rng, (tuple, list)) and rng else (_lo, _hi)
+    preds = [p for p in preds if d_lo.isoformat() <= tr_str(p["kickoff_at"], "%Y-%m-%d") <= d_hi.isoformat()]
+    coupons = [c for c in coupons if d_lo.isoformat() <= str(c["coupon_date"]) <= d_hi.isoformat()]
 
 st.subheader("🎫 Kuponlar")
 if not coupons:
@@ -45,18 +52,5 @@ if singles:
 else:
     ui.empty_state("Seçili filtrelerde tekli kayıt yok.")
 
-if show_q:
-    st.subheader("⏸️ Karar Bekliyor / Karar Verilmedi")
-    q = [x for x in store.select("analysis_queue") if x["status"] in ("ertelendi", "yetismedi")]
-    if q:
-        mm = {m["id"]: m for m in store.select("matches", [("id", "in", [x["match_id"] for x in q])])}
-        st.dataframe(pd.DataFrame([{
-            "Başlama": tr_str(mm.get(x["match_id"], {}).get("kickoff_at")),
-            "Maç": f"{mm.get(x['match_id'], {}).get('home_name', '?')} – {mm.get(x['match_id'], {}).get('away_name', '?')}",
-            "Durum": QUEUE_LABELS[x["status"]], "Eksik veri": ", ".join(x.get("missing") or []),
-        } for x in q]), hide_index=True, width="stretch")
-        st.caption("Bu maçlar elenmedi: veri tamamlanmadığı için tahmin yapılmadı ve bu da kayıtta görünür.")
-    else:
-        st.caption("Bekleyen ya da karar verilmemiş maç yok.")
 st.caption("Kayıtlar veritabanı tetikleyicileriyle kilitlidir: maç başladıktan sonra eklenemez; seçim, oran ve olasılık "
            "değiştirilemez; kayıt silinemez. Yalnızca durum/sonuç alanları otomatik güncellenir.")

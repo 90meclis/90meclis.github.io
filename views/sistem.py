@@ -1,4 +1,4 @@
-"""Yönetim / tanılama sayfası — ziyaretçi menüsünde görünmez; adres çubuğuna ?yonetim=1 eklenince açılır."""
+"""Yönetim / tanılama sayfası — yalnızca ADMIN_TOKEN eşleşen yöneticiye görünür (app.py)."""
 import pandas as pd
 import streamlit as st
 
@@ -6,6 +6,8 @@ from meclis import ui
 from meclis.coverage import COLS, upcoming_coverage
 from meclis.sources.registry import SOURCES as _REG
 
+if not st.session_state.get("is_admin"):
+    st.stop()
 st.title("🔧 Sistem Durumu")
 st.caption("Geliştirici / yönetici görünümü: kaynak sağlığı, anahtar bekleyen kaynaklar ve veri kapsamı.")
 s, store, pool = ui.resources()

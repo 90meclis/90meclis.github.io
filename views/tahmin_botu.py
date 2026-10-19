@@ -37,46 +37,48 @@ with st.expander("Bot nasıl çalışır?", expanded=False):
 """)
 
 ro = getattr(store, "read_only", False)
-if ro:
-    st.caption("Tahminler zamanlanmış bot tarafından maçtan önce kaydedilir. Buradan deftere yazmadan "
-               "bir deneme analizi çalıştırabilirsin.")
-    c3 = st.columns(4)[0]
-    c1 = c2 = c4 = None
-else:
-    c1, c2, c3, c4 = st.columns(4)
-run_log = []
-try:
-    if c1 is not None and c1.button("🔄 Havuzu yenile", disabled=s.demo_mode or ro, width="stretch"):
-        with st.spinner("Kaynaklar taranıyor..."):
-            r = pool.refresh(history=True)
-        ui.clear_caches()
-        run_log = r["log"] + [f"{r['records']} kaynak kaydı → {r['matches']} birleşik maç"]
-    if c2 is not None and c2.button("📝 Botu çalıştır (kayda yaz)", type="primary", width="stretch", disabled=ro):
-        with st.spinner("Analiz ediliyor..."):
-            from meclis.bot import Bot
+# Bot düğmeleri yalnızca yöneticiye (ADMIN_TOKEN, app.py). Ziyaretçi hiçbir dış isteği tetikleyemez.
+if st.session_state.get("is_admin"):
+    if ro:
+        st.caption("Tahminler zamanlanmış bot tarafından maçtan önce kaydedilir. Buradan deftere yazmadan "
+                   "bir deneme analizi çalıştırabilirsin.")
+        c3 = st.columns(4)[0]
+        c1 = c2 = c4 = None
+    else:
+        c1, c2, c3, c4 = st.columns(4)
+    run_log = []
+    try:
+        if c1 is not None and c1.button("🔄 Havuzu yenile", disabled=s.demo_mode or ro, width="stretch"):
+            with st.spinner("Kaynaklar taranıyor..."):
+                r = pool.refresh(history=True)
+            ui.clear_caches()
+            run_log = r["log"] + [f"{r['records']} kaynak kaydı → {r['matches']} birleşik maç"]
+        if c2 is not None and c2.button("📝 Botu çalıştır (kayda yaz)", type="primary", width="stretch", disabled=ro):
+            with st.spinner("Analiz ediliyor..."):
+                from meclis.bot import Bot
 
-            r = Bot(store, s, pool).run(record=True, fetch_extras=not s.demo_mode)
-        ui.clear_caches()
-        run_log = r["log"]
-    if c3.button("🧪 Kuru çalıştır", width="stretch", help="Analiz eder ama deftere yazmaz"):
-        with st.spinner("Analiz ediliyor..."):
-            from meclis.bot import Bot
+                r = Bot(store, s, pool).run(record=True, fetch_extras=not s.demo_mode)
+            ui.clear_caches()
+            run_log = r["log"]
+        if c3.button("🧪 Kuru çalıştır", width="stretch", help="Analiz eder ama deftere yazmaz"):
+            with st.spinner("Analiz ediliyor..."):
+                from meclis.bot import Bot
 
-            r = Bot(store, s, pool).run(record=False, fetch_extras=False)
-        run_log = r["log"]
-    if c4 is not None and c4.button("🏁 Sonuçlandır", width="stretch", disabled=ro):
-        with st.spinner("Sonuçlar kontrol ediliyor..."):
-            from meclis.settlement import run_settlement
+                r = Bot(store, s, pool).run(record=False, fetch_extras=False)
+            run_log = r["log"]
+        if c4 is not None and c4.button("🏁 Sonuçlandır", width="stretch", disabled=ro):
+            with st.spinner("Sonuçlar kontrol ediliyor..."):
+                from meclis.settlement import run_settlement
 
-            if not s.demo_mode:
-                pool.refresh(days_back=5, days_ahead=0, history=True)
-            r = run_settlement(store, pool)
-        ui.clear_caches()
-        run_log = r["log"]
-except StoreError as e:
-    st.error(f"Kayıt hatası: {e}")
-if run_log:
-    st.code("\n".join(run_log), language=None)
+                if not s.demo_mode:
+                    pool.refresh(days_back=5, days_ahead=0, history=True)
+                r = run_settlement(store, pool)
+            ui.clear_caches()
+            run_log = r["log"]
+    except StoreError as e:
+        st.error(f"Kayıt hatası: {e}")
+    if run_log:
+        st.code("\n".join(run_log), language=None)
 
 st.subheader("Analiz kuyruğu")
 q = store.select("analysis_queue")

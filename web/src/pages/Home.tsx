@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import * as api from "../lib/data";
 import { useAsync } from "../lib/useAsync";
-import { summarize } from "../lib/trust";
+import { summarize, toBets } from "../lib/trust";
 import { pct, signed, trDay, addDays, relTime } from "../lib/format";
 import { usePageMeta, ROUTES } from "../lib/seo";
 import { PickCard } from "../components/PickCard";
@@ -22,7 +22,10 @@ const PILLARS: Record<string, string> = {
 export default function Home() {
   const meta = ROUTES[0];
   usePageMeta(meta.title, meta.description);
-  const preds = useAsync("preds:all", api.allPredictions);
+  const preds = useAsync("home:trust", async () => {
+    const [p, c] = await Promise.all([api.allPredictions(), api.allCoupons()]);
+    return { p, c };
+  });
   const up = useAsync("preds:upcoming", api.upcomingPredictions);
   const today = trDay();
   const next = useAsync(`home:next:${today}`, async () => {
@@ -32,8 +35,9 @@ export default function Home() {
   });
   const newsQ = useAsync("news:home", () => api.news(6));
 
-  const singles = (preds.data ?? []).filter((p) => p.tag === "meclis_gorusu");
-  const s = summarize(singles);
+  const bets = toBets(preds.data?.p ?? [], preds.data?.c ?? []);
+  const s = summarize(bets.filter((b) => b.kind === "tekli"));
+  const tot = summarize(bets);
   const live = (up.data ?? []).filter((p) => p.status === "bekliyor" || p.status === "basladi");
   const showcase = (live.length ? live : (up.data ?? [])).slice(0, 3);
   const offline = preds.error === "offline";
@@ -56,9 +60,9 @@ export default function Home() {
           <div className="hero-stats">
             {preds.loading ? <Skeleton rows={1} h={64} /> : (
               <>
-                <Stat label="Kilitli karar" value={preds.data?.length ?? 0} />
-                <Stat label="İsabet" value={pct(s.hit, 1)} sub={`${s.won}/${s.won + s.lost} sonuçlanan`} />
-                <Stat label="Kâr (birim)" value={signed(s.profit)} tone={s.profit > 0 ? "pos" : s.profit < 0 ? "neg" : "muted"} sub="piyasa oranlı tekliler" />
+                <Stat label="Kilitli karar" value={preds.data?.p.length ?? 0} />
+                <Stat label="Tekli isabet" value={pct(s.hit, 1)} sub={`${s.won}/${s.won + s.lost} sonuçlanan`} />
+                <Stat label="Toplam kâr (birim)" value={tot.profit !== null ? signed(tot.profit) : "—"} tone={(tot.profit ?? 0) > 0 ? "pos" : (tot.profit ?? 0) < 0 ? "neg" : "muted"} sub="tekliler + kuponlar, piyasa oranlı" />
               </>
             )}
           </div>

@@ -62,11 +62,7 @@ function Detail({ m }: { m: Match }) {
         <div className="col-main">
           <Card title="Meclisin analizi" className="analysis">
             <Gate loading={an.loading} error={an.error} rows={3}>
-              {a?.ready || a?.markets?.length ? <AnalysisView a={a} m={m} /> : (
-                <Empty title={new Date(m.kickoff_at).getTime() > Date.now() ? "Meclisin analizi yakında" : "Bu maç için analiz yayımlanmadı"} icon="◆">
-                  {new Date(m.kickoff_at).getTime() > Date.now() ? <>Meclis her maçı analiz eder; değerli bir seçim varsa başlama saatinden saatler önce yayımlar. Aşağıda şimdiden form, istatistik ve oranlar var.</> : <>Form, istatistik ve sonuç bilgileri aşağıda.</>}
-                </Empty>
-              )}
+              {a?.ready || a?.markets?.length ? <AnalysisView a={a} m={m} /> : <PreAnalysis m={m} />}
             </Gate>
           </Card>
 
@@ -109,6 +105,103 @@ function ConfidenceCard({ a, preds, m }: { a?: AnalysisPayload; preds: Predictio
       ) : <p className="muted small">Güven göstergesi kararla birlikte yayımlanır.</p>}
       {all.length > 0 && <p className="muted tiny">Veri kaynakları: {all.join(", ")}</p>}
     </Card>
+  );
+}
+
+type Wdl = { n: number; w: number; d: number; l: number; gf: number; ga: number; o25: number; btts: number };
+function wdl(games: Match[], teamId: string): Wdl {
+  const r: Wdl = { n: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, o25: 0, btts: 0 };
+  for (const g of games) {
+    if (!hasScore(g)) continue;
+    const home = g.home_team_id === teamId;
+    const gf = home ? g.home_goals! : g.away_goals!, ga = home ? g.away_goals! : g.home_goals!;
+    r.n++; r.gf += gf; r.ga += ga;
+    if (gf > ga) r.w++; else if (gf === ga) r.d++; else r.l++;
+    if (gf + ga > 2.5) r.o25++;
+    if (gf > 0 && ga > 0) r.btts++;
+  }
+  return r;
+}
+
+/** Model analizi henüz kaydedilmemişse: yalnızca veri havuzundaki gerçek bilgilerden çıkarılan özet. Uydurma sayı yok. */
+function PreAnalysis({ m }: { m: Match }) {
+  const upcoming = new Date(m.kickoff_at).getTime() > Date.now();
+  const d = useAsync(`pre:${m.id}`, async () => {
+    const [h, a, h2h, inj] = await Promise.all([
+      api.teamHistory(m.home_team_id, m.kickoff_at, 10), api.teamHistory(m.away_team_id, m.kickoff_at, 10),
+      api.headToHead(m.home_team_id, m.away_team_id, m.kickoff_at), api.injuriesFor(m),
+    ]);
+    return { h, a, h2h, inj };
+  }, [m.id]);
+  const o = m.odds ?? {};
+  const g = (k: string, s: string) => { const v = o[k]?.[s]; return typeof v === "number" && v > 1 ? v : null; };
+  const implied = (k: string, sels: string[]) => {
+    const odds = sels.map((s) => g(k, s));
+    if (odds.some((x) => x === null)) return null;
+    const inv = odds.map((x) => 1 / x!);
+    const sum = inv.reduce((a, b) => a + b, 0);
+    return { p: inv.map((x) => x / sum), margin: sum - 1, src: sourceLabel(String(o[k]?.src ?? "")) };
+  };
+  const x12 = implied("1X2", ["1", "X", "2"]);
+  const ou = implied("OU_GOALS_2.5", ["ALT", "ÜST"]);
+  const kg = implied("BTTS", ["VAR", "YOK"]);
+  const avg = (x: number, n: number) => (n ? num(x / n, 2) : "—");
+
+  return (
+    <div className="an pre">
+      <p className="pre-note">
+        <b>{upcoming ? "Meclisin model analizi henüz yayımlanmadı." : "Bu maç için model analizi yayımlanmadı."}</b>{" "}
+        {upcoming ? "Meclis her maçı analiz eder; değerli bir seçim çıkarsa başlama saatinden saatler önce yayımlar. " : ""}
+        Aşağıdakiler veri havuzundaki ham bilgilerden çıkarılmıştır; Meclis'in olasılıkları değildir.
+      </p>
+      {x12 && (
+        <div className="pre-block">
+          <h3>Piyasanın gördüğü</h3>
+          <ProbBar p1={x12.p[0]} px={x12.p[1]} p2={x12.p[2]} home={m.home_name} away={m.away_name} />
+          <p className="muted tiny">
+            Oranlardan çıkarılan, marjı arındırılmış olasılıklar{ou ? ` · 2,5 Üst ${pct(ou.p[1])}` : ""}{kg ? ` · KG Var ${pct(kg.p[0])}` : ""}.
+            {" "}Bahis marjı %{num(x12.margin * 100, 1)}{x12.src ? ` · Kaynak: ${x12.src}` : ""}.
+          </p>
+        </div>
+      )}
+      <Gate loading={d.loading} error={d.error} rows={2}>
+        {d.data && (() => {
+          const H = wdl(d.data.h, m.home_team_id), A = wdl(d.data.a, m.away_team_id);
+          const hh = wdl(d.data.h2h, m.home_team_id);
+          const injH = d.data.inj.filter((x) => x.team_id === m.home_team_id), injA = d.data.inj.filter((x) => x.team_id === m.away_team_id);
+          const keyN = (r: Injury[]) => r.filter((x) => x.is_key).length;
+          return (
+            <>
+              {(H.n > 0 || A.n > 0) && (
+                <div className="pre-block">
+                  <h3>Form (son maçlar)</h3>
+                  <div className="table-wrap">
+                    <table className="tbl tight">
+                      <thead><tr><th>Takım</th><th>Maç</th><th>G-B-M</th><th>Attığı / maç</th><th>Yediği / maç</th><th>2,5 Üst</th><th>KG Var</th></tr></thead>
+                      <tbody>
+                        {([[m.home_name, H], [m.away_name, A]] as const).map(([n, r]) => (
+                          <tr key={n}><td><b>{n}</b></td><td>{r.n}</td><td>{r.w}-{r.d}-{r.l}</td><td>{avg(r.gf, r.n)}</td><td>{avg(r.ga, r.n)}</td>
+                            <td>{r.n ? `${r.o25}/${r.n}` : "—"}</td><td>{r.n ? `${r.btts}/${r.n}` : "—"}</td></tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+              <div className="pre-facts">
+                {hh.n > 0 ? (
+                  <div><span className="kicker">Aralarındaki son {hh.n} maç</span>
+                    <p>{m.home_name} {hh.w} galibiyet, {hh.d} beraberlik, {m.away_name} {hh.l} galibiyet · maç başı {avg(hh.gf + hh.ga, hh.n)} gol</p></div>
+                ) : <div><span className="kicker">Aralarındaki maçlar</span><p className="muted">Veri havuzunda son karşılaşma yok.</p></div>}
+                <div><span className="kicker">Eksikler</span>
+                  <p>{m.home_name}: {injH.length ? `${injH.length} oyuncu${keyN(injH) ? ` (${keyN(injH)} kilit)` : ""}` : "bildirilen yok"} · {m.away_name}: {injA.length ? `${injA.length} oyuncu${keyN(injA) ? ` (${keyN(injA)} kilit)` : ""}` : "bildirilen yok"}</p></div>
+              </div>
+              {!x12 && H.n === 0 && A.n === 0 && <p className="muted small">Bu maç için veri havuzunda henüz yeterli bilgi yok.</p>}
+            </>
+          );
+        })()}
+      </Gate>
+    </div>
   );
 }
 

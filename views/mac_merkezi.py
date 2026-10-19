@@ -4,7 +4,7 @@ import pandas as pd
 import streamlit as st
 
 from meclis import ui
-from meclis.markets import MARKET_GROUPS, MARKET_LABELS, pick_label
+from meclis.markets import MARKET_GROUPS, pick_label
 from meclis.pool import status_text, today_tr
 from meclis.timeutil import day_bounds_utc, tr_str
 
@@ -15,7 +15,7 @@ s, store, pool = ui.resources()
 
 if not store.select("matches", limit=1):
     ui.empty_state("Maç verisi hazırlanıyor; kısa süre sonra tekrar bak.")
-    if not getattr(store, "read_only", False) and st.button("📥 Veri havuzunu doldur", type="primary"):
+    if st.session_state.get("is_admin") and not getattr(store, "read_only", False) and st.button("📥 Veri havuzunu doldur", type="primary"):
         with st.spinner("Kaynaklar taranıyor..."):
             r = pool.refresh(history=True)
         ui.clear_caches()

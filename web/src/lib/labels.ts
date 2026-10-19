@@ -2,14 +2,13 @@ import type { PredStatus, Tag } from "./types";
 
 export interface LeagueInfo { name: string; country: string; flag: string; order: number }
 
-// football-data.co.uk lig kodları (+ yeni eklenebilecekler). Bilinmeyen kod, kodun kendisiyle gösterilir.
+// Boru hattının kapsadığı ligler. Filtre listeleri veriden türetilir; bilinmeyen kod, kodun kendisiyle gösterilir.
 export const LEAGUES: Record<string, LeagueInfo> = {
   T1: { name: "Süper Lig", country: "Türkiye", flag: "🇹🇷", order: 1 },
   T2: { name: "TFF 1. Lig", country: "Türkiye", flag: "🇹🇷", order: 2 },
   E0: { name: "Premier Lig", country: "İngiltere", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", order: 3 },
   E1: { name: "Championship", country: "İngiltere", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", order: 4 },
   E2: { name: "League One", country: "İngiltere", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", order: 5 },
-  E3: { name: "League Two", country: "İngiltere", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", order: 6 },
   SP1: { name: "La Liga", country: "İspanya", flag: "🇪🇸", order: 7 },
   SP2: { name: "La Liga 2", country: "İspanya", flag: "🇪🇸", order: 8 },
   I1: { name: "Serie A", country: "İtalya", flag: "🇮🇹", order: 9 },
@@ -22,7 +21,6 @@ export const LEAGUES: Record<string, LeagueInfo> = {
   P1: { name: "Liga Portugal", country: "Portekiz", flag: "🇵🇹", order: 16 },
   B1: { name: "Pro Lig", country: "Belçika", flag: "🇧🇪", order: 17 },
   SC0: { name: "Premiership", country: "İskoçya", flag: "🏴󠁧󠁢󠁳󠁣󠁴󠁿", order: 18 },
-  SC1: { name: "Championship", country: "İskoçya", flag: "🏴󠁧󠁢󠁳󠁣󠁴󠁿", order: 19 },
   G1: { name: "Super League", country: "Yunanistan", flag: "🇬🇷", order: 20 },
   CL: { name: "Şampiyonlar Ligi", country: "UEFA", flag: "🇪🇺", order: 0.5 },
   EL: { name: "Avrupa Ligi", country: "UEFA", flag: "🇪🇺", order: 0.6 },

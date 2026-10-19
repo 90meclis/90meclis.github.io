@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import * as api from "../lib/data";
 import { useAsync } from "../lib/useAsync";
-import { dateShort, dateTime, hoursBefore, num, pct, signed, time } from "../lib/format";
+import { dateShort, dateTime, hoursBefore, num, pct, signed, time, trDay } from "../lib/format";
 import { MARKET_LABELS, STATUS_LABELS, TAG_LABELS, league, pickLabel } from "../lib/labels";
 import { matchPath } from "../lib/match";
 import { usePageMeta, ROUTES } from "../lib/seo";
@@ -24,13 +24,22 @@ export default function Archive() {
   const [lg, setLg] = useState("");
   const [market, setMarket] = useState("");
   const [qText, setQ] = useState("");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const inRange = (iso: string | null | undefined) => {
+    if (!from && !to) return true;
+    if (!iso) return false;
+    const day = trDay(iso);
+    return (!from || day >= from) && (!to || day <= to);
+  };
   const [n, setN] = useState(PAGE);
   const [view, setView] = useState<"kayit" | "kupon">("kayit");
 
   const preds = useMemo(() => d.data?.preds ?? [], [d.data]);
   const leagues = useMemo(() => [...new Set(preds.map((p) => p.league ?? ""))].filter(Boolean).sort((a, b) => league(a).order - league(b).order), [preds]);
+  const coupons = (d.data?.coupons ?? []).filter((c) => inRange(c.first_kickoff_at));
   const markets = useMemo(() => [...new Set(preds.map((p) => p.market))].sort(), [preds]);
-  const rows = preds.filter((p) =>
+  const rows = preds.filter((p) => inRange(p.kickoff_at) &&
     (!tag || p.tag === tag) && (!status || p.status === status) && (!lg || p.league === lg) && (!market || p.market === market) &&
     (!qText || `${p.home_name} ${p.away_name}`.toLocaleLowerCase("tr-TR").includes(qText.toLocaleLowerCase("tr-TR"))),
   );
@@ -44,6 +53,11 @@ export default function Archive() {
         {([["kayit", "Kayıtlar"], ["kupon", "Kuponlar"]] as const).map(([k, l]) => (
           <button key={k} role="tab" aria-selected={view === k} className={view === k ? "on" : ""} onClick={() => setView(k)}>{l}</button>
         ))}
+      </div>
+      <div className="filters dates">
+        <label><span>Başlangıç (TSİ)</span><input type="date" value={from} max={to || undefined} onChange={(e) => { setFrom(e.target.value); setN(PAGE); }} /></label>
+        <label><span>Bitiş (TSİ)</span><input type="date" value={to} min={from || undefined} onChange={(e) => { setTo(e.target.value); setN(PAGE); }} /></label>
+        {(from || to) && <button className="btn ghost" onClick={() => { setFrom(""); setTo(""); }}>Tarihi temizle</button>}
       </div>
       <Gate loading={d.loading} error={d.error} rows={6}>
         {view === "kayit" && (
@@ -83,9 +97,9 @@ export default function Archive() {
           </>
         )}
         {view === "kupon" && (
-          d.data!.coupons.length ? (
-            <div className="coupons">{d.data!.coupons.map((c) => <CouponCard key={c.id} c={c} legs={preds.filter((p) => p.coupon_id === c.id)} />)}</div>
-          ) : <Empty title="Henüz kupon yok" icon="◆">Günün Kararı yalnızca 2,30–4,00 bandında değerli bir kombinasyon bulunursa kurulur.</Empty>
+          coupons.length ? (
+            <div className="coupons">{coupons.map((c) => <CouponCard key={c.id} c={c} legs={preds.filter((p) => p.coupon_id === c.id)} />)}</div>
+          ) : <Empty title={from || to ? "Bu tarih aralığında kupon yok" : "Henüz kupon yok"} icon="◆">Günün Kararı yalnızca 2,30–4,00 bandında değerli bir kombinasyon bulunursa kurulur.</Empty>
         )}
       </Gate>
       <Disclaimer />

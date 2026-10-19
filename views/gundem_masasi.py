@@ -10,7 +10,7 @@ st.caption("Her sabah ücretsiz RSS akışları taranır: transfer, sakatlık, t
 ui.banner()
 s, store, pool = ui.resources()
 
-if not getattr(store, "read_only", False) and st.button("📡 Gündemi şimdi tara", disabled=s.demo_mode):
+if st.session_state.get("is_admin") and not getattr(store, "read_only", False) and st.button("📡 Gündemi şimdi tara", disabled=s.demo_mode):
     from meclis.news import scan_news
 
     with st.spinner("Akışlar okunuyor..."):
