@@ -3,7 +3,7 @@ import streamlit as st
 
 from meclis import ui
 from meclis.markets import MARKET_GROUPS, MARKET_LABELS, pick_label
-from meclis.pool import today_tr
+from meclis.pool import status_text, today_tr
 from meclis.timeutil import day_bounds_utc, tr_str
 
 st.title("🏟️ Maç Merkezi")
@@ -49,8 +49,7 @@ for m in matches:
     rows.append({
         "Saat": tr_str(m["kickoff_at"], "%H:%M"), "Lig": ui.league_name(m["league"]),
         "Maç": f"{m['home_name']} – {m['away_name']}",
-        "Durum": {"planlandi": "Oynanacak", "bitti": "Bitti", "basladi": "Oynanıyor", "ertelendi": "Ertelendi",
-                  "iptal": "İptal"}.get(m["status"], m["status"]),
+        "Durum": status_text(m),
         "Skor": f"{m['home_goals']}-{m['away_goals']}" if m.get("home_goals") is not None else "",
         "1 %": round(100 * p["1"]) if p else None, "X %": round(100 * p["X"]) if p else None,
         "2 %": round(100 * p["2"]) if p else None,

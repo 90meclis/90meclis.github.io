@@ -68,3 +68,17 @@ def test_news_team_mention_with_turkish_suffix():
     assert mentions_team("Fenerbahçe'nin yıldızı sakatlandı", "Fenerbahce")
     assert mentions_team("Galatasaray'da ayrılık", "Galatasaray")
     assert not mentions_team("Beşiktaş kazandı", "Trabzonspor")
+
+
+def test_past_kickoff_without_result_not_shown_as_upcoming():
+    from datetime import timedelta
+
+    from meclis.pool import durum_for, missing_fields, status_text
+    from meclis.timeutil import now_utc, to_iso
+
+    live = {"status": "planlandi", "kickoff_at": to_iso(now_utc() - timedelta(minutes=30))}
+    old = {"status": "planlandi", "kickoff_at": to_iso(now_utc() - timedelta(days=2))}
+    fut = {"status": "planlandi", "kickoff_at": to_iso(now_utc() + timedelta(hours=2))}
+    assert durum_for(live) == "canlı" and status_text(live) == "Oynanıyor (tahmini)"
+    assert status_text(old) == "Sonuç bekleniyor" and "sonuç" in missing_fields(old)
+    assert durum_for(fut) == "gelecek" and status_text(fut) == "Oynanacak" and "sonuç" not in missing_fields(fut)

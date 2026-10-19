@@ -158,9 +158,38 @@ def merge_records(records: list[dict], registry: TeamRegistry | None = None,
 DURUM = {"planlandi": "gelecek", "basladi": "canlı", "bitti": "bitti", "ertelendi": "ertelendi", "iptal": "iptal"}
 
 
+LIVE_WINDOW = timedelta(hours=2, minutes=30)
+
+
+def durum_for(m: dict, now=None) -> str:
+    """Görünen durum. Başlama saati geçmiş ama hiçbir kaynak sonuç vermemişse maç 'gelecek' görünmez:
+    ilk 2,5 saat 'canlı' (tahmini), sonrası 'gelecek' kalır ama arayüz 'Sonuç bekleniyor' der."""
+    st = m.get("status") or "planlandi"
+    if st == "planlandi" and m.get("kickoff_at"):
+        now = now or now_utc()
+        ko = parse_dt(m["kickoff_at"])
+        if ko and ko <= now < ko + LIVE_WINDOW:
+            return "canlı"
+    return DURUM.get(st, "gelecek")
+
+
+def status_text(m: dict, now=None) -> str:
+    st = m.get("status") or "planlandi"
+    if st == "planlandi" and m.get("kickoff_at"):
+        now = now or now_utc()
+        ko = parse_dt(m["kickoff_at"])
+        if ko and ko <= now:
+            return "Oynanıyor (tahmini)" if now < ko + LIVE_WINDOW else "Sonuç bekleniyor"
+    return {"planlandi": "Oynanacak", "bitti": "Bitti", "basladi": "Oynanıyor", "ertelendi": "Ertelendi",
+            "iptal": "İptal"}.get(st, st)
+
+
 def missing_fields(m: dict) -> list[str]:
     """Maç kaydında boş kalan alanlar (Maç Merkezi ve tamlık puanı için)."""
     miss = []
+    if m.get("status") in ("planlandi", "basladi") and m.get("kickoff_at") and parse_dt(m["kickoff_at"]) \
+            and parse_dt(m["kickoff_at"]) + LIVE_WINDOW <= now_utc():
+        miss.append("sonuç")
     if not (m.get("odds") or {}).get("1X2"):
         miss.append("piyasa oranı (1X2)")
     if not m.get("venue"):
@@ -291,7 +320,7 @@ class DataPool:
         for m in merged:
             row = {k: v for k, v in m.items() if k != "stats"}
             row["updated_at"] = ts
-            row["durum"] = DURUM.get(m["status"], "gelecek")
+            row["durum"] = durum_for(m)
             row["score"] = f"{m['home_goals']}-{m['away_goals']}" if m.get("home_goals") is not None and m.get("away_goals") is not None else None
             row["missing_fields"] = missing_fields(m)
             match_rows.append(row)
