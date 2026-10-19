@@ -1,6 +1,7 @@
 """TheSportsDB — ücretsiz test anahtarı "123" ile çalışır (THESPORTSDB_KEY ile değiştirilebilir).
 Ücretsiz anahtar kısıtlı: günlük maç listesi, takım/stadyum bilgisi ve kadro listesi açık;
-ilk 11 ve maç istatistikleri ücretsiz anahtarla genelde boş döner."""
+ilk 11 (lookuplineup.php) ücretsiz anahtarla boş döner (19.10.2026'da doğrulandı: {"lineup": null});
+Patreon anahtarı (THESPORTSDB_KEY) tanımlanınca aynı çağrı resmî ilk 11'i doldurur."""
 from __future__ import annotations
 
 import time
@@ -86,3 +87,20 @@ class TheSportsDB:
         data = self._get("lookup_all_players.php", {"id": tsdb_team_id})
         return [{"name": p.get("strPlayer"), "position": p.get("strPosition"), "number": p.get("strNumber")}
                 for p in (data.get("player") or []) if p.get("strTeam")]
+
+    def lineup(self, tsdb_event_id: str) -> list[dict]:
+        """Maç kadrosu → [{side, start_xi, subs}] (ücretsiz anahtarda genelde boş)."""
+        data = self._get("lookuplineup.php", {"id": tsdb_event_id})
+        return parse_lineup(data.get("lineup") or [])
+
+
+def parse_lineup(items: list[dict]) -> list[dict]:
+    sides: dict[str, dict] = {}
+    for p in items or []:
+        if not p.get("strPlayer"):
+            continue
+        side = "home" if (p.get("strHome") or "").lower() == "yes" else "away"
+        s = sides.setdefault(side, {"side": side, "formation": None, "start_xi": [], "subs": []})
+        rec = {"name": p["strPlayer"], "number": p.get("intSquadNumber"), "pos": p.get("strPositionShort") or p.get("strPosition")}
+        (s["subs"] if (p.get("strSubstitute") or "").lower() == "yes" else s["start_xi"]).append(rec)
+    return [s for s in sides.values() if s["start_xi"]]

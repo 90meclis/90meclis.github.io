@@ -57,24 +57,53 @@ def _key(name: str) -> str:
     return "".join(ch for ch in strip_accents(name or "").lower() if ch.isalnum())
 
 
+def _parts(name: str) -> tuple[str, str]:
+    """(ilk harf, soyad anahtarı). "Ö. Toprak" → ("o", "toprak"); "Ömer Toprak" → ("o", "toprak")."""
+    toks = [t for t in strip_accents(name or "").replace(".", ". ").split() if t]
+    if not toks:
+        return "", ""
+    first = _key(toks[0])[:1] if len(toks) > 1 else ""
+    return first, _key(toks[-1])
+
+
 def find_player(name: str, players: list[dict]) -> dict | None:
+    """Kaynaklar arası oyuncu eşleştirme: tam ad → (ilk harf + soyad) → tekil soyad → tek adlı oyuncu."""
     k = _key(name)
     if not k:
         return None
     for p in players:
-        if _key(p.get("name")) == k:
+        if _key(p.get("name")) == k or (p.get("full_name") and _key(p["full_name"]) == k):
             return p
-    surname = _key((name or "").split()[-1]) if name else ""
-    cands = [p for p in players if surname and _key(p.get("name", "")).endswith(surname)]
-    return cands[0] if len(cands) == 1 else None
+    first, surname = _parts(name)
+    if not surname:
+        return None
+
+    def keys(p):
+        return [x for x in (p.get("name"), p.get("full_name")) if x]
+
+    cands = [p for p in players if any(_parts(n)[1] == surname for n in keys(p))]
+    if len(cands) > 1 and first:
+        narrowed = [p for p in cands if any(_parts(n)[0] in ("", first) and _parts(n)[1] == surname for n in keys(p))]
+        cands = narrowed or cands
+    if len(cands) == 1:
+        return cands[0]
+    # tek adlı oyuncular ("Vinícius Júnior" ↔ "Vinícius") ve soyadın ad içinde geçmesi
+    loose = [p for p in players if len(surname) >= 5 and any(surname in _key(n) for n in keys(p))]
+    return loose[0] if len(loose) == 1 else None
+
+
+def has_stats(p: dict | None) -> bool:
+    return bool(p) and any(p.get(f) is not None for f in ("minutes", "appearances", "lineups"))
 
 
 def player_importance(player: dict | None, team_players: list[dict], kind: str | None = None) -> dict:
     u = certainty(kind)
-    if not player or not team_players:
+    stat_players = [p for p in (team_players or []) if has_stats(p)]
+    if not player or not stat_players or not has_stats(player):
         return {"importance": round(u * UNKNOWN_IMPORTANCE, 3), "is_key": None, "minutes_share": None,
                 "ga_share": None, "group": _pos_group((player or {}).get("position")), "known": False,
                 "components": [], "certainty": u}
+    team_players = stat_players
     max_min = max((p.get("minutes") or 0) for p in team_players) or 1
     total_ga = sum((p.get("goals") or 0) + (p.get("assists") or 0) for p in team_players) or 1
     comps = {"m": (player.get("minutes") or 0) / max_min,

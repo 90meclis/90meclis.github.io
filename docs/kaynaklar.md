@@ -19,19 +19,21 @@ Supabase Vault içinde durur; kodda, depoda veya tabloda yalnızca değişkenin 
 | **Wikidata (SPARQL)** | — | Ücretsiz, CC0; sorgu başına 60 sn, User-Agent zorunlu | stadyum, stadyum kapasitesi, şehir, stadyum koordinatı, teknik direktör | https://query.wikidata.org |
 | **Open-Meteo** | — | Ticari olmayan kullanım ücretsiz, 10.000 istek/gün | hava durumu, şehir koordinatı | https://open-meteo.com/en/pricing |
 | **Haber RSS akışları** | — | Yayıncıların herkese açık RSS akışları | haber başlığı, özet, bağlantı | — |
+| **Wikipedia (güncel kadro)** | — | Ücretsiz MediaWiki API; seri istek, tanımlayıcı User-Agent, maxlag=5 | güncel A takım kadrosu, forma no, mevki | https://www.mediawiki.org/wiki/API:Etiquette |
 | **Meclis Elo (iç hesap)** | — | Havuzdaki gerçek sonuçlardan hesaplanır | takım gücü (Elo), gol modeli önseli | — |
 
 ## Anahtar gerektirenler (anahtar gelene kadar "anahtar bekleniyor")
 
 | Kaynak | Anahtar (ortam değişkeni) | Ücretsiz katman | Doldurduğu alanlar | Kayıt / bilgi |
 |---|---|---|---|---|
-| **API-Football (api-sports.io)** | `API_FOOTBALL_KEY` | Ücretsiz: 100 istek/gün, 10/dk | fikstür, ilk 11, sakat/cezalı, maç istatistiği, oyuncu dakika/gol/asist, hakem | https://dashboard.api-football.com/register |
+| **API-Football (api-sports.io)** | `API_FOOTBALL_KEY` ✅ tanımlı | Ücretsiz: 100 istek/gün, 10/dk; sezonluk sorgu yalnızca 2022–2024, tarih sorgusu dün–yarın, fikstür sorgusu güncel sezonda açık | güncel sakat/cezalı (dün–yarın), maç öncesi resmî ilk 11, geçmiş fikstür ve sakatlık (2022–2024), oyuncu dakika/ilk 11/gol/asist (2024) | https://dashboard.api-football.com/register |
+| **Bzzoiro Sports Data (BSD)** | `BSD_API_KEY` | Ücretsiz futbol planı, kota yok (IP başına 10 istek/sn); 6 ligin hepsi | maç başına sakat/cezalı/şüpheli, resmî ilk 11 (~1 saat önce), tahmini ilk 11 (AI), kadro + uygunluk, fikstür/sonuç | https://sports.bzzoiro.com/register/ |
 | **football-data.org** | `FOOTBALL_DATA_TOKEN` | Ücretsiz: 12 turnuva, 10 istek/dk (Süper Lig yok) | fikstür, sonuç, İY skoru, hakem, stadyum | https://www.football-data.org/client/register |
 | **The Odds API** | `ODDS_API_KEY` | Ücretsiz: ayda 500 kredi (h2h+totals × eu = 2 kredi/lig) | 1X2 oranı, Alt/Üst oranı, Pinnacle oranı | https://the-odds-api.com/#get-access |
 | **OddsPapi** | `ODDSPAPI_KEY` | Ücretsiz: ayda 250 istek (bot günde en çok 1 oran çağrısı yapar) | 1X2 oranı (Pinnacle dahil 300+ bahis şirketi) | https://oddspapi.io/en/register |
 | **Sportmonks Football API v3** | `SPORTMONKS_KEY` | Ücretsiz plan: yalnızca Danimarka Superliga + İskoçya Premiership (180 istek/saat/varlık); bizim liglerimiz ücretli planda | fikstür, sonuç, İY skoru, stadyum, hakem, maç istatistiği | https://my.sportmonks.com/register |
 | **FootyStats API** | `FOOTYSTATS_KEY` | Ücretsiz: yalnızca Premier Lig, 180 istek/saat; Süper Lig ücretli (Hobby £29.99/ay) | sonuç, İY skoru, korner, kart, isabetli şut, faul, stadyum, 1X2 ve 2.5 Alt/Üst oranı | https://footystats.org/api |
-| **SportDevs Football API** | `SPORTDEVS_KEY` | Ücretsiz: 300 istek/gün, 10 büyük lig | fikstür, sonuç, İY skoru, stadyum | https://sportdevs.com/football |
+| **SportDevs Football API** | `SPORTDEVS_KEY` | Ücretsiz: 300 istek/gün, 10 büyük lig | fikstür, sonuç, İY skoru, stadyum, ilk 11 (`matches-lineups`), kadro içindeki eksikler | https://sportdevs.com/football |
 | **Club Elo** | `CLUBELO_KEY` | Eskiden anahtarsızdı; Eylül 2026'dan beri API kimlik doğrulama istiyor, kayıt henüz kapalı | takım gücü (Elo) başlangıç puanı | http://clubelo.com/API |
 
 ## Tüm anahtarlar
@@ -47,9 +49,55 @@ Supabase Vault içinde durur; kodda, depoda veya tabloda yalnızca değişkenin 
 | `FOOTYSTATS_KEY` | FootyStats API | https://footystats.org/api | Ücretsiz: yalnızca Premier Lig, 180 istek/saat; Süper Lig ücretli (Hobby £29.99/ay) |
 | `SPORTDEVS_KEY` | SportDevs Football API | https://sportdevs.com/football | Ücretsiz: 300 istek/gün, 10 büyük lig |
 | `CLUBELO_KEY` | Club Elo | http://clubelo.com/API | Eskiden anahtarsızdı; Eylül 2026'dan beri API kimlik doğrulama istiyor, kayıt henüz kapalı |
+| `BSD_API_KEY` | Bzzoiro Sports Data (BSD) | https://sports.bzzoiro.com/register/ | Ücretsiz futbol planı, kota yok; sakat/cezalı + resmî/tahmini ilk 11 + kadro uygunluğu |
 
 GitHub: Repo → Settings → Secrets and variables → Actions → **New repository secret** (adlar yukarıdaki gibi).
 İş akışı (`.github/workflows/meclis.yml`) hepsini ortam değişkeni olarak geçirir.
+
+## Kadro, sakat/cezalı ve ilk 11 havuzu (`meclis/teamnews.py`)
+
+Kural: kaynak sınırı yok; hepsi havuza girer, biri boşsa diğeri doldurur. Komut: `python -m meclis kadro`
+(sabah ve gün içi çalıştırmalarında otomatik).
+
+| Veri | Kaynak sırası (ilk dolu kazanır, kaynaklar satırda birlikte yazılır) |
+|---|---|
+| **Güncel kadro** (`players`, `player_key = k:<ad>`) | Wikipedia A takım kadrosu → BSD kadrosu (eksik oyuncuları ekler, forma no/mevki tamamlar). Takım başına 7 günde bir. |
+| **Oyuncu önemi istatistiği** | Aynı kulüpte son açık API-Football sezonu (ücretsiz plan: 2024) ad eşleştirmesiyle (`stats_source` = "api-football 2024"). Eşleşmeyen oyuncu "bilinmiyor" (önem 0,15 × kesinlik) sayılır, uydurma değer yok. |
+| **Sakat / cezalı / şüpheli** (`injuries`) | BSD maç listesi → BSD kadro uygunluğu → API-Football (dün/bugün/yarın günlük liste; 36 saatten yakın maçta fikstür sorgusu) → SportDevs kadro eksikleri. Her kayıt Eksik Etkisi formülüyle (0–100) oyuncu önemine göre ağırlıklanır. En az bir kaynak geçerli yanıt verdiyse liste "biliniyor" sayılır; boş yanıt = bildirilen eksik yok. |
+| **İlk 11** (`lineups`, `lineup_status`) | BSD resmî → API-Football → SportDevs → TheSportsDB (Patreon anahtarı) → BSD tahmini. Resmî ilk 11 her zaman tahmini ezer; **tahmini ilk 11 "Açıklanan ilk 11" tamlık maddesini doldurmaz**, arayüzde "tahmini" etiketiyle görünür. |
+
+Eski kayıtlar silinmez: bir takımın güncel kadrosu en son yenilemenin damgasını taşıyan satırlardır; bir maçın güncel
+eksik listesi son başarılı taramadaki satırlardır (listeden çıkan oyuncu görünmez).
+
+### Lig bazında kapsam (19.10.2026 canlı denemesi)
+
+| Lig | Wikipedia kadro | API-Football güncel (dün–yarın + fikstür) | API-Football geçmiş | BSD (anahtar gelince) | SportDevs (anahtar gelince) |
+|---|---|---|---|---|---|
+| Süper Lig (T1) | ✅ | ✅ sakat/cezalı + ilk 11 | ✅ | ✅ "Trendyol Super Lig" | ✅ (10 büyük lig içinde) |
+| Premier Lig (E0) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| La Liga (SP1) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Serie A (I1) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Bundesliga (D1) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Ligue 1 (F1) | ✅ | ✅ | ✅ | ✅ | ✅ |
+
+### API-Football ücretsiz plan: neler açık? (19.10.2026 canlı deneme)
+
+| Sorgu | Ücretsiz planda | Kullanım |
+|---|---|---|
+| Sezon parametreli (`/fixtures?league&season`, `/injuries?league&season`, `/players?team&season`) | Yalnızca 2022–2024 | Geçmiş veri doldurma |
+| Tarih parametreli (`/fixtures?date`, `/injuries?date`) | Yalnızca dün–bugün–yarın | Güncel sezon fikstür kimlikleri (8 saatte bir, tek istekte tüm ligler) ve günün tüm sakat/cezalı listesi (tek istek) |
+| Fikstür kimliğiyle (`/injuries?fixture`, `/fixtures/lineups?fixture`) | Güncel sezonda da açık | Maç öncesi resmî ilk 11 (başlamadan ≤75 dk), 36 saatten yakın maçın sakatlıkları |
+| `page` parametresi | En fazla 3 | Oyuncu istatistikleri takım takım çekilir |
+
+Sezonluk sorguda kapalı sezon bir kez görülünce `source_status` içinde `api-football:sezon:<yıl>` olarak işaretlenir ve
+7 gün boyunca o sezona sezonluk istek atılmaz (tarih ve fikstür sorguları sürer).
+
+### API-Football geçmiş veri doldurma (`python -m meclis gecmis`)
+
+Günlük bütçe (`API_FOOTBALL_DAILY_BUDGET`, varsayılan 90) içinden 45 istek güncel sezon işlerine ayrılır; kalan ~45
+istek şu sırayla harcanır: en yeni sezon her lig-sezon için fikstür (1 istek) → oyuncu istatistikleri (takım başına ≤3 sayfa) → sezonun tüm
+sakat/cezalı kayıtları (1 istek). İlerleme `source_status` tablosunda `gecmis:apif:<lig>:<sezon>:<iş>` satırlarında tutulur; iş
+yarıda kalırsa ertesi gün kaldığı sayfadan sürer (GitHub Actions: her gün 03:40 TSİ). Toplam ≈ 750 istek ≈ 17 gün; Süper Lig 2024 ilk sırada.
 
 ## Haber akışları (RSS)
 
@@ -79,7 +127,7 @@ Denenip eklenmeyenler: NTV Spor kök `/rss` (HTML dönüyor), Fanatik, Milliyet,
 
 ## Birleştirme önceliği (alan bazında)
 
-- **Genel alanlar:** API-Football → Sportmonks → football-data.org → FootyStats → SportDevs → OpenLigaDB →
+- **Genel alanlar:** API-Football → Sportmonks → football-data.org → FootyStats → SportDevs → BSD → OpenLigaDB →
   The Odds API → OddsPapi → TheSportsDB → football-data.co.uk → openfootball.
 - **Oranlar:** The Odds API → OddsPapi (Pinnacle) → football-data.co.uk → FootyStats → API-Football → Sportmonks.
 - **Boşluk dolduranlar:** openfootball ile OpenLigaDB `pl`/`la1` (topluluk ligleri) yeni maç ya da takım
@@ -108,9 +156,16 @@ Geriye dönük test (T1, E0, SP1, I1; 752 maç; her maç yalnızca kendinden ön
 | Kaynak | Neden |
 |---|---|
 | FotMob, SofaScore, Flashscore, WhoScored | Koşulları otomatik erişimi / kazımayı yasaklıyor; resmî açık API yok. |
-| Transfermarkt, Forebet, Understat, FBref | Koşullar kazımayı yasaklıyor (FBref/Sports-Reference otomatik erişimi açıkça sınırlıyor). |
+| Transfermarkt, Forebet, Understat, FBref | Koşullar kazımayı yasaklıyor (Transfermarkt: "bot, spider, screen scraping veya başka otomatik süreçle erişim yasak" — robots.txt açık olsa da; FBref/Sports-Reference otomatik erişimi açıkça sınırlıyor). |
 | Nesine iç uç noktaları | Belgelenmemiş iç API; kullanım koşulları izin vermiyor. |
-| ESPN belgelenmemiş API | Kamuya açık kullanım koşulu yok; kullanılmıyor. |
+| ESPN belgelenmemiş API (site.api.espn.com) | Teknik olarak çalışıyor (6 ligde kadro + oyuncu istatistiği + maç sonrası ilk 11; sakatlık alanı boş), ama ESPN/Disney kullanım koşulları robot/script ile erişimi ve veri çıkarmayı açıkça yasaklıyor; resmî API değil. |
+| Fantasy Premier League API | Teknik olarak çalışıyor (yalnızca Premier Lig: sakat/cezalı + oynama ihtimali), ama FPL koşulları otomatik sistemle bilgi çıkarmayı ve ticari kullanımı yasaklıyor. |
+| FotMob | robots.txt `/api/*` yolunu genel botlara kapatıyor; koşullar otomatik erişimi yasaklıyor. |
+| SofaScore | Doğrudan erişim 403 (bot koruması); koşullar kazımayı yasaklıyor. |
+| Premier Injuries, PhysioRoom | Koşullar içeriğin kopyalanmasını/ticari kullanımını yazılı izin olmadan yasaklıyor; PhysioRoom tablosu 2022'den beri güncellenmiyor; ikisi de yalnızca Premier Lig. |
+| SoccersAPI | Ücretsiz plan yalnızca Avusturya Bundesliga, Avustralya A-League, Danimarka Superliga; bizim liglerimiz ücretli. |
+| bigballsdata Injuries API | Ücretsiz anahtar var ama canlı sakatlık yalnızca NBA + NHL; futbol sakatlıkları canlı değil. |
+| football-data.org ücretsiz katman | İlk 11 / sakatlık "Deep Data" ücretli pakette; ücretsiz katman yalnızca fikstür/sonuç (zaten havuzda). |
 | Club Elo web sayfaları | Yalnızca resmî API kullanılır; Eylül 2026'dan beri API kimlik doğrulaması istiyor ve kayıt kapalı. |
 | odds-api.io | Yeni ücretsiz anahtar verilmesi 27 Ağustos 2026'da durduruldu. |
 | iSports API, AllSportsAPI | Kalıcı ücretsiz katman yok, yalnızca deneme süresi. |

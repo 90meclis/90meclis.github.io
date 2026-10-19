@@ -76,6 +76,7 @@ Secrets / Supabase Vault'a yazın):
 | `FOOTYSTATS_KEY` | FootyStats API | https://footystats.org/api | Ücretsiz: yalnızca Premier Lig, 180 istek/saat; Süper Lig ücretli (Hobby £29.99/ay) |
 | `SPORTDEVS_KEY` | SportDevs Football API | https://sportdevs.com/football | Ücretsiz: 300 istek/gün, 10 büyük lig |
 | `CLUBELO_KEY` | Club Elo | http://clubelo.com/API | Eskiden anahtarsızdı; Eylül 2026'dan beri API kimlik doğrulama istiyor, kayıt henüz kapalı |
+| `BSD_API_KEY` | Bzzoiro Sports Data (BSD) | https://sports.bzzoiro.com/register/ | Ücretsiz futbol planı, kota yok: maç başına sakat/cezalı, resmî + tahmini ilk 11, kadro uygunluğu (6 lig) |
 
 Diğer ayarlar için `.env.example` dosyasına bakın. **Gerçek anahtar hiçbir dosyada depoya girmez.**
 
@@ -86,7 +87,9 @@ python -m meclis yenile [--gecmis]     # veri havuzunu güncelle (--gecmis: önc
 python -m meclis gundem                # RSS gündem taraması
 python -m meclis bot [--kuru]          # analiz + kayıt (--kuru: hiçbir şey yazmadan dene)
 python -m meclis sonuclandir           # biten maçları otomatik sonuçlandır
-python -m meclis sabah                 # yenile + gündem + bot + sonuçlandır
+python -m meclis kadro [--zorla]       # güncel kadrolar (Wikipedia+BSD) + yaklaşan maçların eksikleri ve ilk 11'i
+python -m meclis gecmis                # API-Football ücretsiz plan 2022–2024 geçmiş veri (günlük bütçe, kaldığı yerden)
+python -m meclis sabah                 # yenile + gündem + kadro + bot + sonuçlandır
 python -m meclis durum                 # kaynak durumu / kuyruk özeti
 python -m meclis bot --ligler T1,E0    # lig seçimi
 ```
@@ -96,12 +99,13 @@ Aynı işlemler arayüzde **Tahmin Botu** sayfasından da yapılabilir (anon ana
 ### Zamanlanmış çalışma (GitHub Actions)
 
 `.github/workflows/meclis.yml`:
-- 08:00 TSİ `sabah`, gün içinde her 2 saatte bir `yenile + bot + sonuclandir`, gece `sonuclandir`;
+- 08:00 TSİ `sabah`, gün içinde her 2 saatte bir `yenile + kadro + bot + sonuclandir`, gece `sonuclandir`,
+  03:40 TSİ `gecmis` (API-Football kotası sıfırlandıktan sonra);
   ayrıca **Actions → Run workflow** ile elle.
 - Repo → Settings → Secrets and variables → Actions → **Secrets**: `SUPABASE_URL`,
   `SUPABASE_SERVICE_ROLE_KEY` ve yukarıdaki tablodaki tüm veri anahtarları (`API_FOOTBALL_KEY`,
   `FOOTBALL_DATA_TOKEN`, `ODDS_API_KEY`, `ODDSPAPI_KEY`, `SPORTMONKS_KEY`, `FOOTYSTATS_KEY`, `SPORTDEVS_KEY`,
-  `CLUBELO_KEY`, `THESPORTSDB_KEY`). Tanımlanmayan secret boş geçer; bot o kaynağı "anahtar bekleniyor" diye raporlar.
+  `CLUBELO_KEY`, `THESPORTSDB_KEY`, `BSD_API_KEY`). Tanımlanmayan secret boş geçer; bot o kaynağı "anahtar bekleniyor" diye raporlar.
   **Variables**: `LEAGUES` (boşsa `T1,E0,SP1,I1,D1,F1`).
 
 ## Model özeti

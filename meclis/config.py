@@ -97,6 +97,7 @@ class Settings:
     sportdevs_key: str | None = None
     oddspapi_key: str | None = None
     clubelo_key: str | None = None
+    bsd_api_key: str | None = None
     keys: dict = field(default_factory=dict)  # ENV ADI -> değer (yalnızca "tanımlı mı" kontrolü için)
     completeness_min: float = 60.0
     thesportsdb_key: str = "123"
@@ -171,6 +172,7 @@ def load_settings() -> Settings:
         sportdevs_key=get_setting("SPORTDEVS_KEY"),
         oddspapi_key=get_setting("ODDSPAPI_KEY"),
         clubelo_key=get_setting("CLUBELO_KEY"),
+        bsd_api_key=get_setting("BSD_API_KEY"),
         keys=_all_keys(),
         completeness_min=get_float("COMPLETENESS_MIN", 60.0),
         thesportsdb_key=get_setting("THESPORTSDB_KEY", "123") or "123",

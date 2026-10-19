@@ -68,3 +68,43 @@ class SportDevs:
             if len(rows) < 50:
                 break
         return out
+
+    def lineups(self, sportdevs_match_id: int) -> list[dict]:
+        """/matches-lineups?id=eq.<maç> → [{side, formation, start_xi, subs, confirmed, missing}].
+        Belgeye göre kadro kimliği maç kimliğiyle aynıdır; 5 dakikada bir güncellenir."""
+        r = get(f"{BASE}/matches-lineups", params=[("id", f"eq.{int(sportdevs_match_id)}")],
+                headers={"Authorization": f"Bearer {self.key}"})
+        if r.status_code in (401, 403):
+            raise SourceError(f"SportDevs yetki hatası (HTTP {r.status_code})")
+        if r.status_code != 200:
+            raise SourceError(f"SportDevs HTTP {r.status_code}")
+        return parse_lineups(r.json() or [])
+
+
+MISSING_REASONS = {0: "diğer", 1: "sakat", 2: "hasta", 3: "cezalı", 11: "cezalı (sarı kart)",
+                   12: "cezalı (çift sarı)", 13: "cezalı (kırmızı kart)", 21: "kiralık"}
+
+
+def parse_lineups(rows: list[dict]) -> list[dict]:
+    out = []
+    for row in rows or []:
+        for side in ("home", "away"):
+            t = row.get(f"{side}_team") or {}
+            players = t.get("players") or []
+            xi, subs, missing = [], [], []
+            for p in players:
+                name = p.get("player_name") or p.get("name")
+                if not name:
+                    continue
+                rec = {"name": name, "number": p.get("shirt_number") or p.get("jersey_number"), "pos": p.get("position")}
+                if p.get("missing") or p.get("reason") is not None and p.get("is_missing"):
+                    missing.append({"player_name": name, "kind": MISSING_REASONS.get(p.get("reason"), "kesin yok"),
+                                    "reason": MISSING_REASONS.get(p.get("reason"))})
+                elif p.get("substitute"):
+                    subs.append(rec)
+                else:
+                    xi.append(rec)
+            if xi or missing:
+                out.append({"side": side, "formation": t.get("formation"), "start_xi": xi, "subs": subs,
+                            "confirmed": bool(row.get("confirmed")), "missing": missing})
+    return out

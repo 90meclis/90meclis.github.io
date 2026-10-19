@@ -112,7 +112,7 @@ create table if not exists match_stats (match_id text not null, side text not nu
   possession real, source text, updated_at text, primary key (match_id, side));
 create table if not exists players (team_id text not null, player_key text not null, name text not null,
   position text, minutes int, appearances int, lineups int, goals int, assists int, season text, source text, updated_at text,
-  primary key (team_id, player_key));
+  shirt_number int, stats_source text, primary key (team_id, player_key));
 create table if not exists injuries (id text primary key, match_id text, team_id text not null, team_name text,
   player_name text not null, injury_status text, reason text, matches_played int, key_matches int,
   goal_contribution real, defensive_contribution real, minutes_share real, weight_score real, is_key int,
@@ -123,7 +123,7 @@ create table if not exists trends (id text primary key, team_id text not null, t
 create table if not exists sources (name text primary key, api_key_secret text, key_storage text, daily_limit int,
   fills_fields text default '[]', requires_key int default 0, license_note text, is_active int default 1, updated_at text);
 create table if not exists lineups (match_id text not null, side text not null, formation text, start_xi text default '[]',
-  subs text default '[]', coach text, source text, updated_at text, primary key (match_id, side));
+  subs text default '[]', coach text, source text, updated_at text, lineup_status text, primary key (match_id, side));
 create table if not exists weather (match_id text primary key, data text not null, source text, updated_at text);
 create table if not exists agenda (id text primary key, title text not null, link text not null, source text,
   published_at text, summary text, category text, match_id text references matches(id) on delete set null,

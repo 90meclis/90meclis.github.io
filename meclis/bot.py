@@ -73,18 +73,26 @@ class Bot:
             if ko - now_utc() <= timedelta(hours=30):
                 injuries, known = self.pool.injuries(match)
             for side in ("home", "away"):
-                players[match[f"{side}_team_id"]] = self.store.select("players", [("team_id", "eq", match[f"{side}_team_id"])])
+                players[match[f"{side}_team_id"]] = self.pool.squad_players(match[f"{side}_team_id"])
             try:
                 weather = self.pool.weather(match)
             except Exception as e:
                 self.log.append(f"⚠️ hava durumu alınamadı ({match['home_name']}): {e}")
         else:
-            injuries = self.store.select("injuries", [("match_id", "eq", match["id"])])
+            from .teamnews import current_players, fresh_injuries
+
+            injuries = fresh_injuries(self.store, match["id"])
+            for side in ("home", "away"):
+                players[match[f"{side}_team_id"]] = current_players(
+                    self.store.select("players", [("team_id", "eq", match[f"{side}_team_id"])]))
             known = bool(self.store.get("source_status", source=f"injuries:{match['id']}"))
             w = self.store.get("weather", match_id=match["id"])
             weather = w["data"] if w else None
             lineups = self.store.select("lineups", [("match_id", "eq", match["id"])])
-        return analyze_match(match, ctx, self.s, injuries, known, players, weather, lineups_known=bool(lineups))
+        from .teamnews import is_confirmed
+
+        return analyze_match(match, ctx, self.s, injuries, known, players, weather,
+                             lineups_known=any(is_confirmed(x) for x in lineups or []))
 
     def candidates(self, now) -> list[dict]:
         lo = now + timedelta(minutes=self.s.min_minutes_before_kickoff)

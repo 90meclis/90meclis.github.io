@@ -173,12 +173,28 @@ for col, side in ((k1, "home"), (k2, "away")):
         st.markdown(f"**{m[f'{side}_name']}**")
         lu = lineups.get(side)
         if lu:
-            st.caption(f"İlk 11 ({lu.get('formation') or '—'}) · Teknik direktör: {lu.get('coach') or '—'} · kaynak: {lu.get('source')}")
+            from meclis.teamnews import is_confirmed
+
+            label = "İlk 11" if is_confirmed(lu) else "Tahmini ilk 11 (resmî değil)"
+            st.caption(f"{label} ({lu.get('formation') or '—'}) · Teknik direktör: {lu.get('coach') or '—'} · kaynak: {lu.get('source')}")
             st.write(", ".join(p["name"] for p in lu.get("start_xi") or []))
         else:
-            st.caption("İlk 11 henüz açıklanmadı veya API-Football anahtarı yok (genelde maçtan ~1 saat önce gelir).")
-            if not s.demo_mode:
-                with st.expander("Kadro listesi (TheSportsDB)"):
+            st.caption("İlk 11 henüz açıklanmadı (resmî ilk 11 genelde maçtan ~1 saat önce gelir; tahmini ilk 11 için "
+                       "BSD_API_KEY gerekir).")
+        if not s.demo_mode:
+            with st.expander("Güncel kadro (Wikipedia / BSD)"):
+                from meclis.teamnews import current_players
+
+                sq = current_players(store.select("players", [("team_id", "eq", m[f"{side}_team_id"])]))
+                if sq:
+                    st.dataframe(pd.DataFrame([{"No": p.get("shirt_number"), "Oyuncu": p.get("name"),
+                                                "Mevki": p.get("position"), "Dakika": p.get("minutes"),
+                                                "İlk 11": p.get("lineups"), "Gol": p.get("goals"), "Asist": p.get("assists"),
+                                                "İstatistik": p.get("stats_source") or "—"} for p in sq]),
+                                 hide_index=True)
+                    st.caption("Kadro: Wikipedia (CC BY-SA 4.0) / BSD. İstatistik: aynı kulüpte son açık API-Football "
+                               "sezonu (ücretsiz plan); boşsa oyuncu önemi 'bilinmiyor' sayılır.")
+                else:
                     sq = pool.squad_list(m[f"{side}_team_id"], m[f"{side}_name"])
                     if sq:
                         st.dataframe(pd.DataFrame(sq), hide_index=True)
@@ -196,7 +212,8 @@ for col, side in ((k1, "home"), (k2, "away")):
             else:
                 st.caption("Bildirilen eksik yok.")
         else:
-            st.caption("Sakat/cezalı listesi yok (API-Football anahtarı gerekli). Uydurma liste gösterilmez.")
+            st.caption("Sakat/cezalı listesi henüz yok (kaynak: BSD — BSD_API_KEY bekleniyor; API-Football ücretsiz "
+                       "planı güncel sezonu kapsamıyor). Uydurma liste gösterilmez.")
 
 w1, w2 = st.columns(2)
 with w1:

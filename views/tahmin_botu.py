@@ -90,7 +90,7 @@ st.subheader("Veri kaynakları")
 from meclis.sources.registry import SOURCES as _REG, key_state  # noqa: E402
 
 db_src = {x["name"]: x for x in store.select("sources")}
-status = {x["source"]: x for x in store.select("source_status") if not x["source"].startswith("injuries:")}
+status = {x["source"]: x for x in store.select("source_status") if not x["source"].startswith(("injuries:", "gecmis:", "api-football:tarih:"))}
 _KEY_ICON = {"gerekmez": "✅ gerekmez", "tanımlı": "✅ tanımlı", "ücretsiz anahtar (123)": "✅ ücretsiz anahtar (123)",
              "anahtar bekleniyor": "🔑 anahtar bekleniyor"}
 _rows = []

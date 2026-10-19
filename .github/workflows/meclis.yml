@@ -5,10 +5,11 @@ on:
     - cron: "0 5 * * *"        # 08:00 TSİ — sabah: havuz + gündem + bot + sonuçlandırma
     - cron: "15 9-21/2 * * *"  # gün içi: her 2 saatte bot (Karar Bekliyor maçları yeniden dener) + sonuçlandırma
     - cron: "30 23 * * *"      # gece: sonuçlandırma
+    - cron: "40 0 * * *"       # 03:40 TSİ — API-Football günlük kotası sıfırlandıktan sonra geçmiş veri doldurma
   workflow_dispatch:
     inputs:
       komut:
-        description: "Komut (sabah / bot / sonuclandir / gundem / yenile)"
+        description: "Komut (sabah / bot / sonuclandir / gundem / yenile / kadro / gecmis)"
         required: true
         default: "sabah"
 
@@ -32,6 +33,7 @@ jobs:
       SPORTDEVS_KEY: ${{ secrets.SPORTDEVS_KEY }}
       CLUBELO_KEY: ${{ secrets.CLUBELO_KEY }}
       THESPORTSDB_KEY: ${{ secrets.THESPORTSDB_KEY }}
+      BSD_API_KEY: ${{ secrets.BSD_API_KEY }}
       LEAGUES: ${{ vars.LEAGUES || 'T1,E0,SP1,I1,D1,F1' }}
     steps:
       - uses: actions/checkout@v4
@@ -55,13 +57,15 @@ jobs:
         run: |
           if [ "$OLAY" = "workflow_dispatch" ]; then
             case "$GIRDI" in
-              sabah|bot|sonuclandir|gundem|yenile|durum) komut="$GIRDI" ;;
+              sabah|bot|sonuclandir|gundem|yenile|durum|kadro|gecmis) komut="$GIRDI" ;;
               *) echo "::error::Geçersiz komut: $GIRDI"; exit 1 ;;
             esac
           elif [ "$ZAMAN" = "0 5 * * *" ]; then
             komut=sabah
           elif [ "$ZAMAN" = "30 23 * * *" ]; then
             komut=sonuclandir
+          elif [ "$ZAMAN" = "40 0 * * *" ]; then
+            komut=gecmis
           else
             komut=gunici
           fi
@@ -72,6 +76,7 @@ jobs:
         run: |
           if [ "$KOMUT" = "gunici" ]; then
             python -m meclis yenile
+            python -m meclis kadro
             python -m meclis bot
             python -m meclis sonuclandir
           else

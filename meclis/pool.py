@@ -14,11 +14,11 @@ from . import names
 from .timeutil import now_utc, parse_dt, to_iso
 
 # Alan bazında öncelik (ilk dolu değer kazanır; boşlar sıradaki kaynaktan dolar)
-PRIORITY = ["api-football", "sportmonks", "football-data.org", "footystats", "sportdevs", "openligadb",
+PRIORITY = ["api-football", "sportmonks", "football-data.org", "footystats", "sportdevs", "bsd", "openligadb",
             "the-odds-api", "oddspapi", "thesportsdb", "football-data.co.uk", "openfootball"]
 # Görünen ad önceliği (mevcut adlar kararlı kalsın diye eski kaynaklar önde)
 NAME_PRIORITY = ["thesportsdb", "api-football", "football-data.org", "sportmonks", "football-data.co.uk",
-                 "footystats", "sportdevs", "openligadb", "the-odds-api", "oddspapi", "openfootball"]
+                 "footystats", "sportdevs", "openligadb", "the-odds-api", "oddspapi", "openfootball", "bsd"]
 # Oran önceliği: çok şirketli ortalama > Pinnacle > CSV ortalaması > tekil kaynaklar
 ODDS_PRIORITY = ["the-odds-api", "oddspapi", "football-data.co.uk", "footystats", "api-football", "sportmonks"]
 SCALARS = ["kickoff_at", "season", "home_goals", "away_goals", "ht_home_goals", "ht_away_goals",
@@ -191,6 +191,7 @@ DURUM = {"planlandi": "gelecek", "basladi": "canlı", "bitti": "bitti", "ertelen
 
 
 LIVE_WINDOW = timedelta(hours=2, minutes=30)
+APIF_DATE_REFRESH_H = 8  # API-Football tarih sorgusu en fazla 6 saatte bir (günlük 100 istek bütçesi)
 
 
 def durum_for(m: dict, now=None) -> str:
@@ -250,7 +251,9 @@ class DataPool:
         from .sources.oddspapi import OddsPapi
         from .sources.sportdevs import SportDevs
         from .sources.sportmonks import Sportmonks
+        from .sources.bsd import BSD
         from .sources.thesportsdb import TheSportsDB
+        from .teamnews import TeamNews
 
         self.store = store
         self.s = settings
@@ -262,7 +265,9 @@ class DataPool:
         self.apif = ApiFootball(settings.api_football_key, store, settings.apif_daily_budget)
         self.tsdb = TheSportsDB(settings.thesportsdb_key)
         self.oddsapi = OddsApi(settings.odds_api_key)
+        self.bsd = BSD(getattr(settings, "bsd_api_key", None))
         self.log: list[str] = []
+        self.news = TeamNews(self)
 
     def _waiting_key(self, source: str, env: str, what: str) -> None:
         """Anahtar yoksa kaynak atlanır ama bu GİZLENMEZ: durum tablosunda 'anahtar bekleniyor' görünür."""
@@ -328,7 +333,26 @@ class DataPool:
                 self._note("football-data.org", False, str(e))
         else:
             self._waiting_key("football-data.org", "FOOTBALL_DATA_TOKEN", "fikstür/sonuç/hakem (büyük Avrupa ligleri)")
-        if self.apif.available:
+        if self.apif.available and self.apif.season_blocked(today.year if today.month >= 7 else today.year - 1):
+            # Ücretsiz plan: sezonluk sorgu kapalı ama dün/bugün/yarın tarih sorgusu açık (tek istekte tüm ligler).
+            n_fx = 0
+            for d in (today - timedelta(days=1), today, today + timedelta(days=1)):
+                key = f"api-football:tarih:{d.isoformat()}"
+                st = self.store.get("source_status", source=key) or {}
+                if st.get("ok") and st.get("updated_at") and \
+                        now_utc() - parse_dt(st["updated_at"]) < timedelta(hours=APIF_DATE_REFRESH_H):
+                    continue
+                try:
+                    rows = self.apif.fixtures_by_date(d, leagues)
+                    recs += rows
+                    n_fx += len(rows)
+                    self.store.set_source_status(key, True, f"{len(rows)} maç")
+                except Exception as e:
+                    self._note("api-football", False, f"{d}: {e}")
+                    break
+            self.log.append(f"ℹ️ api-football: güncel sezon sezonluk sorguya kapalı; dün/bugün/yarın tarih sorgusuyla "
+                            f"{n_fx} maç eşleştirildi (fikstür kimliği → sakat/cezalı ve ilk 11)")
+        elif self.apif.available:
             season = today.year if today.month >= 7 else today.year - 1
             for lg in leagues:
                 try:
@@ -351,6 +375,15 @@ class DataPool:
                     break
         else:
             self._waiting_key("the-odds-api", "ODDS_API_KEY", "çok şirketli 1X2/Alt-Üst oranları")
+        if self.bsd.available:
+            try:
+                rows = self.bsd.events(today - timedelta(days=days_back), today + timedelta(days=days_ahead), leagues)
+                recs += rows
+                self._note("bsd", True, f"{len(rows)} maç (sakat/cezalı ve ilk 11 için eşleştirme)", calls=1)
+            except Exception as e:
+                self._note("bsd", False, str(e))
+        else:
+            self._waiting_key("bsd", "BSD_API_KEY", "maç başına sakat/cezalı listesi, resmî ve tahmini ilk 11, kadro uygunluğu")
         self._collect_extra(recs, today, days_back, days_ahead, history)
         return recs
 
@@ -651,83 +684,17 @@ class DataPool:
                                            "updated_at": to_iso(now_utc())}])
         return data
 
-    def squad_players(self, team_id: str, team_apif: int | None, season: int) -> list[dict]:
-        cached = self.store.select("players", [("team_id", "eq", team_id)])
-        fresh = cached and all(parse_dt(p["updated_at"]) > now_utc() - timedelta(days=4) for p in cached[:1])
-        if fresh or not (self.apif.available and team_apif):
-            return cached
-        try:
-            ps = self.apif.team_players(team_apif, season)
-        except Exception as e:
-            self._note("api-football", False, f"oyuncular: {e}")
-            return cached
-        ts = to_iso(now_utc())
-        rows = [{"team_id": team_id, **p, "season": str(season), "source": "api-football", "updated_at": ts} for p in ps]
-        self.store.upsert("players", rows)
-        return rows
+    def squad_players(self, team_id: str, team_apif: int | None = None, season: int | None = None) -> list[dict]:
+        """Takımın güncel oyuncu listesi (Wikipedia/BSD kadrosu + API-Football geçmiş istatistiği)."""
+        return self.news.team_players(team_id)
 
     def injuries(self, match: dict, max_age_h: float = 8) -> tuple[list[dict], bool]:
-        """Döner: (sakat/cezalı listesi, veri_var_mı). Veri yoksa False — tahmin bunu not eder."""
-        from .model.injuries import find_player, player_importance
-
-        cached = self.store.select("injuries", [("match_id", "eq", match["id"])])
-        fetched_ok = self.store.get("source_status", source=f"injuries:{match['id']}")
-        if fetched_ok and (now_utc() - parse_dt(fetched_ok["updated_at"])).total_seconds() < max_age_h * 3600:
-            return cached, True
-        fid = (match.get("ext_ids") or {}).get("apif")
-        if not (self.apif.available and fid):
-            return cached, bool(fetched_ok)
-        try:
-            raw = self.apif.injuries(int(fid))
-        except Exception as e:
-            self._note("api-football", False, f"sakatlık: {e}")
-            return cached, bool(fetched_ok)
-        ko = parse_dt(match["kickoff_at"])
-        season = ko.year if ko.month >= 7 else ko.year - 1
-        ext = match.get("ext_ids") or {}
-        rows = []
-        for it in raw:
-            side = "home" if it.get("team_apif") == ext.get("apif_home") else "away" \
-                if it.get("team_apif") == ext.get("apif_away") else \
-                ("home" if names.same_team(it.get("team_name") or "", match["home_name"]) else "away")
-            tid = match[f"{side}_team_id"]
-            players = self.squad_players(tid, ext.get(f"apif_{side}"), season)
-            status = {"Missing Fixture": "kesin yok", "Questionable": "şüpheli"}.get(it.get("kind"), it.get("kind"))
-            pl = find_player(it["player_name"], players)
-            imp = player_importance(pl, players, status)
-            rows.append({"id": f"{match['id']}:{it.get('player_id') or it['player_name']}", "match_id": match["id"],
-                         "team_id": tid, "team_name": match[f"{side}_name"], "player_name": it["player_name"],
-                         "injury_status": status, "reason": it.get("reason"),
-                         "matches_played": (pl or {}).get("appearances"), "key_matches": (pl or {}).get("lineups"),
-                         "goal_contribution": imp["ga_share"], "defensive_contribution": imp.get("defensive_share"),
-                         "minutes_share": imp["minutes_share"], "weight_score": imp["importance"],
-                         "is_key": imp["is_key"], "source": "api-football", "fetched_at": to_iso(now_utc())})
-        self.store.upsert("injuries", rows)
-        self.store.set_source_status(f"injuries:{match['id']}", True, f"{len(rows)} kayıt")
-        return rows, True
+        """Döner: (sakat/cezalı listesi, veri_var_mı). Kaynaklar: BSD, API-Football, SportDevs (bkz. teamnews)."""
+        return self.news.injuries(match, max_age_h)
 
     def lineups(self, match: dict) -> list[dict]:
-        cached = self.store.select("lineups", [("match_id", "eq", match["id"])])
-        if cached:
-            return cached
-        fid = (match.get("ext_ids") or {}).get("apif")
-        ko = parse_dt(match["kickoff_at"])
-        if not (self.apif.available and fid) or (ko - now_utc()).total_seconds() > 75 * 60:
-            return []
-        try:
-            raw = self.apif.lineups(int(fid))
-        except Exception as e:
-            self._note("api-football", False, f"kadro: {e}")
-            return []
-        rows = []
-        ext = match.get("ext_ids") or {}
-        for it in raw:
-            side = "home" if it.get("team_apif") == ext.get("apif_home") else "away"
-            rows.append({"match_id": match["id"], "side": side, "formation": it.get("formation"),
-                         "start_xi": it.get("start_xi"), "subs": it.get("subs"), "coach": it.get("coach"),
-                         "source": "api-football", "updated_at": to_iso(now_utc())})
-        self.store.upsert("lineups", rows)
-        return rows
+        """İlk 11: resmî (BSD/API-Football/SportDevs/TheSportsDB) → yoksa BSD tahmini."""
+        return self.news.lineups(match)
 
     def squad_list(self, team_id: str, name: str) -> list[dict]:
         t = self.team_info(team_id, name)

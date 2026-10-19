@@ -45,8 +45,8 @@ insert into sources (name, api_key_secret, key_storage, daily_limit, fills_field
    '["fikstür","sonuç","İY skoru"]', false,
    'Ücretsiz katman: GitHub ham dosyaları, CC0 (kamu malı). CC0-1.0 lisanslı açık veri; güncelleme gecikmeli olabilir, en düşük öncelik. Kayıt/bilgi: https://github.com/openfootball/football.json'),
   ('thesportsdb', 'THESPORTSDB_KEY', 'env + GitHub Actions Secrets + Supabase Vault', null,
-   '["fikstür","sonuç","stadyum","şehir","kadro listesi"]', false,
-   'Ücretsiz katman: Ücretsiz anahtar ''123'': ~30 istek/dk, günlük liste lig başına 3 maç. Patreon anahtarı (THESPORTSDB_KEY) tüm maçları ve ilk 11''i açar. Kayıt/bilgi: https://www.thesportsdb.com/pricing'),
+   '["fikstür","sonuç","stadyum","şehir","kadro listesi","ilk 11 (Patreon anahtarıyla)"]', false,
+   'Ücretsiz katman: Ücretsiz anahtar ''123'': ~30 istek/dk, günlük liste lig başına 3 maç. Ücretsiz ''123'' anahtarında ilk 11 boş döner (doğrulandı); Patreon anahtarı (THESPORTSDB_KEY) tüm maçları ve ilk 11''i açar. Kayıt/bilgi: https://www.thesportsdb.com/pricing'),
   ('wikidata', null, 'anahtar gerekmez', null,
    '["stadyum","stadyum kapasitesi","şehir","stadyum koordinatı","teknik direktör"]', false,
    'Ücretsiz katman: Ücretsiz, CC0; sorgu başına 60 sn, User-Agent zorunlu. CC0 veri; Wikimedia User-Agent politikasına uyulur, sonuçlar 14 gün önbelleklenir. Kayıt/bilgi: https://query.wikidata.org'),
@@ -56,12 +56,15 @@ insert into sources (name, api_key_secret, key_storage, daily_limit, fills_field
   ('rss', null, 'anahtar gerekmez', null,
    '["haber başlığı","özet","bağlantı"]', false,
    'Ücretsiz katman: Yayıncıların herkese açık RSS akışları. Yalnızca başlık/özet/bağlantı saklanır; tam metin kopyalanmaz, bağlantı yayıncıya gider.'),
+  ('wikipedia', null, 'anahtar gerekmez', null,
+   '["güncel A takım kadrosu","forma no","mevki"]', false,
+   'Ücretsiz katman: Ücretsiz MediaWiki API; seri istek, tanımlayıcı User-Agent, maxlag=5. İçerik CC BY-SA 4.0; kaynak gösterilir. Takım başına 7 günde bir okunur. Sakatlık bilgisi içermez. Kayıt/bilgi: https://www.mediawiki.org/wiki/API:Etiquette'),
   ('meclis-elo', null, 'anahtar gerekmez', null,
    '["takım gücü (Elo)","gol modeli önseli"]', false,
    'Ücretsiz katman: Havuzdaki gerçek sonuçlardan hesaplanır. Dış kaynak değil; football-data.co.uk/OpenLigaDB sonuçlarından türetilir.'),
   ('api-football', 'API_FOOTBALL_KEY', 'env + GitHub Actions Secrets + Supabase Vault', 100,
-   '["fikstür","ilk 11","sakat/cezalı","maç istatistiği","oyuncu dakika/gol/asist","hakem"]', true,
-   'Ücretsiz katman: Ücretsiz: 100 istek/gün, 10/dk. Ücretsiz planda güncel sezon erişimi kısıtlı olabilir. Kayıt/bilgi: https://dashboard.api-football.com/register'),
+   '["güncel sakat/cezalı (dün–yarın)","maç öncesi resmî ilk 11","geçmiş fikstür (2022–2024)","geçmiş sakat/cezalı","oyuncu dakika/ilk 11/gol/asist (2024)"]', true,
+   'Ücretsiz katman: Ücretsiz: 100 istek/gün, 10/dk. Ücretsiz plan (19.10.2026''da doğrulandı): sezonluk sorgu yalnızca 2022–2024, tarih sorgusu dün–yarın, fikstür kimliğiyle sorgu güncel sezonda açık, page en fazla 3. Kalan bütçe `python -m meclis gecmis` ile geçmiş veri doldurmaya gider, kaldığı yerden sürer. Kayıt/bilgi: https://dashboard.api-football.com/register'),
   ('football-data.org', 'FOOTBALL_DATA_TOKEN', 'env + GitHub Actions Secrets + Supabase Vault', 14400,
    '["fikstür","sonuç","İY skoru","hakem","stadyum"]', true,
    'Ücretsiz katman: Ücretsiz: 12 turnuva, 10 istek/dk (Süper Lig yok). Kayıt/bilgi: https://www.football-data.org/client/register'),
@@ -78,8 +81,11 @@ insert into sources (name, api_key_secret, key_storage, daily_limit, fills_field
    '["sonuç","İY skoru","korner","kart","isabetli şut","faul","stadyum","1X2 ve 2.5 Alt/Üst oranı"]', true,
    'Ücretsiz katman: Ücretsiz: yalnızca Premier Lig, 180 istek/saat; Süper Lig ücretli (Hobby £29.99/ay). Kayıt/bilgi: https://footystats.org/api'),
   ('sportdevs', 'SPORTDEVS_KEY', 'env + GitHub Actions Secrets + Supabase Vault', 300,
-   '["fikstür","sonuç","İY skoru","stadyum"]', true,
+   '["fikstür","sonuç","İY skoru","stadyum","ilk 11 (matches-lineups)","eksik oyuncular (kadro içinde)"]', true,
    'Ücretsiz katman: Ücretsiz: 300 istek/gün, 10 büyük lig. Kayıt/bilgi: https://sportdevs.com/football'),
+  ('bsd', 'BSD_API_KEY', 'env + GitHub Actions Secrets + Supabase Vault', null,
+   '["sakat/cezalı/şüpheli (maç başına)","resmî ilk 11 (~1 saat önce)","tahmini ilk 11 (AI)","kadro + oyuncu uygunluğu","fikstür","sonuç","İY skoru"]', true,
+   'Ücretsiz katman: Ücretsiz futbol planı: tüm v2 uç noktaları, kota yok (IP başına 10 istek/sn); 6 ligin hepsi kapsamda. Lisans v4.0: iç kullanım için saklama ve kendi uygulamanda gösterim serbest; ham verinin yeniden satışı yasak. Kayıt/bilgi: https://sports.bzzoiro.com/register/'),
   ('clubelo', 'CLUBELO_KEY', 'env + GitHub Actions Secrets + Supabase Vault', null,
    '["takım gücü (Elo) başlangıç puanı"]', false,
    'Ücretsiz katman: Eskiden anahtarsızdı; Eylül 2026''dan beri API kimlik doğrulama istiyor, kayıt henüz kapalı. Web sayfaları kazınmaz; API açılınca CLUBELO_KEY ile kullanılır. O zamana kadar Meclis Elo devrede. Kayıt/bilgi: http://clubelo.com/API')
@@ -179,8 +185,13 @@ create table if not exists players (
   season      text,
   source      text,
   updated_at  timestamptz not null default now(),
+  shirt_number int,                          -- forma numarası (Wikipedia/BSD kadrosu)
+  stats_source text,                         -- istatistiğin geldiği kaynak+sezon, ör. "api-football 2024"
   primary key (team_id, player_key)
 );
+-- Eski kurulumlar için (idempotent)
+alter table players add column if not exists shirt_number int;
+alter table players add column if not exists stats_source text;
 
 -- ---------------------------------------------------------------------
 -- 3) injuries — sakat / cezalı / şüpheli oyuncular
@@ -232,8 +243,10 @@ create table if not exists lineups (
   coach      text,
   source     text,
   updated_at timestamptz not null default now(),
+  lineup_status text,                        -- 'resmi' (açıklanan ilk 11) | 'tahmini' (BSD AI tahmini)
   primary key (match_id, side)
 );
+alter table lineups add column if not exists lineup_status text;
 
 create table if not exists weather (
   match_id   text primary key,
