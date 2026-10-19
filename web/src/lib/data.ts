@@ -76,11 +76,25 @@ export async function match(id: string): Promise<Match | null> {
   return r[0] ?? null;
 }
 
+/** Bu sezonun başlangıcı (1 Temmuz, UTC). Kullanıcı: "geçmiş sezon değil bu sezon genelinde". */
+export function seasonStartIso(ref: Date = new Date()): string {
+  const y = ref.getUTCMonth() >= 6 ? ref.getUTCFullYear() : ref.getUTCFullYear() - 1;
+  return `${y}-07-01T00:00:00Z`;
+}
+
+/** Takımın bu sezonki son maçları. Avrupa kupası takımı için yerel lig maçları da (aynı kulüp) dahil edilir. */
 export async function teamHistory(teamId: string, beforeIso: string, limit = 10): Promise<Match[]> {
+  let ids = [teamId];
+  if (/^(CL|EL|ECL):/.test(teamId)) {
+    const slug = teamId.slice(teamId.indexOf(":") + 1);
+    const same = await run<{ id: string }>(db().from("teams").select("id").like("id", `%:${slug}`));
+    ids = [...new Set([teamId, ...same.map((x) => x.id)])];
+  }
+  const list = ids.map((x) => `"${x}"`).join(",");
   return run<Match>(
     db().from("matches").select(MATCH_LIST)
-      .or(`home_team_id.eq."${teamId}",away_team_id.eq."${teamId}"`)
-      .lt("kickoff_at", beforeIso).not("home_goals", "is", null)
+      .or(`home_team_id.in.(${list}),away_team_id.in.(${list})`)
+      .gte("kickoff_at", seasonStartIso(new Date(beforeIso))).lt("kickoff_at", beforeIso).not("home_goals", "is", null)
       .order("kickoff_at", { ascending: false }).limit(limit),
   );
 }
@@ -136,10 +150,8 @@ export const trends = (lg: string) => all<Trend>(() => db().from("trends").selec
 
 /** Güncel sezonun maçları (Avrupa takvimi: 1 Temmuz'dan itibaren). */
 export async function seasonMatches(lg: string): Promise<Match[]> {
-  const now = new Date();
-  const y = now.getUTCMonth() >= 6 ? now.getUTCFullYear() : now.getUTCFullYear() - 1;
   return all<Match>(() =>
-    db().from("matches").select(MATCH_LIST).eq("league", lg).gte("kickoff_at", `${y}-07-01T00:00:00Z`).order("kickoff_at", { ascending: false }),
+    db().from("matches").select(MATCH_LIST).eq("league", lg).gte("kickoff_at", seasonStartIso()).order("kickoff_at", { ascending: false }),
   );
 }
 

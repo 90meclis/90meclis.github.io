@@ -14,8 +14,8 @@ s, store, pool = ui.resources()
 with st.expander("Bot nasıl çalışır?", expanded=False):
     st.markdown(f"""
 1. **Bülten taraması:** Seçili liglerde (**{', '.join(ui.league_name(x) for x in s.leagues)}**) önümüzdeki
-   **{s.horizon_hours:.0f} saat** içindeki maçlar alınır. Maç asla elenmez. Model girdisi **güncel sezondur**;
-   geçmiş sezonlar yalnızca zayıf önsel olarak girer. İlk 11 için resmî liste beklenmez: **Meclis tahmini ilk 11**
+   **{s.horizon_hours:.0f} saat** içindeki maçlar alınır. Maç asla elenmez. Model **bu sezon genelinde** çalışır;
+   girdi bu sezonun maçlarıdır. İlk 11 için resmî liste beklenmez: **Meclis tahmini ilk 11**
    (son resmî ilk 11'ler, sezon ilk 11 payı, sakat/cezalı listesi) modele işlenir.
 2. **Veri toplama:** Birleşik havuz: 18 kaynak (anahtarsız: football-data.co.uk, OpenLigaDB, openfootball,
    TheSportsDB, Wikidata, Open-Meteo, RSS, Meclis Elo; anahtarlı: API-Football, Sportmonks, football-data.org,

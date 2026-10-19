@@ -1,12 +1,12 @@
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import * as api from "../lib/data";
 import { useAsync } from "../lib/useAsync";
-import { dateLong, dateShort, num, pct, relTime, signed, time } from "../lib/format";
+import { dateLong, dateShort, dateTime, hoursBefore, num, pct, relTime, signed, time } from "../lib/format";
 import { MARKET_GROUPS, league, pickLabel, sourceLabel, fmtLine } from "../lib/labels";
-import { hasScore, matchPath, matchState, result } from "../lib/match";
+import { hasScore, matchPath, matchState, result, sameTeam } from "../lib/match";
 import { usePageMeta } from "../lib/seo";
 import type { AnalysisPayload, Injury, Lineup, Match, MatchStat, Prediction } from "../lib/types";
-import { Card, Disclaimer, Empty, Gate, Meter, Skeleton, Stat } from "../components/ui";
+import { Card, Disclaimer, Empty, Gate, Meter, Skeleton, Stat, StatusPill, TagPill } from "../components/ui";
 import { ProbBar } from "../components/charts";
 import { MiniMd } from "../components/MiniMd";
 import { PickCard } from "../components/PickCard";
@@ -37,6 +37,9 @@ function Detail({ m }: { m: Match }) {
   const st = matchState(m);
   const sc = hasScore(m);
   const l = league(m.league);
+  const order: Record<string, number> = { meclis_gorusu: 0, gunun_karari: 1, karar_birligi: 2 };
+  const picks = [...(preds.data ?? [])].sort((x, y) => (order[x.tag] ?? 9) - (order[y.tag] ?? 9));
+  const published = picks.length > 0;
 
   return (
     <div className="detail">
@@ -60,15 +63,16 @@ function Detail({ m }: { m: Match }) {
 
       <div className="detail-grid">
         <div className="col-main">
-          <Card title="Meclisin analizi" className="analysis">
+          {published && <Verdict picks={picks} a={a} m={m} />}
+          <Card title={published ? "Maç konuşuyor" : "Meclisin analizi"} className="analysis">
             <Gate loading={an.loading} error={an.error} rows={3}>
-              {a?.ready || a?.markets?.length ? <AnalysisView a={a} m={m} /> : <PreAnalysis m={m} />}
+              {a?.ready || a?.markets?.length ? <AnalysisView a={a} m={m} published={published} /> : <PreAnalysis m={m} />}
             </Gate>
           </Card>
 
-          {!!preds.data?.length && (
-            <Card title="Bu maçtaki kararlar">
-              <div className="picks">{preds.data.map((p) => <PickCard key={p.id} p={p} />)}</div>
+          {picks.length > 1 && (
+            <Card title="Bu maçtaki tüm kararlar">
+              <div className="picks">{picks.map((p) => <PickCard key={p.id} p={p} />)}</div>
             </Card>
           )}
 
@@ -113,7 +117,7 @@ function wdl(games: Match[], teamId: string): Wdl {
   const r: Wdl = { n: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, o25: 0, btts: 0 };
   for (const g of games) {
     if (!hasScore(g)) continue;
-    const home = g.home_team_id === teamId;
+    const home = sameTeam(g.home_team_id, teamId);
     const gf = home ? g.home_goals! : g.away_goals!, ga = home ? g.away_goals! : g.home_goals!;
     r.n++; r.gf += gf; r.ga += ga;
     if (gf > ga) r.w++; else if (gf === ga) r.d++; else r.l++;
@@ -174,7 +178,7 @@ function PreAnalysis({ m }: { m: Match }) {
             <>
               {(H.n > 0 || A.n > 0) && (
                 <div className="pre-block">
-                  <h3>Form (son maçlar)</h3>
+                  <h3>Form (bu sezon, son maçlar)</h3>
                   <div className="table-wrap">
                     <table className="tbl tight">
                       <thead><tr><th>Takım</th><th>Maç</th><th>G-B-M</th><th>Attığı / maç</th><th>Yediği / maç</th><th>2,5 Üst</th><th>KG Var</th></tr></thead>
@@ -205,7 +209,48 @@ function PreAnalysis({ m }: { m: Match }) {
   );
 }
 
-function AnalysisView({ a, m }: { a: AnalysisPayload; m: Match }) {
+/** Yayımlanmış karar: Meclis kararını net ve kararlı bir sesle söyler. */
+function Verdict({ picks, a, m }: { picks: Prediction[]; a?: AnalysisPayload; m: Match }) {
+  const p = picks[0];
+  const label = pickLabel(p.market, p.selection, p.line, m.home_name, m.away_name);
+  const odds = p.odds ?? p.fair_odds;
+  const tags = [...new Set(picks.map((x) => x.tag))];
+  const scen = (a?.scenarios ?? []).filter((x) => x.olasılık !== null).sort((x, y) => (y.olasılık ?? 0) - (x.olasılık ?? 0)).slice(0, 2);
+  const live = p.status === "bekliyor";
+  return (
+    <section className={`verdict st-border-${p.status}`} aria-label="Meclis'in kararı">
+      <div className="v-top">
+        <span className="kicker">🗳️ Meclis'in kararı</span>
+        <span className="v-tags">{tags.map((t) => <TagPill key={t} tag={t} />)}<StatusPill status={p.status} /></span>
+      </div>
+      <div className="v-main">
+        <div>
+          <h2 className="v-pick">{label}</h2>
+          <p className="v-say">{live ? <>Meclis bu maçta kararını verdi: <b>{label}</b>. Maç bunu söylüyor.</> : <>Meclis'in kararı buydu: <b>{label}</b>.</>}</p>
+        </div>
+        {odds && <div className="v-odds"><b>{num(odds)}</b><small>{p.odds ? sourceLabel(p.odds_source) || "piyasa oranı" : "adil oran"}</small></div>}
+      </div>
+      <div className="v-stats">
+        <span>Olasılık <b>{pct(p.probability)}</b></span>
+        {p.edge !== null && <span>Değer <b className={p.edge > 0 ? "pos" : ""}>{signed(p.edge * 100, 1)}%</b></span>}
+        {p.result_value && <span>Sonuç <b>{p.result_value}</b></span>}
+        {p.profit !== null && !live && <span>K/Z <b className={p.profit >= 0 ? "pos" : "neg"}>{signed(p.profit)}</b></span>}
+      </div>
+      {p.confidence !== null && <Meter value={p.confidence * 100} label={`Meclis güveni ${num(p.confidence * 100, 0)}/100`} />}
+      {p.rationale && <div className="v-why"><h3>Neden?</h3><MiniMd text={p.rationale} published /></div>}
+      {(p.scenario_note || scen.length > 0) && (
+        <div className="v-scn"><h3>Maçın akışı</h3>
+          {p.scenario_note && <p>{p.scenario_note}</p>}
+          {scen.length > 0 && <ul>{scen.map((x) => <li key={x.ad}><b>{x.ad}</b> ({pct(x.olasılık)}): {x.anlatım}</li>)}</ul>}
+        </div>
+      )}
+      <p className="v-lock"><span aria-hidden="true">🔒</span> Maçtan {hoursBefore(p.recorded_at, p.kickoff_at)} kilitlendi · kayıt {dateTime(p.recorded_at)} TSİ</p>
+      <p className="v-note">18+ · Garanti yoktur; karar bir olasılık değerlendirmesidir.</p>
+    </section>
+  );
+}
+
+function AnalysisView({ a, m, published }: { a: AnalysisPayload; m: Match; published: boolean }) {
   const p = Object.fromEntries((a.markets ?? []).filter((x) => x.market === "1X2").map((x) => [x.selection, x.probability]));
   const bp = a.best_pick;
   return (
@@ -218,14 +263,14 @@ function AnalysisView({ a, m }: { a: AnalysisPayload; m: Match }) {
         {a.count_info?.cards && <Stat label="Kart bekl." value={num(a.count_info.cards.total, 1)} />}
         {a.count_info?.shots_on_target && <Stat label="İsabetli şut bekl." value={num(a.count_info.shots_on_target.total, 1)} />}
       </div>
-      {bp && (
+      {bp && !published && (
         <div className="best-pick">
-          <span className="kicker">Meclisin seçimi</span>
+          <span className="kicker">Meclis'in eğilimi · karar maçtan saatler önce yayımlanır</span>
           <strong>{pickLabel(bp.market, bp.selection, bp.line, m.home_name, m.away_name)}</strong>
           <span className="muted">olasılık {pct(bp.probability)} · {bp.odds ? `oran ${num(bp.odds)}` : `adil oran ${num(bp.fair_odds)}`}</span>
         </div>
       )}
-      {a.narrative && <MiniMd text={a.narrative} skipFirst />}
+      {a.narrative && <MiniMd text={a.narrative} skipFirst published={published} />}
       {!!a.scenarios?.length && (
         <div className="scenarios">
           <h3>Senaryolar</h3>
@@ -238,6 +283,7 @@ function AnalysisView({ a, m }: { a: AnalysisPayload; m: Match }) {
           ))}
         </div>
       )}
+      <Approach a={a} m={m} />
       {!!a.top_scores?.length && (
         <div className="topscores"><h3>En olası skorlar</h3>
           <div className="ts-list">{a.top_scores.map(([s, pr]) => <span key={s} className="ts"><b>{s}</b>{pct(pr)}</span>)}</div>
@@ -273,6 +319,22 @@ function AnalysisView({ a, m }: { a: AnalysisPayload; m: Match }) {
   );
 }
 
+/** Sistemin yaklaşımı: bu maçta modelin neye dayandığı (saklanan analizden). */
+function Approach({ a, m }: { a: AnalysisPayload; m: Match }) {
+  const cs = a.current_season_matches;
+  const ie = (a.injury_effect ?? {}) as Record<string, number | string>;
+  const items: string[] = [];
+  if (a.basis) items.push(`Gol beklentisinin dayanağı: ${a.basis}.`);
+  if (cs && (cs.home || cs.away)) items.push(`Bu sezon oynanan maçlar: ${m.home_name} ${cs.home ?? 0}, ${m.away_name} ${cs.away ?? 0}. Model bu sezon genelinde çalışır.`);
+  if (typeof ie.home_tee === "number" && typeof ie.away_tee === "number")
+    items.push(`Eksikler ağırlıklı okundu: Eksik Etkisi ${m.home_name} ${num(ie.home_tee, 0)} (${ie.home_band ?? ""}), ${m.away_name} ${num(ie.away_tee, 0)} (${ie.away_band ?? ""}).`);
+  if (a.weather?.summary) items.push(`Hava: ${a.weather.summary}, ${num(a.weather.temperature_c, 0)}°C, rüzgâr ${num(a.weather.wind_kmh, 0)} km/sa.`);
+  items.push("Her pazar (skor, gol, korner, kart, isabetli şut, kale vuruşu) ayrı hesaplanır; yalnızca piyasa fiyatına göre değer taşıyan seçim karara dönüşür.");
+  return (
+    <div className="approach"><h3>Meclis'in yaklaşımı</h3><ul>{items.map((x, i) => <li key={i}>{x}</li>)}</ul></div>
+  );
+}
+
 function FormAndStats({ m }: { m: Match }) {
   const hist = useAsync(`hist:${m.id}`, async () => {
     const [h, a] = await Promise.all([api.teamHistory(m.home_team_id, m.kickoff_at, 10), api.teamHistory(m.away_team_id, m.kickoff_at, 10)]);
@@ -280,7 +342,7 @@ function FormAndStats({ m }: { m: Match }) {
     return { h, a, stats };
   }, [m.id]);
   return (
-    <Card title="Form ve maç maç istatistik" aside={<span className="muted small">Son 10 maç · ortalama değil, her maçın kendi değeri</span>}>
+    <Card title="Form ve maç maç istatistik" aside={<span className="muted small">Bu sezon, son 10 maç · ortalama değil, her maçın kendi değeri</span>}>
       <Gate loading={hist.loading} error={hist.error} rows={4}>
         {hist.data && (
           <div className="two-teams">
@@ -295,8 +357,8 @@ function FormAndStats({ m }: { m: Match }) {
 
 export function TeamSeries({ name, teamId, games, stats }: { name: string; teamId: string; games: Match[]; stats: MatchStat[] }) {
   const sidx = new Map(stats.map((s) => [`${s.match_id}:${s.side}`, s]));
-  if (!games.length) return <div><h3 className="ts-name">{name}</h3><p className="muted small">Geçmiş maç verisi yok.</p></div>;
-  const hasXg = games.some((g) => sidx.get(`${g.id}:${g.home_team_id === teamId ? "home" : "away"}`)?.xg != null);
+  if (!games.length) return <div><h3 className="ts-name">{name}</h3><p className="muted small">Bu sezon için maç verisi henüz yok.</p></div>;
+  const hasXg = games.some((g) => sidx.get(`${g.id}:${sameTeam(g.home_team_id, teamId) ? "home" : "away"}`)?.xg != null);
   return (
     <div className="team-series">
       <h3 className="ts-name">{name}</h3>
@@ -308,7 +370,7 @@ export function TeamSeries({ name, teamId, games, stats }: { name: string; teamI
           <thead><tr><th>Tarih</th><th>Rakip</th><th>Skor</th><th title="Şut">Şut</th><th title="İsabetli şut">İsb.</th><th title="Korner">Krn</th><th title="Kart (sarı+kırmızı)">Kart</th>{hasXg && <th>xG</th>}</tr></thead>
           <tbody>
             {games.map((g) => {
-              const home = g.home_team_id === teamId;
+              const home = sameTeam(g.home_team_id, teamId);
               const s = sidx.get(`${g.id}:${home ? "home" : "away"}`);
               const r = result(g, teamId);
               const card = s && (s.yellow !== null || s.red !== null) ? (s.yellow ?? 0) + (s.red ?? 0) : null;
@@ -472,14 +534,17 @@ function WeatherCard({ m, a }: { m: Match; a?: AnalysisPayload }) {
   const w = useAsync(`w:${m.id}`, () => api.weatherFor(m.id), [m.id]);
   const d = w.data?.[0]?.data ?? a?.weather;
   if (w.loading) return null;
-  if (!d) return null;
+  if (!d) {
+    const far = new Date(m.kickoff_at).getTime() - Date.now() > 15 * 864e5;
+    return <Card title="Hava durumu"><p className="muted small">{far ? "Tahmin, maça 16 gün kala açılır." : new Date(m.kickoff_at).getTime() < Date.now() ? "Bu maç için hava kaydı yok." : "Hava durumu maç analiziyle birlikte eklenir."}</p></Card>;
+  }
   return (
     <Card title="Hava durumu">
       <div className="weather">
         <b className="w-temp">{num(d.temperature_c, 0)}°</b>
         <div><strong>{d.summary}</strong><p className="muted small">Yağış %{d.precip_prob ?? "—"} · Rüzgâr {num(d.wind_kmh, 0)} km/sa · Nem %{d.humidity ?? "—"}</p></div>
       </div>
-      <p className="muted tiny">{d.location} · Open-Meteo</p>
+      <p className="muted tiny">{d.location} · Open-Meteo{d.time_utc ? ` · ${time(d.time_utc.endsWith("Z") ? d.time_utc : d.time_utc + "Z")} TSİ` : ""}</p>
     </Card>
   );
 }

@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { stripPush } from "../lib/text";
+import { cleanLine } from "../lib/text";
 
 // Teknik/iç notları ziyaretçiye göstermemek için süzülen ifadeler
 const HIDE = /(anahtar|api[- ]?football|api_|_key|token|kota|kuru çalıştır|service_role)/i;
@@ -19,11 +19,11 @@ function inline(s: string): ReactNode[] {
 }
 
 /** Botun anlatımını güvenli biçimde gösterir (HTML enjeksiyonu yok). */
-export function MiniMd({ text, skipFirst = false }: { text: string; skipFirst?: boolean }) {
+export function MiniMd({ text, skipFirst = false, published = false }: { text: string; skipFirst?: boolean; published?: boolean }) {
   let paras = text.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
   if (skipFirst) paras = paras.slice(1);
   paras = paras
-    .map((p) => p.split("\n").filter((l) => !HIDE.test(l)).map(stripPush).filter((l) => l.trim()).join("\n"))
+    .map((p) => p.split("\n").filter((l) => !HIDE.test(l)).map((l) => cleanLine(l, published)).filter((l) => l.trim()).join("\n"))
     .filter((p) => p && !HIDE.test(p));
   return (
     <div className="md">

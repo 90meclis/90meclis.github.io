@@ -198,6 +198,10 @@ export interface AnalysisPayload {
   postponed_markets?: Record<string, string>;
   h2h?: { tarih: string; maç: string; skor: string; İY?: string }[];
   form?: { home?: FormRow[]; away?: FormRow[] };
+  basis?: string;
+  current_season_matches?: { home?: number; away?: number };
+  model_matches?: { home?: number; away?: number };
+  elo?: Record<string, unknown> | null;
 }
 export interface FormRow { tarih: string; rakip: string; yer: string; skor: string; sonuç: string }
 export interface Analysis { match_id: string; created_at: string; model_version: string | null; payload: AnalysisPayload }

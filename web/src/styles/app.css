@@ -496,3 +496,25 @@ html, body { overflow-x: clip; }
 .pre-facts p { margin: 4px 0 0; font-size: 14px; }
 .filters.dates label { flex: 0 1 170px; }
 .filters.dates .btn { align-self: end; }
+/* Meclis'in kararı */
+.verdict { background: linear-gradient(135deg, rgba(215,255,63,.10), rgba(215,255,63,.02) 60%), var(--card); border: 1px solid rgba(215,255,63,.45); border-radius: var(--r); padding: 18px 20px; margin-bottom: 16px; box-shadow: var(--shadow); }
+.verdict .v-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.verdict .kicker { color: var(--lime); }
+.verdict .v-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.verdict .v-main { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin: 10px 0 8px; }
+.verdict .v-pick { font-family: var(--display); font-size: clamp(28px, 5vw, 40px); line-height: 1.05; margin: 0; text-transform: uppercase; letter-spacing: .01em; }
+.verdict .v-say { margin: 6px 0 0; font-size: 15px; }
+.verdict .v-odds { display: grid; justify-items: center; background: var(--lime); color: #0b0f14; border-radius: var(--r-sm); padding: 8px 14px; min-width: 84px; }
+.verdict .v-odds b { font-family: var(--display); font-size: 32px; line-height: 1; }
+.verdict .v-odds small { font-size: 11px; font-weight: 700; opacity: .75; }
+.verdict .v-stats { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 14px; color: var(--muted); margin-bottom: 10px; }
+.verdict .v-stats b { color: var(--text); }
+.verdict h3 { font-size: 14px; margin: 14px 0 6px; }
+.verdict .v-scn ul { margin: 6px 0 0; padding-left: 18px; font-size: 14px; }
+.verdict .v-scn p { margin: 0; font-size: 14px; }
+.verdict .v-lock { font-size: 12px; color: var(--muted); margin: 12px 0 2px; }
+.verdict .v-note { font-size: 11px; color: var(--dim); margin: 0; }
+.approach { margin: 14px 0; }
+.approach h3 { font-size: 14px; margin: 0 0 6px; }
+.approach ul { margin: 0; padding-left: 18px; font-size: 14px; color: var(--muted); }
+.approach li { margin: 3px 0; }

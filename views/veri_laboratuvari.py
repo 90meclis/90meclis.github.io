@@ -2,7 +2,9 @@ import pandas as pd
 import streamlit as st
 
 from meclis import ui
+from meclis.analysis import LeagueContext, season_start
 from meclis.lab import market_tables
+from meclis.timeutil import parse_dt
 
 st.title("🧪 Veri Laboratuvarı")
 st.caption("Pazar ligleri (takım tabloları) ve maç maç takım serileri — ortalamanın arkasındaki gerçek maçlar.")
@@ -14,11 +16,14 @@ c1, c2, c3 = st.columns(3)
 lg = c1.selectbox("Lig", s.leagues, format_func=ui.league_name)
 scope = c2.radio("Kapsam", ["tümü", "iç saha", "deplasman"], horizontal=True)
 last_n = c3.select_slider("Son kaç maç", options=[5, 10, 15, 20, 38, 76], value=10)
-ctx = bot.context(lg)
+_ctx = bot.context(lg)
+_s0 = season_start()
+# Yalnızca bu sezon: kullanıcı isteği "geçmiş sezon değil bu sezon genelinde".
+ctx = LeagueContext(_ctx.league, [m for m in _ctx.matches if parse_dt(m["kickoff_at"]) >= _s0], _ctx.stats)
 if not ctx.matches:
-    ui.empty_state("Bu lig için henüz yeterli bitmiş maç verisi yok.")
+    ui.empty_state("Bu lig için bu sezon henüz bitmiş maç yok.")
     st.stop()
-st.caption(f"Havuzda {len(ctx.matches)} bitmiş maç (son iki sezon). İstatistikler birden çok kaynaktan birleştirilir; "
+st.caption(f"Bu sezon {len(ctx.matches)} bitmiş maç ({_s0:%d.%m.%Y} sonrası). İstatistikler birden çok kaynaktan birleştirilir; "
            "verisi olmayan pazarın tablosu gösterilmez.")
 
 tables = market_tables(ctx, scope, last_n)

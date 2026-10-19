@@ -4,12 +4,9 @@ Hazırlanma: 20.10.2026. Amaç: kullanıcının (Ebraar) söylediklerini kendi k
 yorumumuzu yanına yazmak ve özetlerimizin nerede saptığını göstermek. Kural: **kullanıcının sözü özetimizden
 üstündür; sonra söylenen önce söyleneni geçersiz kılar.**
 
-> **Kapsam sınırı (önemli):** Bu belgeyi yazan alt ajanın ReadTranscript aracına erişimi yoktu (`cursor` ad alanı
-> bulunamadı). Bu yüzden konuşmanın baştan sonuna dökümü okunamadı. Aşağıdaki alıntılar, devralınan konuşmada
-> görünen kullanıcı mesajlarıdır (`t20s4` → `t36u`). Mesajların saat damgası bu görünümde yoktu, bu yüzden tur
-> kimliği kullanıldı (hepsi 19–20.10.2026 gecesi). İlk sürüm (v1) yapım talimatı, pazar araştırması, veri kaynakları
-> ve Supabase şeması brifleri ile önceki widget yanıtları **okunamadı**. Bu briflerden yalnızca dolaylı izler
-> kullanıldı (§3). Ana ajanın dökümü okuyup §1'i tamamlaması gerekiyor.
+> **Kapsam (güncellendi 20.10.2026):** Konuşmanın tam kullanıcı dökümü (`t0u`–`t36u`) artık okundu. §1.0'da ilk brifler
+> (`t0u`–`t5u`, `t16u`) aynen yer alıyor. `t6u`–`t15u` ve `t19u`–`t20u` SQL çalıştırma ve sesli arama sorunları gibi süreç
+> mesajları; gereksinim içermiyor. §3'teki "dolaylı izler" artık doğrudan alıntıyla doğrulanabilir.
 
 Etiketler: **[SAPMA]** özetimiz kullanıcının sözüyle çelişiyor · **[EKLEME]** kullanıcının hiç istemediği bir şeyi
 kural gibi yazmışız · **[BELİRSİZ]** söz iki türlü okunabiliyor · **[UYUMLU]**.
@@ -17,6 +14,77 @@ kural gibi yazmışız · **[BELİRSİZ]** söz iki türlü okunabiliyor · **[U
 ---
 
 ## 1. Kullanıcı mesajları (aynen) ve yorumumuz
+
+### 1.0 İlk brifler (aynen)
+
+#### t0u
+> Sana ortak demek istiyorum
+
+Yorum: Kullanıcı bizi projenin ortağı olarak görüyor. Kararları onun yerine verip işi bitirmemiz bekleniyor (t11u, t15u ve t30u ile tutarlı).
+
+#### t1u
+> Ebraar'ın 90 Meclis projesi için araştırma görevi. Amaç: piyasadaki futbol tahmin/analiz sitelerini ve uygulamalarını gözlemleyip incelemek, ne yaptıklarını, ne yapamadıklarını bulmak ve 90 Meclis'in farklı bakış açısıyla (her şeyin tek masada olduğu, kazanç-kayıp şeffaf kayıt, veri laboratuvarı, maç merkezi, tahmin botu, tahmin arşivi) neler yapılabileceğini çıkarmak.
+>
+> Araştırılacak konular:
+> 1. Popüler futbol tahmin siteleri ve uygulamaları (Türk ve uluslararası): hangi özellikleri var, nasıl çalışıyorlar, arayüzleri nasıl, hangi verileri gösteriyorlar.
+> 2. Maç analizi siteleri: maç merkezi tarzı sayfalar, maça tıklayınca ne gösteriyorlar (kadrolar, form, istatistikler, son karşılaşmalar).
+> 3. Veri/istatistik siteleri: hangi pazarlar var (korner, ilk yarı gol, kart, isabetli şut, kale vuruşu), takım bazlı ligler/sıralamalar nasıl tutuluyor.
+> 4. Tahmin arşivi/kayıt sistemleri: sonuçların şeffaf gösterildiği, kazanç-kayıp kayıtlı sistemler var mı.
+> 5. Ücretsiz/açık kaynak araçlar: Streamlit, Supabase, GitHub Pages gibi araçlarla neler yapılabilir, bunların sınırları neler.
+> 6. 90 Meclis'in farklı olabileceği noktalar: bu siteler ne yapmıyor ki biz yapabiliriz?
+>
+> Çıktı olarak: her kategoride 3-5 örnek site/uygulama, her birinin güçlü ve zayıf yönleri, ve 90 Meclis için alınabilecek fikirler listesi. Türkçe rapor olarak döndür.
+
+Yorum: Pazar araştırması. 90 Meclis'in farkı şunlar: her şey tek masada, kazanç-kayıp şeffaf kayıt, veri laboratuvarı, maç merkezi, tahmin botu, tahmin arşivi. Bölüm adlarının kaynağı bu brif.
+
+#### t2u
+> 90 Meclis tahmin uygulamasının ilk sürümünü kur: Streamlit tabanlı tek uygulama, GitHub repo 90-meclis (yoksa oluştur), Supabase bağlantısı (env değişkenleriyle: SUPABASE_URL, SUPABASE_KEY). Uygulama şu altı bölümü içersin: (1) Maç Merkezi — maça tıklayınca o maçın tüm verisi tek ekranda: kadrolar, sakatlıklar, form, istatistikler, son karşılaşmalar, hava durumu; sistemin senaryoları ve yaklaşımı da yazılsın; maç konuşsun, kullanıcıya "bunu oyna" hissi versin. (2) Tahmin Botu — bülteni tarar, maçları eler, her pazarı inceler (skor, gol, korner, kart, isabetli şut, kale vuruşu), senaryolar kurar, tahminleri maçtan önce kayda düşer; veri eksikse maç elenmez, tahmin ertelenir; sakatlıklar ağırlıklı okunur (kilit isim mi değil mi). (3) Tahmin Arşivi — etiketli tahminler: günün kararı (2-3 maçlık kupon, oran bandı 2.30-4.00), meclis görüşü (tekli bahisler), karar birliği (5+ meclis görüşü varsa en güvendiği 2-3 maçtan kombinasyon); her tahminin durumu: bekliyor, başladı, kazandı, kaybetti, iade. (4) Veri Laboratuvarı — pazar ligleri: korner, ilk yarı gol, KG var/yok, kart; takım serileri maç maç (ortalama değil, maç bazlı şut sayıları vb.). (5) Gündem Masası — her sabah gündem taranır: transferler, sakatlık haberleri, teknik direktör kararları; o günün maçlarına bağlanır. (6) Güven Panosu — arşivin herkese açık yüzü: haftalık kayıt, başarı oranı, hangi pazarlarda tuttuğu. Veri kaynakları birleşik çalışsın: birden fazla kaynak aynı havuzda, eksik alan diğerinden tamamlanır, maç asla elenmez. Veri eksikliği bahane olmasın — bulmaya çalış, bulamazsan tahmin ertelenir. Tüm kararlar kilitli: adım adım gitme yok, her adımda "en iyisi bu mu?" diye sorulur. Uygulama Türkçe olsun. Bittiğinde ne kurulduğunu ve nasıl çalıştırıldığını raporla.
+
+Yorum: **Ürünün ana tarifi budur.**
+- Altı bölüm ve içerikleri kullanıcının.
+- **Maç Merkezi:** maça tıklanınca tek ekranda kadrolar, sakatlıklar, form, istatistikler, son karşılaşmalar ve hava durumu gösterilir; sistemin senaryoları ve yaklaşımı yazılır. **"Maç konuşsun, kullanıcıya 'bunu oyna' hissi versin."** Yayımlanmış bir kararı olan maç sayfası bu yüzden kararı net ve kararlı bir sesle sunar ("Meclis'in kararı" bloğu, gerekçe ve senaryolarla). 6deba6c'de bahse yönlendiren ifadeleri silmiştik. Bu, kullanıcının sözüne aykırıydı ve geri alındı. Yayımlanmamış maçta karar uydurulmaz.
+- **Kuponlar:** Günün Kararı 2-3 maç, oran bandı 2.30–4.00. Meclis Görüşü tekli. Karar Birliği, 5+ Meclis Görüşü varsa en güvenilen 2-3 maçtan kurulur.
+- **Durumlar:** bekliyor, başladı, kazandı, kaybetti, iade.
+- **Güven Panosu:** haftalık kayıt, başarı oranı, hangi pazarlarda tuttuğu.
+- **Veri:** birleşik havuz kullanılır, maç asla elenmez. "Veri eksikse tahmin ertelenir" cümlesi t32u ile güncellendi: bahane yok, veri güçlendirilir.
+- "Tüm kararlar kilitli": adım adım gitme yok, her adımda "en iyisi bu mu?" diye sorulur.
+- **Not:** v1 brifinde 18+ / garanti notu yok. Bunu biz ekledik ve küçük bir not olarak tutuyoruz.
+
+#### t3u
+> 90 Meclis (modern futbol medya markası ve tahmin takip uygulaması) için veri kaynakları araştırması ve birleştirme planı. Görev: (1) Maç verisi, oranlar, kadrolar, sakatlıklar, istatistikler (korner, ilk yarı gol, KG var/yok, isabetli şut, kale vuruşu, kartlar) için en iyi ücretsiz/ücretli API ve veri kaynaklarını araştır — WhoScored, Flashscore, Forebet, Windrawwin, WoodStats ve benzeri rakipler dahil. (2) Her maçın verisini eksiksiz alabileceğimiz lider kaynakları belirle. (3) Kaynakların birleşik çalışması için mimari öner: 5-50 kaynak tek havuzda, eksik alan diğer kaynaktan tamamlanır, maç asla elenmez, veri yok diye tahmin yapılmaz ama veri bulunmaya çalışılır. (4) Sakatlıkların ağırlıklı okunması: kilit isim mi, kaç maç oynadı, olmadan takım yapamaz mı — ham liste değil. (5) Rakiplerin koyduğu bölüm isimlerini ve yapılarını incele, 90 Meclis için elit ama Türkçe kaçmayan isim önerileri çıkar. Sonuçları Türkçe rapor olarak döndür: kaynak listesi, mimari, isim önerileri, rakiplerin zayıf yanları.
+
+Yorum: Veri kaynakları ve mimari: 5–50 kaynak tek havuzda, eksik alan başka kaynaktan tamamlanır. Sakatlık ağırlıklı okunur (kilit isim mi, kaç maç oynadı). Bölüm isimleri "elit ama Türkçe kaçmayan" olmalı.
+
+#### t4u
+> Research the football statistics website FoodStats (foodstats.com — NOT WoodStats, the user corrected: it's Food, not Wood). Find out: 1) What the site is and what it offers (stats, predictions, data). 2) What data it provides for football matches (leagues covered, stats types, odds, predictions). 3) Whether it has a free plan or API access, and what limits. 4) How it compares to WhoScored, Flashscore, Forebet, Windrawwin — what it does better, what it lacks. 5) Anything useful for a Turkish football prediction/analysis site (90 Meclis) that could be a data source or inspiration. Return a concise report in Turkish with findings and whether FoodStats is worth using as a data source.
+
+Yorum: Kullanıcı düzeltmesi: site "WoodStats" değil, **FoodStats (foodstats.com)**. Veri kaynağı adayı olarak araştırıldı.
+
+#### t5u
+> 90 Meclis uygulaması için Supabase veritabanı şeması hazırla. Kullanıcının Supabase hesabında 90 Meclis adında bir proje var (Europe/İrlanda bölgesi, ücretsiz plan). Şunları yap:
+>
+> 1) matches tablosu: maç tarihi, ev sahibi takım, deplasman takımı, lig, skor, durum (gelecek/canlı/bitti), maç kimliği, veri kaynakları (hangi kaynaklardan veri geldiği), eksik alanlar listesi.
+> 2) predictions tablosu: maç kimliği, tahmin (pazar, oran, seçim), etiket (günün kararı / meclis görüşü / karar birliği), botun senaryo notu, güven skoru, sonuç (kazandı/kaybetti/bekliyor), kayıt zamanı.
+> 3) injuries tablosu: oyuncu, takım, sakatlık durumu, sezon başından beri kaç maç oynadı, kaç maçta kilit isimdi, gol katkısı, defans katkısı, ağırlık puanı (kilit isim mi değil mi).
+> 4) trends tablosu: takım, pazar (korner, KG var/yok, ilk yarı gol, şut sayısı), seri (kaç maçtır), maç maç değerler (ortalama değil, her maçın kendi değeri).
+> 5) agenda tablosu: gündem haberi, hangi maça bağlandığı, etki notu.
+> 6) sources tablosu: veri kaynağı adı, API anahtarı nerede saklanıyor, günlük istek limiti, hangi alanları dolduruyor.
+>
+> Tüm tablolar için SQL CREATE TABLE komutlarını hazırla. API-Football anahtarı dahil hiçbir gizli bilgiyi koda gömme — Supabase'in gizli ayarlarında (vault/secrets) saklanacak şekilde talimat ver. Türkçe rapor olarak özetle: hangi tablo ne işe yarar, nasıl bağlanır.
+
+Yorum: Altı tablo (matches, predictions, injuries, trends, agenda, sources) ve alanları kullanıcının tanımı. trends tablosunda "maç maç değerler (ortalama değil)" isteniyor. Gizli anahtarlar koda gömülmez.
+
+#### t16u
+> Bak kaynak sınırı yok isteği bağlı deme ekle ekleyebildigimizi çünkü veri sıkıntısı çekmeye lim
+
+Yorum (yarım kalmış sesli mesaj): "Kaynak sınırı yok, isteğe bağlı deme, ekleyebildiğimizi ekle; çünkü veri sıkıntısı çekmeyelim." Hiçbir kaynak "isteğe bağlı" sayılmaz (t32u: "Hiçbir kaynak isteğe bağlı sayılmaz").
+
+### 1.1 Yüzeyler: site ve Streamlit (kararımız, kullanıcının sözüne dayanır)
+- **Web sitesi (GitHub Pages) 90 Meclis'in herkese açık yüzüdür.** t29u: "başka misafir kullanıcılar da olacak, daha profesyonel bir şeyler yapamaz mıydık… ben bu yüzden Streamlit kullanmak istememiştim."
+- **Streamlit, çalışan ikincil bir uygulama olarak kalır.** t29u: "ama neyse çalışan bir şeyi yapalım da çok önemli değil." Bölümleri sitedekilerle aynı tanımları kullanır (aynı K/Z hesabı). Bot işlemleri yalnızca yönetici anahtarıyla (ADMIN_TOKEN) görünür.
+- **t25u'yu misafir/herkese açık erişim olarak okuyoruz:** "herkes açık kalabilir… kullanıcı tarafı olsun, misafir tarafı olsun." Ziyaretçi giriş yapmadan her şeyi görür. Ayrı bir üyelik sistemi kurulmadı.
+
+### 1.2 Sonraki mesajlar (aynen) ve yorumumuz
 
 ### t20s4 — veri kaynağı sorusuna yanıt
 > "Önce ücretsiz kaynakları dene"
@@ -44,7 +112,7 @@ Yorum: Streamlit hesabı zaten GitHub'a bağlı. Gereksinim değil, süreç bilg
 Yorum: "(Repo) herkese açık kalabilir, o ayarı ben yapamam." Ardından **"kullanıcı tarafı olsun, misafir tarafı
 olsun"**. **[BELİRSİZ]** İki okuma var: (a) site misafirlere açık olsun ("kullanıcı tarafı = misafir tarafı");
 (b) iki ayrı yüz olsun: kullanıcının (Ebraar'ın) kendi tarafı ve misafir tarafı. Biz yalnızca (a)'yı uyguladık,
-yönetimi de gizli bir sayfaya koyduk. Kullanıcıya sorulmalı (`docs/tarif.md` A5).
+yönetimi de gizli bir sayfaya koyduk. **Geçerli okuma (§1.1):** misafir/herkese açık erişim.
 
 ### t26u – t28u (Streamlit kurulumu)
 > "URL adını değiştirelim mi" · "Yav" · "Giriş de ki URL mi yapistircam bahsettigin keyde attığım mı"
@@ -127,14 +195,14 @@ Yorum: Tarifte birden çok eksik var. Kullanıcı bize güveniyor. **Yanıltmaya
 | S2 | İlk tarif: "Her maç tahmin alır, istisna yok" | "her maça tahmin mi verilecekti ben ondan mı bahsediyorum" (t33u) | Düzeltildi. Kodda da yalnızca değer seçimi yayımlanıyor |
 | S3 | Veri kaynakları raporu ve ilk kod: "Karar Bekliyor / Karar Verilmedi / T-15" | "Karar Bekliyor? hayır böyle bir şey yok… on beş dakika kala mı? Hayır" (t32u) | Kodda kaldırıldı; şema, belge ve testte duruyor |
 | S4 | Kupon kuralını "2-3 maçlık kombine, 5+ şartı kalktı" diye değiştirdik (sohbet, t32u sonrası) | "kuponlar için bir şey demedim onları değiştirme" (t33u) | Geri alındı. Kural ilk haliyle |
-| S5 | Uygulama Streamlit ile kuruldu ve misafire Streamlit açık | "ben bu yüzden stremlit kullanmak istememiştim… başka misafir kullanıcılar da olacak daha profesyonel" (t29u) | **SAPMA (kısmen giderildi)**: site yapıldı, Streamlit hâlâ açık |
+| S5 | Uygulama Streamlit ile kuruldu ve misafire Streamlit açık (artık: site ana yüz, Streamlit ikincil, §1.1) | "ben bu yüzden stremlit kullanmak istememiştim… başka misafir kullanıcılar da olacak daha profesyonel" (t29u) | **SAPMA (kısmen giderildi)**: site yapıldı, Streamlit hâlâ açık |
 | S6 | Yalnızca misafir yüzü + gizli yönetim sayfası | "kullanıcı tarafı olsun. Misafir tarafı olsun" (t25u) | **BELİRSİZ**: ayrı kullanıcı tarafı istenmiş olabilir |
 | S7 | "Her maçı veriyor olacak" → "her maça tahmin" | t33u ile düzeltildi: kastedilen veri | Belgelerde "her maçın verisi eksiksiz olacak" olarak yazılmalı |
 | S8 | Değer eşikleri (edge ≥ %3, p ≥ 0,40, oran ≤ 3,20; oransızda 0,72–0,86), "maç başına tek seçim", "adil oran" seçimleri | Kullanıcı bu sayıları okuduğumuz kısımda söylemedi. "Bizim tahmin anlayışımız" v1'de olabilir | **EKLEME / doğrulanamadı**: v1 talimatıyla karşılaştırılmalı |
 | S9 | En az 3 saat önce yayın | "saatler öncesinde paylaşacağız" (t32u) | Uyumlu sayılır. 3 saat alt sınırı bizim seçimimiz |
 | S10 | `docs/tarif.md` yol haritası: "Bot vs Ebraar vs topluluk", "Oybirliği/Oyçokluğu/Şerhli", "Tutanak/Sicil" ad önerileri | Kullanıcı bunları istemedi; bölüm ve etiket adları kullanıcının | **EKLEME**: bizim önerimiz olarak ayrıldı |
 | S11 | Ana sayfa içeriği ("dünün kararları" vb.), tasarım paleti, SEO | Kullanıcı "profesyonel" dedi, detay vermedi | Bizim tasarımımız. Kural değil, öneri |
-| S12 | "18+ / garanti değildir" notu | Bu turda kullanıcı söylemedi (v1'de olabilir) | Doğrulanamadı. Tutulması önerilir |
+| S12 | "18+ / garanti değildir" notu; 6deba6c'de "bunu oyna" türü ifadelerin silinmesi | v1 (t2u): "maç konuşsun, kullanıcıya 'bunu oyna' hissi versin". 18+ notu v1'de yok | **SAPMA giderildi**: yayımlanmış kararda kararlı ses geri geldi. Küçük 18+ notu bizim eklememiz olarak kalıyor |
 
 ## 3. Okunamayan önceki brifler — dolaylı izler
 - `supabase/schema.sql` başlığı ve kullanıcının eklediği `.sql` dosyası: "Ana tablolar (**kullanıcı tanımı**): matches, predictions, injuries, trends, agenda, sources". Altı tablo kullanıcıdan geliyor. `sources` tablosunda anahtarın değil yerinin tutulması da kullanıcı kuralı.

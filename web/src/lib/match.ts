@@ -29,8 +29,17 @@ export function odds1x2(m: Match): { "1"?: number; X?: number; "2"?: number } | 
 
 export function result(m: Match, teamId: string): "G" | "B" | "M" | null {
   if (!hasScore(m)) return null;
-  const home = m.home_team_id === teamId;
+  const home = sameTeam(m.home_team_id, teamId);
   const gf = home ? m.home_goals! : m.away_goals!;
   const ga = home ? m.away_goals! : m.home_goals!;
   return gf > ga ? "G" : gf === ga ? "B" : "M";
+}
+
+const UEFA = new Set(["CL", "EL", "ECL"]);
+export const teamSlug = (id: string) => id.slice(id.indexOf(":") + 1);
+/** Takım kimlikleri lig önekli (T1:fenerbahce, CL:fenerbahce). Avrupa kupası maçında aynı kulübü eşleştirir. */
+export function sameTeam(a: string, b: string): boolean {
+  if (a === b) return true;
+  const la = a.split(":")[0], lb = b.split(":")[0];
+  return (UEFA.has(la) || UEFA.has(lb)) && teamSlug(a) === teamSlug(b);
 }

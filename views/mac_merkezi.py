@@ -4,9 +4,10 @@ import pandas as pd
 import streamlit as st
 
 from meclis import ui
-from meclis.markets import MARKET_GROUPS, pick_label
+from meclis.analysis import LeagueContext, season_start
+from meclis.markets import MARKET_GROUPS, TAG_LABELS, pick_label
 from meclis.pool import status_text, today_tr
-from meclis.timeutil import day_bounds_utc, tr_str
+from meclis.timeutil import day_bounds_utc, parse_dt, tr_str
 
 st.title("🏟️ Maç Merkezi")
 st.caption("Maça tıkla: kadro, eksikler, form, istatistik, son karşılaşmalar, hava durumu ve meclisin senaryoları tek ekranda.")
@@ -120,7 +121,32 @@ k[1].metric(f"{m['away_name']} gol bekl.", f"{lam['away']:.2f}" if lam else "—
 for i, (sel_, lab) in enumerate((("1", "MS 1"), ("X", "MS X"), ("2", "MS 2"))):
     k[2 + i].metric(lab, f"%{100 * p1x2[sel_]:.0f}" if p1x2 else "—",
                     help=f"Piyasa: {(m.get('odds') or {}).get('1X2', {}).get(sel_, '—')}")
-k[5].metric("Veri tamlığı", f"{a.get('quality', {}).get('score', 0):.0f}/100")
+k[5].metric("Veri derinliği", f"{a.get('quality', {}).get('score', 0):.0f}/100", help="Güven göstergesi; tahmini durdurmaz.")
+
+# Yayımlanmış karar: Meclis kararını net bir sesle söyler.
+_preds = [x for x in store.select("predictions", [("match_id", "eq", m["id"])])]
+_order = {"meclis_gorusu": 0, "gunun_karari": 1, "karar_birligi": 2}
+_preds.sort(key=lambda x: _order.get(x.get("tag"), 9))
+if _preds:
+    pk = _preds[0]
+    with st.container(border=True):
+        st.markdown("#### 🗳️ Meclis'in kararı")
+        lab_ = pick_label(pk["market"], pk["selection"], pk.get("line"), m["home_name"], m["away_name"])
+        odds_ = pk.get("odds") or pk.get("fair_odds")
+        st.markdown(f"## {lab_}  ·  **{odds_:.2f}**" if odds_ else f"## {lab_}")
+        tags_ = " · ".join(dict.fromkeys(TAG_LABELS.get(x["tag"], x["tag"]) for x in _preds))
+        bits = [f"Olasılık **%{100 * pk['probability']:.0f}**"]
+        if pk.get("edge") is not None:
+            bits.append(f"değer **%{100 * pk['edge']:+.1f}**")
+        if pk.get("confidence") is not None:
+            bits.append(f"güven **{100 * pk['confidence']:.0f}/100**")
+        st.markdown(f"{tags_} · " + " · ".join(bits) + f" · {ui.status_badge(pk['status'])}")
+        st.markdown(f"Meclis bu maçta kararını verdi: **{lab_}**. Maç bunu söylüyor.")
+        if pk.get("rationale"):
+            st.markdown(pk["rationale"])
+        if pk.get("scenario_note"):
+            st.markdown(f"🎬 **Senaryo:** {pk['scenario_note']}")
+        st.caption(f"🔒 Kayıt: {tr_str(pk['recorded_at'])} TSİ, maçtan önce kilitlendi. 18+ · Garanti yoktur.")
 
 left, right = st.columns([3, 2])
 with left:
@@ -171,20 +197,22 @@ with c3:
     if a.get("h2h"):
         st.dataframe(pd.DataFrame(a["h2h"]), hide_index=True, width="stretch")
     else:
-        st.caption("Havuzdaki son iki sezonda karşılaşma yok.")
+        st.caption("Havuzda bu iki takımın son karşılaşması yok.")
 
-ctx = bot.context(m["league"])
-st.markdown("#### 🔢 İstatistikler (son 10 maç, maç maç)")
+_ctx = bot.context(m["league"])
+_s0 = season_start()
+ctx = LeagueContext(_ctx.league, [x for x in _ctx.matches if parse_dt(x["kickoff_at"]) >= _s0], _ctx.stats)
+st.markdown("#### 🔢 İstatistikler (bu sezon, son 10 maç, maç maç)")
 s1, s2 = st.columns(2)
 for col, side in ((s1, "home"), (s2, "away")):
     ser = pd.DataFrame(ctx.series(m[f"{side}_team_id"], 10))
     with col:
         st.markdown(f"**{m[f'{side}_name']}**")
         if ser.empty:
-            st.caption("Geçmiş maç verisi yok.")
+            st.caption("Bu sezon için maç verisi henüz yok.")
         else:
             num = ser[["şut", "isabetli şut", "korner", "kart"]].apply(pd.to_numeric, errors="coerce")
-            st.caption("Ortalama (son 10): " + " · ".join(f"{c} {num[c].mean():.1f}" for c in num.columns if num[c].notna().any()))
+            st.caption("Ortalama (bu sezon, son 10): " + " · ".join(f"{c} {num[c].mean():.1f}" for c in num.columns if num[c].notna().any()))
             st.dataframe(ser.dropna(axis=1, how="all"), hide_index=True, width="stretch")
 
 st.markdown("#### 👥 Kadrolar ve eksikler")

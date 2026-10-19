@@ -1,4 +1,3 @@
-import { stripPush } from "../lib/text";
 import { Link } from "react-router-dom";
 import type { Prediction } from "../lib/types";
 import { pickLabel, league, sourceLabel } from "../lib/labels";
@@ -31,7 +30,7 @@ export function PickCard({ p, compact = false }: { p: Prediction; compact?: bool
         {p.result_value && <span>Sonuç <b>{p.result_value}</b></span>}
         {p.profit !== null && p.status !== "bekliyor" && <span>K/Z <b className={p.profit >= 0 ? "pos" : "neg"}>{signed(p.profit)}</b></span>}
       </div>
-      {!compact && p.scenario_note && stripPush(p.scenario_note) && <p className="pick-note"><span className="muted">Senaryo:</span> {stripPush(p.scenario_note)}</p>}
+      {!compact && p.scenario_note && <p className="pick-note"><span className="muted">Senaryo:</span> {p.scenario_note}</p>}
       <p className="pick-lock" title={`Kayıt: ${dateTime(p.recorded_at)} TSİ`}>
         <span aria-hidden="true">🔒</span> Maçtan {hoursBefore(p.recorded_at, p.kickoff_at)} kilitlendi
       </p>
