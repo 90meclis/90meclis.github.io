@@ -62,8 +62,8 @@ function Detail({ m }: { m: Match }) {
           <Card title="Meclisin analizi" className="analysis">
             <Gate loading={an.loading} error={an.error} rows={3}>
               {a?.ready || a?.markets?.length ? <AnalysisView a={a} m={m} /> : (
-                <Empty title={new Date(m.kickoff_at).getTime() > Date.now() ? "Meclisin kararı yakında" : "Bu maç için analiz yayımlanmadı"} icon="◆">
-                  {new Date(m.kickoff_at).getTime() > Date.now() ? <>Meclis her maçın kararını başlama saatinden saatler önce yayımlar. Aşağıda şimdiden form, istatistik ve oranlar var.</> : <>Form, istatistik ve sonuç bilgileri aşağıda.</>}
+                <Empty title={new Date(m.kickoff_at).getTime() > Date.now() ? "Meclisin analizi yakında" : "Bu maç için analiz yayımlanmadı"} icon="◆">
+                  {new Date(m.kickoff_at).getTime() > Date.now() ? <>Meclis her maçı analiz eder; değerli bir seçim varsa başlama saatinden saatler önce yayımlar. Aşağıda şimdiden form, istatistik ve oranlar var.</> : <>Form, istatistik ve sonuç bilgileri aşağıda.</>}
                 </Empty>
               )}
             </Gate>

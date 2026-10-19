@@ -27,7 +27,7 @@ export default function Archive() {
   const [n, setN] = useState(PAGE);
   const [view, setView] = useState<"kayit" | "kupon">("kayit");
 
-  const preds = d.data?.preds ?? [];
+  const preds = useMemo(() => d.data?.preds ?? [], [d.data]);
   const leagues = useMemo(() => [...new Set(preds.map((p) => p.league ?? ""))].filter(Boolean).sort((a, b) => league(a).order - league(b).order), [preds]);
   const markets = useMemo(() => [...new Set(preds.map((p) => p.market))].sort(), [preds]);
   const rows = preds.filter((p) =>

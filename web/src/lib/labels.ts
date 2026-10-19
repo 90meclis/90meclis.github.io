@@ -5,7 +5,7 @@ export interface LeagueInfo { name: string; country: string; flag: string; order
 // football-data.co.uk lig kodları (+ yeni eklenebilecekler). Bilinmeyen kod, kodun kendisiyle gösterilir.
 export const LEAGUES: Record<string, LeagueInfo> = {
   T1: { name: "Süper Lig", country: "Türkiye", flag: "🇹🇷", order: 1 },
-  T2: { name: "1. Lig", country: "Türkiye", flag: "🇹🇷", order: 2 },
+  T2: { name: "TFF 1. Lig", country: "Türkiye", flag: "🇹🇷", order: 2 },
   E0: { name: "Premier Lig", country: "İngiltere", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", order: 3 },
   E1: { name: "Championship", country: "İngiltere", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", order: 4 },
   E2: { name: "League One", country: "İngiltere", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", order: 5 },
@@ -20,13 +20,13 @@ export const LEAGUES: Record<string, LeagueInfo> = {
   F2: { name: "Ligue 2", country: "Fransa", flag: "🇫🇷", order: 14 },
   N1: { name: "Eredivisie", country: "Hollanda", flag: "🇳🇱", order: 15 },
   P1: { name: "Liga Portugal", country: "Portekiz", flag: "🇵🇹", order: 16 },
-  B1: { name: "Pro League", country: "Belçika", flag: "🇧🇪", order: 17 },
+  B1: { name: "Pro Lig", country: "Belçika", flag: "🇧🇪", order: 17 },
   SC0: { name: "Premiership", country: "İskoçya", flag: "🏴󠁧󠁢󠁳󠁣󠁴󠁿", order: 18 },
   SC1: { name: "Championship", country: "İskoçya", flag: "🏴󠁧󠁢󠁳󠁣󠁴󠁿", order: 19 },
   G1: { name: "Super League", country: "Yunanistan", flag: "🇬🇷", order: 20 },
-  UCL: { name: "Şampiyonlar Ligi", country: "UEFA", flag: "🇪🇺", order: 0.5 },
-  UEL: { name: "Avrupa Ligi", country: "UEFA", flag: "🇪🇺", order: 0.6 },
-  UECL: { name: "Konferans Ligi", country: "UEFA", flag: "🇪🇺", order: 0.7 },
+  CL: { name: "Şampiyonlar Ligi", country: "UEFA", flag: "🇪🇺", order: 0.5 },
+  EL: { name: "Avrupa Ligi", country: "UEFA", flag: "🇪🇺", order: 0.6 },
+  ECL: { name: "Konferans Ligi", country: "UEFA", flag: "🇪🇺", order: 0.7 },
 };
 
 export function league(code: string | null | undefined): LeagueInfo {
@@ -42,7 +42,7 @@ export const TAG_LABELS: Record<Tag, string> = {
 export const TAG_HINT: Record<Tag, string> = {
   gunun_karari: "2–3 maçlık kupon, toplam oran 2.30–4.00 bandında",
   meclis_gorusu: "Maç başına tek seçim (tekli)",
-  karar_birligi: "2–3 maçlık kombine: meclisin en güvendiği seçimler",
+  karar_birligi: "Günde 5+ Meclis Görüşü varsa en güvenilenlerden kombine",
 };
 
 export const STATUS_LABELS: Record<PredStatus, string> = {

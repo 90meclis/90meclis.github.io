@@ -421,3 +421,41 @@ class TeamNews:
             except Exception as e:
                 self.pool.log.append(f"⚠️ ilk 11 {m['id']}: {e}")
         return out
+
+
+# ---------------------------------------------------------------------- Meclis tahmini ilk 11
+def recent_xis(store, team_id: str, before_iso: str, n: int = 5) -> list[list[str]]:
+    """Takımın son n maçındaki RESMÎ ilk 11'leri (en yeni önce)."""
+    from datetime import timedelta as _td
+
+    lo = to_iso(parse_dt(before_iso) - _td(days=70))
+    ms = [m for m in store.select("matches", [("kickoff_at", "gte", lo), ("kickoff_at", "lt", before_iso)])
+          if team_id in (m["home_team_id"], m["away_team_id"])]
+    ms = sorted(ms, key=lambda m: m["kickoff_at"], reverse=True)[:12]
+    if not ms:
+        return []
+    side_of = {m["id"]: ("home" if m["home_team_id"] == team_id else "away") for m in ms}
+    rows = store.select("lineups", [("match_id", "in", list(side_of))])
+    by = {r["match_id"]: r for r in rows if r.get("side") == side_of.get(r["match_id"]) and is_confirmed(r)}
+    out = []
+    for m in ms:
+        r = by.get(m["id"])
+        if r and r.get("start_xi"):
+            out.append([p.get("name") for p in r["start_xi"] if p.get("name")])
+        if len(out) >= n:
+            break
+    return out
+
+
+def build_xi(store, match: dict, injuries: list[dict], players_by_team: dict) -> dict:
+    """Maçın iki tarafı için Meclis tahmini ilk 11 (bkz. meclis/xi.py)."""
+    from .xi import predict_xi
+
+    lus = store.select("lineups", [("match_id", "eq", match["id"])])
+    out = {}
+    for side in ("home", "away"):
+        tid = match[f"{side}_team_id"]
+        ext = next((x.get("start_xi") for x in lus if x.get("side") == side and not is_confirmed(x)), None)
+        unav = [r for r in injuries or [] if r.get("team_id") == tid]
+        out[side] = predict_xi(players_by_team.get(tid) or [], unav, recent_xis(store, tid, match["kickoff_at"]), ext)
+    return out

@@ -11,8 +11,8 @@ tek bir çok sayfalı Streamlit uygulamasıdır; veri Supabase'te (PostgreSQL) t
 
 | Menü | Ne yapar |
 |---|---|
-| **Maç Merkezi** | Seçilen maçın ilk 11'leri (API-Football anahtarıyla, maça ~75 dk kala), sakat/cezalılar ve **Eksik Etkisi (0–100)**, son form, istatistik ortalamaları, H2H, Open-Meteo hava durumu, model λ'ları, pazar olasılıkları ve "🎙️ Maç konuşuyor" senaryo metni. Veri yoksa "yok" der; uydurmaz. |
-| **Tahmin Botu** | Bülteni (önümüzdeki 48 saat) tarar, her maçta tüm pazarları (skor, 1X2, çifte şans, gol Alt/Üst, KG, takım golü, İY gol, korner, kart, isabetli şut, kale vuruşu) hesaplar, tamlık kapısından geçenleri **maçtan önce** kaydeder. Eksik veri maçı elemez: tahmin **Karar Bekliyor** olur, yeniden denenir; maça 15 dk kala hâlâ eksikse **Karar Verilmedi** olarak kayıtta kalır. |
+| **Maç Merkezi** | Seçilen maçın **Meclis tahmini ilk 11'i** (modelde kullanılan; resmî liste beklenmez), dış kaynak tahmini / resmî ilk 11 (gelirse yalnızca bilgi), sakat/cezalılar ve **Eksik Etkisi (0–100)**, son form, istatistik ortalamaları, H2H, Open-Meteo hava durumu, model λ'ları, pazar olasılıkları ve "🎙️ Maç konuşuyor" senaryo metni. Veri yoksa "yok" der; uydurmaz. |
+| **Tahmin Botu** | Bülteni (önümüzdeki 48 saat) tarar, her maçta tüm pazarları (skor, 1X2, çifte şans, gol Alt/Üst, KG, takım golü, İY gol, korner, kart, isabetli şut, kale vuruşu) hesaplar. Eksik veri analizi durdurmaz (tamlık yalnızca güven göstergesi); yalnızca **değer kuralını** geçen seçim **maçtan en az 3 saat önce** yayımlanır (sabah çalışması günün bütün maçlarına karar verir). Yayımlanmamış adaylar her çalışmada (gece dahil) güncel veriyle yeniden hesaplanır; yayımlanan seçim kilitlidir. |
 | **Tahmin Arşivi** | Etiketli kayıtlar: **Günün Kararı** (2–3 maç, toplam oran 2.30–4.00), **Meclis Görüşü** (tekli), **Karar Birliği** (günde ≥5 tekli varsa en güvenilen 2–3). Durumlar: bekliyor / başladı / kazandı / kaybetti / iade — otomatik sonuçlanır. |
 | **Veri Laboratuvarı** | Pazar ligleri (korner, ilk yarı gol, KG, kart, isabetli şut…) ve takımların **maç maç** serileri (ortalama değil, her maçın kendi değeri). |
 | **Gündem Masası** | Sabah RSS taraması (sakatlık / teknik direktör / transfer / kadro), haberler takım adıyla maçlara bağlanır ve etki notu eklenir. |
@@ -59,7 +59,8 @@ Okuma sırası: ortam değişkeni → `.streamlit/secrets.toml` (Streamlit Cloud
 | `SUPABASE_URL`, `SUPABASE_KEY` | Önerilir | Kalıcı kayıt. Yoksa yerel SQLite. |
 | Veri kaynağı anahtarları | Evet (her biri) | Aşağıdaki tablo. Tanımlı değilse kaynak atlanır ve arayüzde **🔑 anahtar bekleniyor** yazar. |
 | `LEAGUES` | Hayır | Boşsa 21 lig: `T1,E0,SP1,I1,D1,F1,CL,EL,ECL,T2,E1,N1,P1,B1,SC0,G1,E2,SP2,I2,D2,F2` (T1 = Süper Lig, T2 = TFF 1. Lig, CL/EL/ECL = UEFA kupaları). |
-| `COMPLETENESS_MIN` | Hayır | Tamlık eşiği (varsayılan 60/100). |
+| `BOT_PUBLISH_LEAD_HOURS` | Hayır | Seçim en geç başlamadan kaç saat önce yayımlanır (varsayılan 3). |
+| `BOT_PUBLISH_WINDOW_HOURS` | Hayır | TR günü dışındaki maçlar için yayın penceresi (varsayılan 12 saat). |
 | `DEMO_MODE` | Hayır | `1` = örnek veri modu. |
 
 **Veri kaynağı anahtarları** (hepsi ücretsiz kayıtla alınır; değerleri yalnızca env / GitHub Secrets / Streamlit
@@ -110,15 +111,21 @@ Aynı işlemler arayüzde **Tahmin Botu** sayfasından da yapılabilir (anon ana
 
 ## Model özeti
 
+- **Temel: güncel sezon (2026/27).** Geçmiş sezon maçları yalnızca zayıf önsel/kalibrasyon olarak 0.3 ağırlıkla girer.
+  Takımın bu sezonki maçı 3'ten azsa piyasa oranı (varsa) gol beklentisine yarı ağırlıkla katılır; lig geçmişi
+  hiç yoksa (ör. UEFA kupaları) gol beklentisi piyasa oranından türetilir (bu durumda "değer" iddiası kurulmaz).
 - **Gol / skor:** zaman ağırlıklı (ξ = 0.0019/gün) **Dixon-Coles** Poisson modeli; 10×10 skor matrisinden 1X2,
   çifte şans, Alt/Üst 1.5/2.5/3.5, KG, takım golleri, doğru skor; ilk yarı oranı ligden ölçülür.
 - **Sayım pazarları:** korner, kart, isabetli şut, kale vuruşu için takım hücum/savunma oranları (büzülmeli);
   lig varyansı ortalamayı aşıyorsa **negatif binom**, değilse Poisson.
-- **Sakatlık:** oyuncu önemi = dakika, ilk 11, gol+asist katkısı, savunma payı; "Eksik Etkisi" (TEE, 0–100)
-  ve λ çarpanı (0.70–1.30 ile sınırlı). Sakatlık verisi yoksa bu açıkça yazılır.
-- **Veri tamlığı (0–100):** fikstür 20, takım geçmişi (≥8 maç) 20, piyasa oranı 15, sakatlık 15, istatistik
-  geçmişi 15, hakem 5, ilk 11 10. Eşik altı → Karar Bekliyor.
-- **Seçim:** piyasa oranı varsa değer (edge) ≥ %3; yoksa yüksek olasılıklı, "adil oran" etiketli seçim
+- **Meclis tahmini ilk 11 + sakatlık:** her takım için kendi ilk 11 tahminimiz (son resmî ilk 11'ler 0.45, sezon ilk 11
+  payı 0.35, dış tahmin 0.20; sakat/cezalı dışarıda, şüpheli ×0.5). Eksik Etkisi'ne sakat/cezalı/şüpheli listesi +
+  en güçlü 11'de olup tahmini 11'de olmayanlar (rotasyon, kesinlik 0.5) girer; oyuncu önemi = dakika, ilk 11,
+  gol+asist katkısı, savunma payı; "Eksik Etkisi" (TEE, 0–100) ve λ çarpanı (0.70–1.30 ile sınırlı).
+- **Veri tamlığı (0–100, yalnızca güven göstergesi):** fikstür 15, bu sezonki maçlar (≥6) 25, piyasa oranı 15,
+  sakatlık 15, istatistik geçmişi 15, hakem 5, Meclis tahmini ilk 11 10. Tahmini durdurmaz; seçim puanını 0.85–1.0
+  arasında çarpar.
+- **Seçim (yayın kuralı):** iki takımın da modelde en az 4 maçı olmalı; piyasa oranı varsa değer (edge) ≥ %3; yoksa yüksek olasılıklı, "adil oran" etiketli seçim
   (bunlar ROI'ye katılmaz). Günün Kararı yalnızca gerçek oranlı ayaklardan, beklenen değeri ≥ 0 olan en
   yüksek ortak olasılıklı kombinasyondur; bant tutmazsa **kupon yok** denir.
 
@@ -162,12 +169,12 @@ MECLIS_TEST_PG_DSN="host=localhost dbname=meclis_test user=postgres" pytest test
 ```
 
 Kapsam: Dixon-Coles ve sayım modelleri, kaynak birleştirme (Türkçe ad eşleme, provenance, maç düşürmeme),
-kupon bandı, sonuçlandırma (iade dahil), değiştirilemezlik tetikleyicileri, TEE, Karar Bekliyor → Karar
-Verilmedi akışı, altı sayfanın açılışı (Streamlit AppTest) ve başsız sunucu sağlık kontrolü.
+kupon bandı, sonuçlandırma (iade dahil), değiştirilemezlik tetikleyicileri, TEE, yayın penceresi (≥3 saat önce),
+tahmini ilk 11, piyasa oranından gol beklentisi, altı sayfanın açılışı (Streamlit AppTest) ve başsız sunucu sağlık kontrolü.
 
 ## Bilinen sınırlar
 
-- Kale vuruşu için ücretsiz kaynak yok → bu pazar çoğunlukla **Karar Bekliyor** kalır.
+- Kale vuruşu verisi azdır (BSD biten maç istatistiğinden gelir) → bu pazar çoğu maçta hesaplanmaz.
 - Anahtarsız modda sakatlık ve ilk 11 yok; tamlık puanı buna göre düşer, metinlerde açıkça yazılır.
 - Piyasa oranı yoksa Günün Kararı genellikle kurulmaz (bilinçli).
 - Takım adı eşleştirme muhafazakârdır; yeni bir ad varyantı ayrı takım sanılabilir (`meclis/names.py` → `ALIASES`).

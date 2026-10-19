@@ -50,6 +50,8 @@ def certainty(kind: str | None) -> float:
         return 0.5
     if "karar" in k or "game time" in k:
         return 0.3
+    if "rotasyon" in k:  # tahmini 11'de yok ama sakat değil (Meclis tahmini ilk 11)
+        return 0.5
     return 1.0
 
 

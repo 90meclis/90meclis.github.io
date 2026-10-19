@@ -67,8 +67,8 @@ def narrative(match: dict, payload: dict) -> str:
     lines = [f"**{home} – {away}** · {tr_str(match['kickoff_at'])} (TSİ)"]
     if not payload.get("ready"):
         lines.append(
-            "Bu maçı henüz konuşturamıyorum: " + "; ".join(payload.get("missing") or ["veri eksik"]) +
-            ". Maç elenmedi — tahmin **ertelendi**, bot veri tamamlandıkça yeniden deneyecek.")
+            "Bu maçın analizi kurulamadı: " + "; ".join(payload.get("missing") or ["veri eksik"]) +
+            ". Bot sonraki çalışmada güncel veriyle yeniden hesaplayacak.")
         return "\n\n".join(lines)
     lam = payload["lambdas"]
     tot = lam["home"] + lam["away"]

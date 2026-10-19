@@ -24,7 +24,7 @@ export default function News() {
   const [linked, setLinked] = useState(false);
   const [text, setText] = useState("");
   const [n, setN] = useState(PAGE);
-  const items = q.data ?? [];
+  const items = useMemo(() => q.data ?? [], [q.data]);
   const cats = useMemo(() => {
     const c: Record<string, number> = {};
     for (const x of items) c[x.category ?? "genel"] = (c[x.category ?? "genel"] ?? 0) + 1;

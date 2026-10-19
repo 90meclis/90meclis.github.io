@@ -32,8 +32,9 @@ class GoalModel:
         return t in self.attack and self.n_matches.get(t, 0) >= min_matches
 
     def lambdas(self, home: str, away: str) -> tuple[float, float]:
-        lh = np.exp(self.mu + self.home_adv + self.attack[home] - self.defence[away])
-        la = np.exp(self.mu + self.attack[away] - self.defence[home])
+        # modelde olmayan takım (yeni çıkmış / ilk maç) lig ortalamasıyla (0) temsil edilir
+        lh = np.exp(self.mu + self.home_adv + self.attack.get(home, 0.0) - self.defence.get(away, 0.0))
+        la = np.exp(self.mu + self.attack.get(away, 0.0) - self.defence.get(home, 0.0))
         return float(lh), float(la)
 
 
@@ -59,7 +60,9 @@ def fit_dixon_coles(matches: list[dict], xi: float = 0.0019, ridge: float = 0.5,
     ai = np.array([idx[m["away"]] for m in rows])
     x = np.array([m["hg"] for m in rows], dtype=float)
     y = np.array([m["ag"] for m in rows], dtype=float)
-    w = np.exp(-xi * np.array([max(0.0, m.get("days_ago", 0.0)) for m in rows]))
+    # zaman ağırlığı × sezon ağırlığı (geçmiş sezonlar yalnızca zayıf önsel: weight < 1)
+    w = np.exp(-xi * np.array([max(0.0, m.get("days_ago", 0.0)) for m in rows])) * \
+        np.array([float(m.get("weight", 1.0)) for m in rows])
 
     def unpack(p):
         return p[:n], p[n:2 * n], p[2 * n], p[2 * n + 1], p[2 * n + 2]
@@ -182,3 +185,40 @@ def goal_markets(m: np.ndarray, lh: float, la: float, ht_ratio: float = 0.44) ->
 def most_likely_scores(m: np.ndarray, k: int = 3) -> list[tuple[str, float]]:
     flat = [(float(m[i, j]), f"{i}-{j}") for i in range(m.shape[0]) for j in range(m.shape[1])]
     return [(s, p) for p, s in sorted(flat, reverse=True)[:k]]
+
+
+def lambdas_from_odds(odds: dict, rho: float = 0.0) -> tuple[float, float] | None:
+    """Piyasa oranlarından (marjı temizlenmiş 1X2, varsa 2.5 Alt/Üst) gol beklentisi: bağımsız Poisson + DC
+    düzeltmesiyle olasılıkları en iyi tutturan (λ_ev, λ_dep). Lig/takım geçmişi olmayan maçlarda (ör. kupa,
+    yeni takım) temel girdi olarak kullanılır; uydurma değil, piyasanın kendi beklentisidir."""
+    o = (odds or {}).get("1X2") or {}
+    try:
+        inv = [1 / float(o["1"]), 1 / float(o["X"]), 1 / float(o["2"])]
+    except (KeyError, TypeError, ValueError, ZeroDivisionError):
+        return None
+    tot = sum(inv)
+    p1, px, p2 = (x / tot for x in inv)
+    pov = None
+    ou = (odds or {}).get("OU_GOALS_2.5") or {}
+    try:
+        io, iu = 1 / float(ou["ÜST"]), 1 / float(ou["ALT"])
+        pov = io / (io + iu)
+    except (KeyError, TypeError, ValueError, ZeroDivisionError):
+        pov = None
+
+    def loss(p):
+        lh, la = np.exp(p)
+        m = score_matrix(lh, la, rho)
+        g = np.arange(m.shape[0])
+        tot_g = g[:, None] + g[None, :]
+        e = (float(np.tril(m, -1).sum()) - p1) ** 2 + (float(np.trace(m)) - px) ** 2 + \
+            (float(np.triu(m, 1).sum()) - p2) ** 2
+        if pov is not None:
+            e += (float(m[tot_g > 2.5].sum()) - pov) ** 2
+        return e
+
+    res = minimize(loss, np.log([1.4, 1.1]), method="Nelder-Mead", options={"xatol": 1e-4, "fatol": 1e-8})
+    lh, la = (float(x) for x in np.exp(res.x))
+    if not (0.1 < lh < 6 and 0.1 < la < 6):
+        return None
+    return lh, la

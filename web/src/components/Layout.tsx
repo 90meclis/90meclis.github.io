@@ -2,15 +2,8 @@ import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { Logo } from "./Logo";
 import { Disclaimer } from "./ui";
+import { NAV } from "../lib/nav";
 
-export const NAV = [
-  { to: "/mac-merkezi", label: "Maç Merkezi", icon: "◎" },
-  { to: "/tahmin-botu", label: "Tahmin Botu", icon: "◆" },
-  { to: "/tahmin-arsivi", label: "Tahmin Arşivi", icon: "▤" },
-  { to: "/guven-panosu", label: "Güven Panosu", icon: "◈" },
-  { to: "/gundem-masasi", label: "Gündem Masası", icon: "◉" },
-  { to: "/veri-laboratuvari", label: "Veri Laboratuvarı", icon: "▦" },
-];
 
 export function Layout() {
   const loc = useLocation();

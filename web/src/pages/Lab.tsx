@@ -30,7 +30,7 @@ export default function Lab() {
   const lgQ = useAsync("leagues", api.leaguesInDb);
   const leagues = useMemo(() => [...(lgQ.data ?? [])].sort((a, b) => league(a).order - league(b).order), [lgQ.data]);
   const [lgSel, setLg] = useState<string>("");
-  const lg = lgSel || leagues[0] || "";
+  const lg = lgSel || (leagues.includes("T1") ? "T1" : leagues[0]) || "";
   const [tab, setTab] = useState<Tab>("seri");
 
   return (
@@ -114,7 +114,7 @@ function TeamTab({ lg }: { lg: string }) {
     return [...h.data.games].reverse().map((g) => {
       const home = g.home_team_id === team;
       const s = idx.get(`${g.id}:${home ? "home" : "away"}`);
-      let v: number | null = null;
+      let v: number | null;
       if (metric === "goals") v = home ? g.home_goals : g.away_goals;
       else if (metric === "cards") v = s && (s.yellow !== null || s.red !== null) ? (s.yellow ?? 0) + (s.red ?? 0) : null;
       else v = (s?.[metric as keyof MatchStat] as number | null | undefined) ?? null;

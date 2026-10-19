@@ -7,9 +7,24 @@ from . import MODEL_VERSION
 from .markets import attach_odds
 from .model.counts import STATS, CountModel, count_markets, fit_count_model
 from .model.elo import BLEND_WEIGHT, EloModel, blend, fit_elo
-from .model.goals import GoalModel, fit_dixon_coles, goal_markets, most_likely_scores, score_matrix
+from .model.goals import GoalModel, fit_dixon_coles, goal_markets, lambdas_from_odds, most_likely_scores, score_matrix
 from .model.injuries import injury_adjustment
 from .timeutil import now_utc, parse_dt, to_iso
+
+
+# Model girdisi GÜNCEL sezondur; geçmiş sezon maçları yalnızca zayıf önsel/kalibrasyon olarak bu ağırlıkla girer.
+PRIOR_SEASON_WEIGHT = 0.3
+# Takımın bu sezonki maç sayısı bundan azsa piyasa oranı (varsa) gol beklentisine yarı ağırlıkla katılır.
+THIN_CURRENT = 3
+LEAGUE_BASELINE = (1.45, 1.15)  # hiçbir model/oran yoksa (yalnızca bilgi; bu tabanla tahmin YAYIMLANMAZ)
+
+
+def season_start(now=None):
+    from datetime import datetime, timezone
+
+    d = (now or now_utc()).date()
+    y = d.year if d.month >= 7 else d.year - 1
+    return datetime(y, 7, 1, tzinfo=timezone.utc)
 
 
 @dataclass
@@ -21,19 +36,28 @@ class LeagueContext:
     elo_model: EloModel | None = None
     count_models: dict[str, CountModel | None] = field(default_factory=dict)
     error: str | None = None
+    n_current: dict[str, int] = field(default_factory=dict)  # takım başına bu sezon oynanmış maç
 
     @classmethod
     def build(cls, league: str, matches: list[dict], stats: dict[str, dict],
               elo_priors: dict[str, float] | None = None) -> "LeagueContext":
         ctx = cls(league, matches, stats)
         now = now_utc()
+        s0 = season_start(now)
         rows = []
+
+        def wt(m):
+            return 1.0 if parse_dt(m["kickoff_at"]) >= s0 else PRIOR_SEASON_WEIGHT
+
         for m in matches:
             if m.get("home_goals") is None:
                 continue
+            if parse_dt(m["kickoff_at"]) >= s0:
+                for t in (m["home_team_id"], m["away_team_id"]):
+                    ctx.n_current[t] = ctx.n_current.get(t, 0) + 1
             rows.append({"home": m["home_team_id"], "away": m["away_team_id"], "hg": m["home_goals"],
                          "ag": m["away_goals"], "hthg": m.get("ht_home_goals"), "htag": m.get("ht_away_goals"),
-                         "days_ago": (now - parse_dt(m["kickoff_at"])).total_seconds() / 86400})
+                         "days_ago": (now - parse_dt(m["kickoff_at"])).total_seconds() / 86400, "weight": wt(m)})
         try:
             ctx.goal_model = fit_dixon_coles(rows)
         except Exception as e:
@@ -53,7 +77,7 @@ class LeagueContext:
                 if hv is None or av is None:
                     continue
                 crow.append({"home": m["home_team_id"], "away": m["away_team_id"], "h": hv, "a": av,
-                             "days_ago": (now - parse_dt(m["kickoff_at"])).total_seconds() / 86400})
+                             "days_ago": (now - parse_dt(m["kickoff_at"])).total_seconds() / 86400, "weight": wt(m)})
             ctx.count_models[stat] = fit_count_model(crow, stat)
         return ctx
 
@@ -130,100 +154,120 @@ def _inj_effect_rows(rows: list[dict], players_by_team: dict[str, list[dict]], t
 
 def analyze_match(match: dict, ctx: LeagueContext, settings, injuries: list[dict] | None = None,
                   injuries_known: bool = False, players_by_team: dict | None = None,
-                  weather: dict | None = None, lineups_known: bool = False) -> dict:
+                  weather: dict | None = None, lineups_known: bool = False, xi: dict | None = None) -> dict:
+    """Her maç ve her pazar analiz edilir; eksik veri maçı ya da analizi DURDURMAZ (tamlık yalnızca güven
+    göstergesidir). Gol beklentisi sırası: güncel sezon ağırlıklı Dixon-Coles + Elo → (takımın bu sezonki verisi
+    azsa) piyasa oranıyla harmanlama → model yoksa piyasa oranından türetilen λ → hiçbiri yoksa lig tabanı
+    (bu tabanla tahmin yayımlanmaz). Yayın kuralı select_single'dadır (değer kuralı)."""
     hid, aid = match["home_team_id"], match["away_team_id"]
-    missing, postponed = [], {}
+    gaps, postponed = [], {}
     gm = ctx.goal_model
-    min_n = settings.min_team_matches
     payload: dict = {"match_id": match["id"], "model_version": MODEL_VERSION, "created_at": to_iso(now_utc()),
                      "home": match["home_name"], "away": match["away_name"], "kickoff_at": match["kickoff_at"],
                      "league": match["league"], "markets": [], "count_info": {}, "postponed_markets": postponed}
-    if gm is None:
-        missing.append(ctx.error or "lig geçmişi yok")
-    else:
-        for tid, nm in ((hid, match["home_name"]), (aid, match["away_name"])):
-            n = gm.n_matches.get(tid, 0)
-            if n < min_n:
-                missing.append(f"{nm}: geçmiş maç sayısı yetersiz ({n}/{min_n})")
-    if settings.require_injury_data and not injuries_known:
-        missing.append("sakatlık verisi (REQUIRE_INJURY_DATA açık)")
+    nh_cur, na_cur = ctx.n_current.get(hid, 0), ctx.n_current.get(aid, 0)
+    payload["current_season_matches"] = {"home": nh_cur, "away": na_cur}
+    payload["model_matches"] = {"home": gm.n_matches.get(hid, 0) if gm else 0, "away": gm.n_matches.get(aid, 0) if gm else 0}
+    payload["min_team_matches"] = settings.min_team_matches
     payload["form"] = {"home": ctx.form(hid), "away": ctx.form(aid)}
     payload["h2h"] = ctx.h2h(hid, aid)
     payload["injuries_known"] = injuries_known
     inj_rows = injuries or []
     players_by_team = players_by_team or {}
-    eff_h = _inj_effect_rows(inj_rows, players_by_team, hid)
-    eff_a = _inj_effect_rows(inj_rows, players_by_team, aid)
+    xi = xi or {}
+    eff_h = (xi.get("home") or {}).get("effect_rows")
+    eff_a = (xi.get("away") or {}).get("effect_rows")
+    eff_h = eff_h if eff_h is not None else _inj_effect_rows(inj_rows, players_by_team, hid)
+    eff_a = eff_a if eff_a is not None else _inj_effect_rows(inj_rows, players_by_team, aid)
     adj = injury_adjustment(eff_h, eff_a)
     payload["injury_effect"] = {**{k: (round(v, 3) if isinstance(v, float) else v) for k, v in adj.items()},
                                 "home_missing": eff_h, "away_missing": eff_a}
+    if xi:
+        payload["predicted_xi"] = {side: {k: v for k, v in (xi.get(side) or {}).items() if k != "effect_rows"}
+                                   for side in ("home", "away")}
     payload["weather"] = weather
     odds = match.get("odds") or {}
-    if not missing:
+    rho = gm.rho if gm else 0.0
+    mkt = lambdas_from_odds(odds, rho) if odds.get("1X2") else None
+    basis, dc, el = None, None, None
+    if gm is not None:
         dc = gm.lambdas(hid, aid)
         el = ctx.elo_model.lambdas(hid, aid) if ctx.elo_model else None
         lh0, la0 = blend(dc, el)
-        lh, la = lh0 * adj["home_mult"], la0 * adj["away_mult"]
-        mtx = score_matrix(lh, la, gm.rho)
-        payload["lambdas"] = {"home": round(lh, 3), "away": round(la, 3), "base_home": round(lh0, 3),
-                              "base_away": round(la0, 3), "rho": round(gm.rho, 4), "ht_ratio": round(gm.ht_ratio, 3),
-                              "dc_home": round(dc[0], 3), "dc_away": round(dc[1], 3),
-                              "elo_weight": BLEND_WEIGHT if el else 0.0}
-        if el and ctx.elo_model:
-            payload["elo"] = {"home": round(ctx.elo_model.ratings[hid]), "away": round(ctx.elo_model.ratings[aid]),
-                              "source": ctx.elo_model.source}
-        payload["top_scores"] = most_likely_scores(mtx, 5)
-        markets = goal_markets(mtx, lh, la, gm.ht_ratio)
-        for stat, (mk, label) in STATS.items():
-            cm = ctx.count_models.get(stat)
-            if cm is None:
-                postponed[mk] = f"{label}: ligde yeterli maç verisi yok — tahmin ertelendi"
-                continue
-            nh, na = cm.n_matches.get(hid, 0), cm.n_matches.get(aid, 0)
-            if nh < min_n or na < min_n:
-                postponed[mk] = f"{label}: takım verisi yetersiz ({nh}/{na} maç) — tahmin ertelendi"
-                continue
-            cmk, info = count_markets(cm, hid, aid)
-            markets += cmk
-            payload["count_info"][stat] = info
-        payload["markets"] = [attach_odds(dict(m), odds) for m in markets]
-    payload["quality"] = completeness(match, gm, ctx.count_models, injuries_known, lineups_known)
-    min_c = getattr(settings, "completeness_min", 60.0)
-    if not missing and payload["quality"]["score"] < min_c:
-        eksik = [k for k, v in payload["quality"]["fields"].items() if v < 1]
-        missing.append(f"tamlık puanı {payload['quality']['score']:.0f} < {min_c:.0f} (eksik: {', '.join(eksik)})")
-    payload["missing"] = missing
-    payload["ready"] = not missing
+        basis = "model (güncel sezon ağırlıklı Dixon-Coles" + (" + Elo)" if el else ")")
+        if mkt and min(nh_cur, na_cur) < THIN_CURRENT:
+            lh0, la0 = blend((lh0, la0), mkt, 0.5)
+            basis += " + piyasa oranı (bu sezon verisi az)"
+            gaps.append(f"bu sezon az maç ({nh_cur}/{na_cur}) — piyasa oranıyla güçlendirildi")
+    elif mkt:
+        lh0, la0 = mkt
+        basis = "piyasa oranı (lig geçmişi yok)"
+        gaps.append(ctx.error or "lig geçmişi yok — gol beklentisi piyasa oranından")
+    else:
+        lh0, la0 = LEAGUE_BASELINE
+        basis = "lig tabanı"
+        gaps.append((ctx.error or "lig geçmişi yok") + "; piyasa oranı da yok — yalnızca bilgi amaçlı")
+    payload["basis"] = basis
+    lh, la = lh0 * adj["home_mult"], la0 * adj["away_mult"]
+    mtx = score_matrix(lh, la, rho)
+    payload["lambdas"] = {"home": round(lh, 3), "away": round(la, 3), "base_home": round(lh0, 3),
+                          "base_away": round(la0, 3), "rho": round(rho, 4),
+                          "ht_ratio": round(gm.ht_ratio if gm else 0.44, 3),
+                          "dc_home": round(dc[0], 3) if dc else None, "dc_away": round(dc[1], 3) if dc else None,
+                          "market_home": round(mkt[0], 3) if mkt else None, "market_away": round(mkt[1], 3) if mkt else None,
+                          "elo_weight": BLEND_WEIGHT if el else 0.0}
+    if el and ctx.elo_model:
+        payload["elo"] = {"home": round(ctx.elo_model.ratings[hid]), "away": round(ctx.elo_model.ratings[aid]),
+                          "source": ctx.elo_model.source}
+    payload["top_scores"] = most_likely_scores(mtx, 5)
+    markets = goal_markets(mtx, lh, la, gm.ht_ratio if gm else 0.44)
+    for stat, (mk, label) in STATS.items():
+        cm = ctx.count_models.get(stat)
+        if cm is None:
+            postponed[mk] = f"{label}: ligde bu istatistiğin verisi yok — pazar hesaplanmadı"
+            continue
+        nh, na = cm.n_matches.get(hid, 0), cm.n_matches.get(aid, 0)
+        if nh < 1 or na < 1:
+            postponed[mk] = f"{label}: takımın bu istatistikte hiç maçı yok ({nh}/{na}) — pazar hesaplanmadı"
+            continue
+        cmk, info = count_markets(cm, hid, aid)  # az maçlı takım lig ortalamasına çekilir (büzülme)
+        markets += cmk
+        payload["count_info"][stat] = info
+    payload["markets"] = [attach_odds(dict(m), odds) for m in markets]
+    xi_ok = sum(1 for side in ("home", "away") if (xi.get(side) or {}).get("players"))
+    payload["quality"] = completeness(match, gm, ctx.count_models, injuries_known, xi_ok / 2, nh_cur, na_cur)
+    payload["missing"] = gaps  # bilgi amaçlı; analizi/yayını kapatmaz
+    payload["ready"] = True
     payload["best_pick"] = select_single(payload, settings)
     from .scenarios import build_scenarios, narrative
 
-    payload["scenarios"] = build_scenarios(payload) if payload["ready"] else []
+    payload["scenarios"] = build_scenarios(payload)
     payload["narrative"] = narrative(match, payload)
     return payload
 
 
 COMPLETENESS_WEIGHTS = {
-    "Fikstür (takımlar, saat, durum)": 20, "Son maçlar (her iki takım ≥ 8)": 20, "Maç öncesi piyasa oranı": 15,
+    "Fikstür (takımlar, saat, durum)": 15, "Bu sezonki maçlar (her iki takım ≥ 6)": 25, "Maç öncesi piyasa oranı": 15,
     "Sakat/cezalı listesi": 15, "Takım istatistik geçmişi (korner, kart, isabetli şut)": 15, "Hakem": 5,
-    "Açıklanan ilk 11": 10,
+    "Meclis tahmini ilk 11": 10,
 }
 
 
-def completeness(match: dict, gm, ctx_counts: dict, injuries_known: bool, lineups_known: bool) -> dict:
-    """Tamlık = Σ(ağırlık × var_mı) / Σ ağırlık  (0–100). Kısmi alanlar 0–1 arası sayılır."""
+def completeness(match: dict, gm, ctx_counts: dict, injuries_known: bool, xi_share: float,
+                 n_h: int = 0, n_a: int = 0) -> dict:
+    """Tamlık = Σ(ağırlık × var_mı) / Σ ağırlık  (0–100). Kısmi alanlar 0–1 arası sayılır.
+    YALNIZCA güven göstergesidir: tahmini durdurmaz, seçimde olasılığı hafifçe (0.85–1.0) çarpar."""
     hid, aid = match["home_team_id"], match["away_team_id"]
-    n_h = gm.n_matches.get(hid, 0) if gm else 0
-    n_a = gm.n_matches.get(aid, 0) if gm else 0
     stats_ok = [1.0 if (cm and cm.has_team(hid, 4) and cm.has_team(aid, 4)) else 0.0
                 for k, cm in ctx_counts.items() if k != "goal_kicks"]
     have = {
         "Fikstür (takımlar, saat, durum)": 1.0 if match.get("kickoff_at") and match.get("home_name") else 0.0,
-        "Son maçlar (her iki takım ≥ 8)": min(1.0, min(n_h, n_a) / 8),
+        "Bu sezonki maçlar (her iki takım ≥ 6)": min(1.0, min(n_h, n_a) / 6),
         "Maç öncesi piyasa oranı": 1.0 if (match.get("odds") or {}).get("1X2") else 0.0,
         "Sakat/cezalı listesi": 1.0 if injuries_known else 0.0,
         "Takım istatistik geçmişi (korner, kart, isabetli şut)": (sum(stats_ok) / len(stats_ok)) if stats_ok else 0.0,
         "Hakem": 1.0 if match.get("referee") else 0.0,
-        "Açıklanan ilk 11": 1.0 if lineups_known else 0.0,
+        "Meclis tahmini ilk 11": float(xi_share),
     }
     tot = sum(COMPLETENESS_WEIGHTS.values())
     score = 100 * sum(COMPLETENESS_WEIGHTS[k] * v for k, v in have.items()) / tot
@@ -237,6 +281,10 @@ def select_single(payload: dict, settings) -> dict | None:
     if not payload.get("ready"):
         return None
     q = payload["quality"]["factor"]
+    model_based = str(payload.get("basis") or "").startswith("model")
+    mm = payload.get("model_matches") or {}
+    if model_based and min(mm.get("home", 0), mm.get("away", 0)) < payload.get("min_team_matches", 4):
+        return None  # takım hakkında modelde hiç/az veri var: "değer" iddiası kurulamaz (sonraki çalışmada yeniden)
     best, best_score = None, 0.0
     for m in payload["markets"]:
         if m["market"] == "CS":
@@ -248,7 +296,8 @@ def select_single(payload: dict, settings) -> dict | None:
             score = (p * q) * (1 + min(m["edge"], 0.25))
             kind = "değer"
         else:
-            if not (settings.no_odds_min_prob <= p <= 0.86) or m["market"] == "DC":
+            # oransız seçim yalnızca kendi modelimizden çıkar (piyasa/taban türevi λ ile "değer" iddia edilemez)
+            if not model_based or not (settings.no_odds_min_prob <= p <= 0.86) or m["market"] == "DC":
                 continue
             score = p * q * 0.97
             kind = "yüksek olasılık (piyasa oranı yok)"

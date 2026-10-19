@@ -14,14 +14,18 @@ s, store, pool = ui.resources()
 with st.expander("Bot nasıl çalışır?", expanded=False):
     st.markdown(f"""
 1. **Bülten taraması:** Seçili liglerde (**{', '.join(ui.league_name(x) for x in s.leagues)}**) önümüzdeki
-   **{s.horizon_hours:.0f} saat** içindeki maçlar alınır. Maç asla elenmez.
+   **{s.horizon_hours:.0f} saat** içindeki maçlar alınır. Maç asla elenmez. Model girdisi **güncel sezondur**;
+   geçmiş sezonlar yalnızca zayıf önsel olarak girer. İlk 11 için resmî liste beklenmez: **Meclis tahmini ilk 11**
+   (son resmî ilk 11'ler, sezon ilk 11 payı, sakat/cezalı listesi) modele işlenir.
 2. **Veri toplama:** Birleşik havuz: 18 kaynak (anahtarsız: football-data.co.uk, OpenLigaDB, openfootball,
    TheSportsDB, Wikidata, Open-Meteo, RSS, Meclis Elo; anahtarlı: API-Football, Sportmonks, football-data.org,
    FootyStats, SportDevs, BSD, Wikipedia, The Odds API, OddsPapi, Club Elo). Eksik alan bir kaynaktan diğerine
    tamamlanır; hiçbir kaynakta olmayan alan boş kalır, uydurulmaz.
-3. **Tamlık kapısı:** Tamlık puanı **{s.completeness_min:.0f}/100** altındaysa veya takım geçmişi
-   **{s.min_team_matches}** maçtan azsa tahmin **Karar Bekliyor** olur ve yeniden denenir. Maçtan
-   **{s.min_minutes_before_kickoff:.0f} dk** önce hâlâ eksikse **Karar Verilmedi** olarak kayıtta kalır.
+3. **Her maç analiz edilir:** Eksik veri analizi durdurmaz; boşluklar ek kaynaklar, güncel sezon verisi, Elo
+   önseli ve piyasa oranıyla kapatılır. Tamlık puanı yalnızca **güven göstergesidir**. Yalnızca **değer kuralını**
+   geçen seçim yayımlanır; geçmeyen maçlar her çalışmada (gece dahil) güncel veriyle yeniden hesaplanır.
+   **Yayın zamanı:** maçtan en az **{s.publish_lead_hours:g} saat** önce — sabah çalışması günün bütün maçlarına
+   karar verir; yayımlanan seçim kilitlenir.
 4. **Modeller:** Gol/skor için zaman ağırlıklı **Dixon-Coles** (Poisson skor matrisi), Elo önseliyle (%45)
    harmanlanır; korner, kart, isabetli şut,
    kale vuruşu için takım oranları + **negatif binom/Poisson**. Sakatlıklar **Eksik Etkisi (0–100)** ile λ'ya işlenir.

@@ -3,7 +3,7 @@ name: 90 Meclis zamanlanmış işler
 on:
   schedule:
     - cron: "0 5 * * *"        # 08:00 TSİ — sabah: havuz + gündem + bot + sonuçlandırma
-    - cron: "15 9-21/2 * * *"  # gün içi: her 2 saatte bot (Karar Bekliyor maçları yeniden dener) + sonuçlandırma
+    - cron: "15 1-21/2 * * *"  # gece + gün içi her 2 saatte: havuz (7 gün) + kadro/eksik/ilk 11 + bot (yayımlanmamış adayları yeniden hesaplar) + sonuçlandırma
     - cron: "30 23 * * *"      # gece: sonuçlandırma
     - cron: "40 0 * * *"       # 03:40 TSİ — API-Football günlük kotası sıfırlandıktan sonra geçmiş veri doldurma
   workflow_dispatch:

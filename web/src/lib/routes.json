@@ -12,7 +12,7 @@
  {
   "path": "/tahmin-botu",
   "title": "Tahmin Botu",
-  "description": "Günün Kararı, Meclis Görüşü ve Karar Birliği: her maç için saatler önce yayımlanan, güven göstergesiyle kilitlenen tahminler."
+  "description": "Günün Kararı, Meclis Görüşü ve Karar Birliği: maçtan saatler önce yayımlanan ve kilitlenen, güven göstergeli tahminler."
  },
  {
   "path": "/tahmin-arsivi",

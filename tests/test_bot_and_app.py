@@ -55,14 +55,63 @@ def test_missing_data_postpones_not_drops(demo_env):
     st.upsert("matches", [{"id": "DEMO:yeni", "league": "DEMO", "kickoff_at": ko, "home_team_id": "DEMO:yenitakim1",
                            "away_team_id": "DEMO:yenitakim2", "home_name": "Yeni Takım Bir (örnek)",
                            "away_name": "Yeni Takım İki (örnek)", "status": "planlandi"}])
-    Bot(st, s).run(record=True, fetch_extras=False)
+    r = Bot(st, s).run(record=True, fetch_extras=False)
     q = st.get("analysis_queue", match_id="DEMO:yeni")
-    assert q["status"] == "ertelendi" and q["missing"] and "Karar Bekliyor" in q["note"]
+    # eksik veri analizi durdurmaz: maç analiz edilir; değer iddiası kurulamadığı için yayımlanmaz, yeniden hesaplanır
+    assert q["status"] == "bekliyor" and "yeniden hesaplanacak" in q["note"]
+    assert "Karar" not in q["note"]
+    assert st.select("analyses", [("match_id", "eq", "DEMO:yeni")])
     assert not st.select("predictions", [("match_id", "eq", "DEMO:yeni")])
     assert st.get("matches", id="DEMO:yeni")  # maç havuzda duruyor
-    # başlamaya 15 dk kala hâlâ eksik → Karar Verilmedi
-    Bot(st, s).run(record=True, now=now_utc() + timedelta(hours=5, minutes=50), fetch_extras=False)
-    assert st.get("analysis_queue", match_id="DEMO:yeni")["status"] == "yetismedi"
+    assert r["postponed"] == 0
+    # başlamaya 3 saatten az kala yeni yayın yapılmaz, 'yetismedi' gibi bir durum da yazılmaz
+    Bot(st, s).run(record=True, now=now_utc() + timedelta(hours=4), fetch_extras=False)
+    assert st.get("analysis_queue", match_id="DEMO:yeni")["status"] == "bekliyor"
+    assert not st.select("predictions", [("match_id", "eq", "DEMO:yeni")])
+
+
+def test_publish_window_and_lead():
+    from datetime import timedelta
+
+    from meclis.bot import Bot
+    from meclis.config import load_settings
+    from meclis.store import SQLiteStore
+    from meclis.timeutil import now_utc, to_iso
+
+    s = load_settings()
+    b = Bot(SQLiteStore(":memory:"), s)
+    now = now_utc()
+    assert not b.publishable({"kickoff_at": to_iso(now + timedelta(hours=2))}, now)  # < 3 saat
+    assert b.publishable({"kickoff_at": to_iso(now + timedelta(hours=5))}, now)
+    assert not b.publishable({"kickoff_at": to_iso(now + timedelta(days=3))}, now)  # pencere dışı
+
+
+def test_predicted_xi_excludes_injured_and_flags_rotation():
+    from meclis.xi import predict_xi
+
+    pos = ["G"] + ["D"] * 6 + ["M"] * 6 + ["F"] * 4
+    players = [{"name": f"Oyuncu {i}", "position": pos[i], "minutes": 900 - 40 * i, "lineups": 10 - (i % 11) // 2,
+                "appearances": 10, "goals": 1 if pos[i] == "F" else 0, "assists": 0} for i in range(len(pos))]
+    recent = [[f"Oyuncu {i}" for i in range(11)]] * 3
+    inj = [{"player_name": "Oyuncu 1", "injury_status": "kesin yok (sakat)", "team_id": "x"}]
+    xi = predict_xi(players, inj, recent)
+    names = [p["name"] for p in xi["players"]]
+    assert len(names) == 11 and "Oyuncu 1" not in names
+    assert sum(1 for p in xi["players"] if p["position"] == "G") == 1
+    assert any(r["name"] == "Oyuncu 1" for r in xi["effect_rows"])
+    # kadro verisi yoksa uydurma 11 kurulmaz
+    assert predict_xi(players[:5])["players"] == []
+
+
+def test_lambdas_from_odds_roundtrip():
+    from meclis.model.goals import goal_markets, lambdas_from_odds, score_matrix
+
+    m = goal_markets(score_matrix(1.7, 0.9), 1.7, 0.9)
+    p = {(x["market"], x["selection"], x["line"]): x["probability"] for x in m}
+    odds = {"1X2": {"1": 1 / p[("1X2", "1", None)], "X": 1 / p[("1X2", "X", None)], "2": 1 / p[("1X2", "2", None)]},
+            "OU_GOALS_2.5": {"ÜST": 1 / p[("OU_GOALS", "ÜST", 2.5)], "ALT": 1 / p[("OU_GOALS", "ALT", 2.5)]}}
+    lh, la = lambdas_from_odds(odds)
+    assert abs(lh - 1.7) < 0.1 and abs(la - 0.9) < 0.1
 
 
 @pytest.mark.parametrize("page", PAGES)

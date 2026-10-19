@@ -34,8 +34,12 @@ async function all<T>(make: () => Sel, max = 20000): Promise<T[]> {
 const MATCH_LIST = "id,league,kickoff_at,home_team_id,away_team_id,home_name,away_name,home_goals,away_goals,score,ht_home_goals,ht_away_goals,status,durum,venue,referee,city,odds,missing_fields,completeness,updated_at,season";
 
 export async function leaguesInDb(): Promise<string[]> {
-  const rows = await all<{ league: string }>(() => db().from("teams").select("league"));
-  return [...new Set(rows.map((r) => r.league))];
+  const since = new Date(Date.now() - 45 * 86400000).toISOString();
+  const [t, m] = await Promise.all([
+    all<{ league: string }>(() => db().from("teams").select("league")),
+    all<{ league: string }>(() => db().from("matches").select("league").gte("kickoff_at", since)),
+  ]);
+  return [...new Set([...t, ...m].map((r) => r.league))];
 }
 
 export async function matchDays(fromDay: string, toDay: string): Promise<Record<string, Record<string, number>>> {

@@ -122,7 +122,9 @@ class Settings:
     leagues: list[str] = field(default_factory=list)
     demo_mode: bool = False
     horizon_hours: float = 48.0
-    min_minutes_before_kickoff: float = 15.0
+    min_minutes_before_kickoff: float = 15.0  # eski kural (kullanılmıyor; geriye uyumluluk)
+    publish_lead_hours: float = 3.0  # seçim en geç başlamadan bu kadar saat önce yayımlanır
+    publish_window_hours: float = 12.0  # TR günü dışındaki maçlar için yayın penceresi
     require_injury_data: bool = False
     min_team_matches: int = 4
     value_edge_min: float = 0.03
@@ -198,6 +200,8 @@ def load_settings() -> Settings:
         demo_mode=demo,
         horizon_hours=get_float("BOT_HORIZON_HOURS", 48.0),
         min_minutes_before_kickoff=get_float("BOT_MIN_MINUTES_BEFORE_KICKOFF", 15.0),
+        publish_lead_hours=get_float("BOT_PUBLISH_LEAD_HOURS", 3.0),
+        publish_window_hours=get_float("BOT_PUBLISH_WINDOW_HOURS", 12.0),
         require_injury_data=get_bool("REQUIRE_INJURY_DATA", False),
         min_team_matches=int(get_float("MIN_TEAM_MATCHES", 4)),
         value_edge_min=get_float("VALUE_EDGE_MIN", 0.03),

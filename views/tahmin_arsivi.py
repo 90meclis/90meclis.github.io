@@ -16,7 +16,7 @@ c1, c2, c3 = st.columns(3)
 tags = c1.multiselect("Etiket", list(TAG_LABELS), default=list(TAG_LABELS), format_func=TAG_LABELS.get)
 statuses = c2.multiselect("Durum", ["bekliyor", "basladi", "kazandi", "kaybetti", "iade"],
                           default=["bekliyor", "basladi", "kazandi", "kaybetti", "iade"], format_func=ui.status_badge)
-show_q = c3.toggle("Karar Bekliyor / Karar Verilmedi maçlarını da göster", value=True)
+show_q = False  # eski 'Karar Bekliyor / Karar Verilmedi' listesi kaldırıldı: yalnızca yayımlanan seçimler arşivdedir
 
 st.subheader("🎫 Kuponlar")
 if not coupons:

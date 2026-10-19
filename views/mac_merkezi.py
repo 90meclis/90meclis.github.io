@@ -80,7 +80,7 @@ for m in matches:
         "Gol bekl.": round(lam["home"] + lam["away"], 2) if lam else None,
         "Tamlık": a.get("quality", {}).get("score"),
         "Meclis": pick_label(bp["market"], bp["selection"], bp.get("line"), m["home_name"], m["away_name"]) if bp
-        else ("Karar Bekliyor" if not a.get("ready") else "Pas"),
+        else "Değer yok",
     })
 st.subheader(f"{day.strftime('%d.%m.%Y')} bülteni · {len(matches)} maç")
 sel = st.dataframe(pd.DataFrame(rows), hide_index=True, width="stretch", on_select="rerun",
@@ -133,7 +133,7 @@ with right:
                                     "Akış": x["anlatım"]} for x in a["scenarios"]]), hide_index=True, width="stretch")
         st.markdown("**En olası skorlar:** " + " · ".join(f"{s_} (%{100 * p_:.0f})" for s_, p_ in a.get("top_scores", [])))
     else:
-        st.info("Karar Bekliyor — senaryolar veri tamamlanınca kurulacak.")
+        st.info("Bu maç için senaryo kurulamadı.")
 
 st.markdown("#### 📊 Tüm pazarlar")
 if a.get("markets"):
@@ -194,15 +194,21 @@ lineups = {x["side"]: x for x in store.select("lineups", [("match_id", "eq", m["
 for col, side in ((k1, "home"), (k2, "away")):
     with col:
         st.markdown(f"**{m[f'{side}_name']}**")
+        pxi = ((a.get("predicted_xi") or {}).get(side) or {})
+        if pxi.get("players"):
+            st.caption("🧠 Meclis tahmini ilk 11 (modelde kullanılan) · dayanak: " + ", ".join(pxi.get("basis") or []))
+            st.write(", ".join(p["name"] + (" (şüpheli)" if p.get("note") else "") for p in pxi["players"]))
+        else:
+            st.caption("Meclis tahmini ilk 11 kurulamadı: " + ", ".join(pxi.get("basis") or ["veri yok"]))
         lu = lineups.get(side)
         if lu:
             from meclis.teamnews import is_confirmed
 
-            label = "İlk 11" if is_confirmed(lu) else "Tahmini ilk 11 (resmî değil)"
-            st.caption(f"{label} ({lu.get('formation') or '—'}) · Teknik direktör: {lu.get('coach') or '—'} · kaynak: {lu.get('source')}")
+            if is_confirmed(lu):
+                st.caption(f"📋 Resmî ilk 11 ({lu.get('formation') or '—'}) · kaynak: {lu.get('source')} — yalnızca bilgi")
+            else:
+                st.caption(f"Dış kaynak tahmini ({lu.get('formation') or '—'}) · kaynak: {lu.get('source')}")
             st.write(", ".join(p["name"] for p in lu.get("start_xi") or []))
-        else:
-            st.caption("İlk 11 henüz açıklanmadı (resmî ilk 11 genelde maçtan ~1 saat önce gelir).")
         if not s.demo_mode:
             with st.expander("Güncel kadro (Wikipedia / BSD)"):
                 from meclis.teamnews import current_players
@@ -261,8 +267,8 @@ with st.expander("🧾 Veri tamlığı ve kaynaklar (alan bazında köken)"):
     q = a.get("quality") or {}
     st.dataframe(pd.DataFrame([{"Alan": k_, "Ağırlık": q.get("weights", {}).get(k_), "Var mı (0–1)": v}
                                for k_, v in (q.get("fields") or {}).items()]), hide_index=True)
-    st.caption(f"Tamlık puanı {q.get('score')} / 100 · eşik {s.completeness_min:.0f}. Eşik altında tahmin 'Karar Bekliyor' "
-               "olur; maçtan 15 dk önce hâlâ eksikse 'Karar Verilmedi' olarak arşivde kalır.")
+    st.caption(f"Tamlık puanı {q.get('score')} / 100 — güven göstergesidir; tahmini durdurmaz. "
+               f"Gol beklentisi dayanağı: {a.get('basis') or '—'}.")
     st.json(m.get("sources") or {})
     st.caption("Piyasa oranları: " + ", ".join(f"{k_}: {v}" for k_, v in (m.get("odds") or {}).items()) if m.get("odds") else "Piyasa oranı yok.")
 st.caption("Olasılıklar modeldir, kesinlik değildir. Sorumlu oyna; 1 birimden fazlasını riske atma.")

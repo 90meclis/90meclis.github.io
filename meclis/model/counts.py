@@ -64,7 +64,7 @@ def fit_count_model(rows: list[dict], stat: str, xi: float = 0.0025, k: float = 
     totals = np.array([r["h"] + r["a"] for r in data], dtype=float)
     acc: dict[str, dict[str, float]] = {}
     for r in data:
-        w = math.exp(-xi * max(0.0, r.get("days_ago", 0.0)))
+        w = math.exp(-xi * max(0.0, r.get("days_ago", 0.0))) * float(r.get("weight", 1.0))
         for team, side_for, side_against, mean_for, mean_against in (
             (r["home"], r["h"], r["a"], hm, am),
             (r["away"], r["a"], r["h"], am, hm),

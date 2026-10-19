@@ -31,11 +31,11 @@ export default function PredictionBot() {
   return (
     <>
       <PageHead kicker={dateLong(new Date().toISOString())} title="Tahmin Botu">
-        Bot bülteni tarar, her pazarı modeller, senaryo kurar ve kararını maçtan <b>önce</b> deftere kilitler. Bültendeki her maç için karar, başlama saatinden saatler önce yayımlanır.
+        Bot bülteni tarar, her pazarı modeller, senaryo kurar ve kararını maçtan <b>önce</b> deftere kilitler. Her maç analiz edilir; yalnızca değer taşıyan seçimler saatler önce yayımlanır.
       </PageHead>
       <Gate loading={d.loading} error={d.error} rows={5}>
         {!focusDay ? (
-          <Empty title="Yeni kararlar yakında" icon="◆">Kararlar her maçtan saatler önce yayımlanır ve kilitlenir. Geçmiş kararlar için <Link to="/tahmin-arsivi">Tahmin Arşivi</Link>.</Empty>
+          <Empty title="Yeni kararlar yakında" icon="◆">Meclis her maçı analiz eder; değerli bir seçim bulduğunda maçtan saatler önce yayımlar ve kilitler. Geçmiş kararlar için <Link to="/tahmin-arsivi">Tahmin Arşivi</Link>.</Empty>
         ) : (
           <>
             <h2 className="day-title">{focusDay === today ? "Bugünün kararları" : `Sıradaki kararlar · ${dateLong(focusDay + "T12:00:00+03:00")}`}</h2>
@@ -61,17 +61,20 @@ export default function PredictionBot() {
         {yesterday.length > 0 && focusDay !== addDays(today, -1) && (
           <section>
             <h3 className="sub">Dünün kararları</h3>
-            <div className="picks grid">{yesterday.map((p) => <PickCard key={p.id} p={p} compact />)}</div>
+            {(d.data?.coupons ?? []).filter((c) => c.coupon_date === addDays(today, -1)).map((c) => (
+              <div className="coupons" key={c.id}><CouponCard c={c} legs={yesterday.filter((p) => p.coupon_id === c.id)} /></div>
+            ))}
+            <div className="picks grid">{yesterday.filter((p) => !p.coupon_id).map((p) => <PickCard key={p.id} p={p} compact />)}</div>
           </section>
         )}
       </Gate>
 
       <Card title="Bot nasıl karar verir?" className="how">
         <ol className="steps">
-          <li><b>Bülten taraması.</b> Önümüzdeki maçlar çok kaynaklı veri havuzundan alınır; her maç için karar üretilir.</li>
+          <li><b>Bülten taraması.</b> Önümüzdeki maçlar çok kaynaklı veri havuzundan alınır; her maç analiz edilir.</li>
           <li><b>Veri.</b> Fikstür, son maçlar, maç maç istatistik, oranlar, eksik oyuncular, hakem ve Meclis tahmini 11 birlikte değerlendirilir. Her kararın yanında bir güven göstergesi yayımlanır.</li>
           <li><b>Modeller.</b> Gol için zaman ağırlıklı Dixon-Coles (Poisson) ve Meclis Elo; korner, kart ve isabetli şut için negatif binom/Poisson. Eksik oyuncular önemlerine göre ağırlıklandırılır.</li>
-          <li><b>Seçim.</b> Maç başına tek <i>Meclis Görüşü</i>. <i>Günün Kararı</i>: 2–3 maç, toplam oran 2,30–4,00. <i>Karar Birliği</i>: meclisin en güvendiği 2–3 maçlık kombine.</li>
+          <li><b>Seçim.</b> Maç başına tek <i>Meclis Görüşü</i>. <i>Günün Kararı</i>: 2–3 maç, toplam oran 2,30–4,00. <i>Karar Birliği</i>: günde 5+ görüş varsa en güvenilenlerden kombine.</li>
           <li><b>Kilit.</b> Kayıt maçtan önce yazılır; sonra değiştirilemez, silinemez. Sonuç otomatik işlenir.</li>
         </ol>
       </Card>

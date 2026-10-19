@@ -63,7 +63,7 @@ Birleşik veri havuzundaki her maç tek satırdır; hiçbir maç eksik veri yüz
 | `result_value`, `profit`, `closing_odds`, `clv`, `settled_at`, `settlement_note` | Sonuçlandırma alanları |
 | `recorded_at` | Kayıt zamanı — **sunucu saatiyle** tetikleyici yazar |
 
-"**Karar Bekliyor**" ve "**Karar Verilmedi**" durumları tahmin satırı değildir (henüz tahmin yoktur);
+Yayımlanmamış adaylar tahmin satırı değildir (analiz `analyses`'te, durum `analysis_queue`'da tutulur);
 `analysis_queue` tablosunda tutulur ve `v_tutanak` görünümünde tahminlerle birlikte
 `karar_bekliyor` / `karar_verilmedi` durumuyla listelenir. Böylece maç hiçbir zaman kayıttan düşmez.
 
@@ -107,12 +107,13 @@ transfer / kadro / genel), `match_id` → `matches.id` (**boş olabilir**, `on d
 | `players` | Oyuncu dakika / maç / ilk 11 / gol / asist (sakatlık ağırlığı için) |
 | `lineups`, `weather` | İlk 11 ve hava durumu önbelleği |
 | `coupons` | Günün Kararı / Karar Birliği kuponları (değiştirilemez) |
-| `analysis_queue` | Analiz kuyruğu: `ertelendi` = **Karar Bekliyor**, `yetismedi` = **Karar Verilmedi** |
+| `analysis_queue` | Analiz kuyruğu: `bekliyor` = yayın penceresi / değer bekleniyor (her çalışmada yeniden hesaplanır), `tamamlandi` = yayımlandı. `ertelendi` / `yetismedi` yalnızca eski kayıtlarda kalır. |
 | `analyses` | Maç analizinin tam yükü (Maç Merkezi metni, olasılıklar) |
 | `source_status` | Kaynak sağlığı ve günlük istek sayacı |
 
 ### Görünümler (Güven Panosu'nun herkese açık yüzü)
-- `v_tutanak` — tüm tahminler + Karar Bekliyor / Karar Verilmedi maçları.
+- `v_tutanak` — tüm tahminler (eski kayıtlarda yayımlanmamış maçlar da görünür).
+- `v_kaynak_durumu` — kaynak durumu (anon okuyabilir; mesajdaki anahtar/jetonlar maskelenir).
 - `v_guven_haftalik` — hafta bazında tahmin, kazanan, kaybeden, iade, isabet %, kâr (birim), ROI %.
 - `v_guven_pazar` — etiket × pazar bazında döküm.
 

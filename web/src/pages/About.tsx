@@ -15,7 +15,7 @@ export default function About() {
           <ul className="def">
             <li><TagPill tag="gunun_karari" /><span>Günün en değerli 2–3 maçlık kuponu. Toplam oran 2,30–4,00 bandında olmalıdır; bant dışında kupon kurulmaz.</span></li>
             <li><TagPill tag="meclis_gorusu" /><span>Maç başına tek seçim. Piyasa oranı varsa değer şartı, yoksa yüksek olasılık şartı aranır.</span></li>
-            <li><TagPill tag="karar_birligi" /><span>Meclisin en güvendiği seçimlerden kurulan 2–3 maçlık kombinasyon.</span></li>
+            <li><TagPill tag="karar_birligi" /><span>Günde en az 5 Meclis Görüşü varsa, en güvenilen seçimlerden kurulan kombinasyon.</span></li>
           </ul>
         </Card>
         <Card title="Durumlar">
@@ -32,7 +32,7 @@ export default function About() {
         <ul className="steps">
           <li><b>Çok kaynaklı havuz.</b> Fikstür, sonuç, istatistik, oran, kadro, sakatlık ve hava durumu birden çok açık kaynaktan birleştirilir; bir kaynakta eksik olan alan diğerinden tamamlanır. Her alanın hangi kaynaktan geldiği saklanır.</li>
           <li><b>Modeller.</b> Gol için Dixon-Coles düzeltmeli Poisson ve Meclis Elo; korner, kart ve şut için negatif binom/Poisson. Eksik oyuncular dakika payı ve gol katkısına göre ağırlıklandırılır.</li>
-          <li><b>Her maça karar.</b> Bültendeki her maç için karar, başlama saatinden saatler önce yayımlanır. Güven göstergesi kararın ne kadar sağlam olduğunu söyler. Uydurma veri asla konmaz.</li>
+          <li><b>Seçici yayın.</b> Bültendeki her maç analiz edilir; yalnızca değer taşıyan seçimler, başlama saatinden saatler önce yayımlanır. Güven göstergesi kararın ne kadar sağlam olduğunu söyler. Uydurma veri asla konmaz.</li>
           <li><b>Kilitli defter.</b> Kayıtlar maç başlamadan yazılır; veritabanı kuralları gereği sonradan değiştirilemez ve silinemez.</li>
         </ul>
       </Card>

@@ -1,9 +1,12 @@
 """Tahmin Botu.
 
-Akış: bülteni tara → maçları süz (lig, zaman penceresi) → her maç için tüm pazarları analiz et →
-senaryoları kur → maçtan ÖNCE deftere yaz. Veri eksikse maç elenmez: analiz kuyruğunda 'ertelendi'
-olarak bekler ve bir sonraki çalışmada yeniden denenir. Başlama saati gelip hâlâ eksikse 'yetismedi'
-olarak kayıtta kalır (sessizce kaybolmaz).
+Akış: bülteni tara → her maç için tüm pazarları analiz et (eksik veri analizi durdurmaz; tamlık yalnızca güven
+göstergesi) → senaryoları kur → değer kuralını geçen seçimi maçtan SAATLER önce deftere yaz.
+
+Yayın zamanı: maç, yayın penceresine girdiğinde (Türkiye saatiyle aynı gün ya da 12 saatten yakın) ve başlamasına
+en az BOT_PUBLISH_LEAD_HOURS (varsayılan 3) saat varken yayımlanır — sabah çalışması günün bütün maçlarına
+karar verir, gün içinde eklenen maç sonraki çalışmada. Yayımlanmamış adaylar (değer çıkmadı / pencere dışında)
+her çalışmada (gece dahil) güncel veriyle yeniden hesaplanır; yayımlanan seçim kilitlidir.
 """
 from __future__ import annotations
 
@@ -17,15 +20,6 @@ from .markets import pick_label
 from .pool import DataPool
 from .store import StoreError
 from .timeutil import TR, now_utc, parse_dt, to_iso, tr_date
-
-
-def _retry_at(now, kickoff, attempts: int):
-    gap = kickoff - now
-    if gap <= timedelta(hours=3):
-        step = timedelta(minutes=30)
-    else:
-        step = timedelta(hours=min(6, 2 + attempts))
-    return min(now + step, kickoff - timedelta(minutes=15))
 
 
 def _prediction_row(match: dict, pick: dict, tag: str, rationale: str, coupon_id: str | None = None,
@@ -70,8 +64,7 @@ class Bot:
             except Exception:
                 lineups = []
             ko = parse_dt(match["kickoff_at"])
-            if ko - now_utc() <= timedelta(hours=30):
-                injuries, known = self.pool.injuries(match)
+            injuries, known = self.pool.injuries(match)  # BSD listesi 7 gün önceden gelir
             for side in ("home", "away"):
                 players[match[f"{side}_team_id"]] = self.pool.squad_players(match[f"{side}_team_id"])
             try:
@@ -89,94 +82,96 @@ class Bot:
             w = self.store.get("weather", match_id=match["id"])
             weather = w["data"] if w else None
             lineups = self.store.select("lineups", [("match_id", "eq", match["id"])])
-        from .teamnews import is_confirmed
+        from .teamnews import build_xi
 
-        return analyze_match(match, ctx, self.s, injuries, known, players, weather,
-                             lineups_known=any(is_confirmed(x) for x in lineups or []))
+        try:
+            xi = build_xi(self.store, match, injuries, players)
+        except Exception as e:  # tahmini 11 kurulamazsa sakat listesiyle devam
+            self.log.append(f"⚠️ tahmini ilk 11 kurulamadı ({match['home_name']}): {e}")
+            xi = {}
+        return analyze_match(match, ctx, self.s, injuries, known, players, weather, xi=xi)
+
+    def lead(self) -> timedelta:
+        return timedelta(hours=self.s.publish_lead_hours)
+
+    def publishable(self, m: dict, now) -> bool:
+        """Yayın penceresi: başlamaya ≥ lead saat var VE (TR saatiyle bugün ya da 12 saatten yakın)."""
+        ko = parse_dt(m["kickoff_at"])
+        if ko - now < self.lead():
+            return False
+        return tr_date(m["kickoff_at"]) <= tr_date(to_iso(now)) or ko - now <= timedelta(hours=self.s.publish_window_hours)
 
     def candidates(self, now) -> list[dict]:
-        lo = now + timedelta(minutes=self.s.min_minutes_before_kickoff)
+        lo = now + self.lead()
         hi = now + timedelta(hours=self.s.horizon_hours)
         ms = self.pool.matches_between(to_iso(lo), to_iso(hi), self.s.leagues)
-        ids = {m["id"] for m in ms}
-        for q in self.store.select("analysis_queue", [("status", "in", ["bekliyor", "ertelendi"])]):
-            if q["match_id"] not in ids:
-                m = self.store.get("matches", id=q["match_id"])
-                if m and parse_dt(m["kickoff_at"]) > lo:
-                    ms.append(m)
-                    ids.add(m["id"])
         return [m for m in ms if m.get("status") in ("planlandi", None)]
 
     def run(self, record: bool = True, now=None, fetch_extras: bool = True) -> dict:
         now = now or now_utc()
-        if record:  # kuru çalıştırma hiçbir şey yazmaz (salt okunur bağlantıda da güvenli)
-            self._expire_queue(now)
         matches = self.candidates(now)
-        self.log.append(f"Bülten: {len(matches)} maç ({', '.join(self.s.leagues)}; {self.s.horizon_hours:.0f} saat)")
-        analyses, recorded, postponed = [], 0, 0
+        self.log.append(f"Bülten: {len(matches)} maç ({len(self.s.leagues)} lig; {self.s.horizon_hours:.0f} saat; "
+                        f"yayın: başlamadan ≥ {self.s.publish_lead_hours:g} saat önce)")
+        analyses, recorded, waiting, nopick = [], 0, 0, 0
         for m in matches:
-            q = self.store.get("analysis_queue", match_id=m["id"]) or {"match_id": m["id"], "attempts": 0}
-            if q.get("status") == "tamamlandi":
-                if self.store.select("predictions", [("match_id", "eq", m["id"]), ("tag", "eq", "meclis_gorusu")], limit=1) \
-                        or q.get("note") == "pas":
-                    a = self._latest_analysis(m["id"])
-                    if a:
-                        analyses.append((m, a))
-                    continue
-            if record and q.get("status") == "ertelendi" and q.get("next_retry_at") and parse_dt(q["next_retry_at"]) > now:
-                postponed += 1
+            published = self.store.select("predictions", [("match_id", "eq", m["id"]), ("tag", "eq", "meclis_gorusu")],
+                                          limit=1)
+            if published:  # yayımlanan seçim kilitli: yeniden hesaplanmaz
+                a = self._latest_analysis(m["id"])
+                if a:
+                    analyses.append((m, a))
                 continue
+            q = self.store.get("analysis_queue", match_id=m["id"]) or {"match_id": m["id"], "attempts": 0}
             try:
                 a = self.analyze(m, fetch_extras)
-            except Exception as e:  # analiz hatası maçı ELEMEZ
-                a = {"ready": False, "missing": [f"analiz hatası: {e}"], "match_id": m["id"]}
-            attempts = int(q.get("attempts") or 0) + 1
-            if not a.get("ready"):
-                postponed += 1
-                if not record:
-                    continue
-                self.store.upsert("analysis_queue", [{
-                    "match_id": m["id"], "status": "ertelendi", "missing": a.get("missing", []),
-                    "attempts": attempts, "last_attempt_at": to_iso(now),
-                    "next_retry_at": to_iso(_retry_at(now, parse_dt(m["kickoff_at"]), attempts)),
-                    "note": "Karar Bekliyor — veri eksik, tahmin ertelendi"}])
-                if a.get("narrative"):
-                    self._save_analysis(m["id"], a, now)
+            except Exception as e:  # analiz hatası maçı ELEMEZ; sonraki çalışmada yeniden hesaplanır
+                self.log.append(f"⚠️ analiz hatası ({m['home_name']} – {m['away_name']}): {e}")
                 continue
+            attempts = int(q.get("attempts") or 0) + 1
             if record:
                 self._save_analysis(m["id"], a, now)
                 self.store.update("matches", {"completeness": a["quality"]["score"]}, [("id", "eq", m["id"])])
             analyses.append((m, a))
             bp = a.get("best_pick")
-            note = "pas"
-            if bp and record:
+            can_publish = self.publishable(m, now)
+            if bp and can_publish and record:
                 lab = pick_label(bp["market"], bp["selection"], bp.get("line"), m["home_name"], m["away_name"])
                 why = (f"{lab}: olasılık %{bp['probability'] * 100:.1f}; λ {a['lambdas']['home']:.2f}-{a['lambdas']['away']:.2f}; "
-                       f"tür: {bp['kind']}; tamlık {a['quality']['score']:.0f}/100")
+                       f"tür: {bp['kind']}; dayanak: {a.get('basis')}; tamlık (güven) {a['quality']['score']:.0f}/100")
                 try:
                     sc = "; ".join(f"{x['ad']} (%{100 * x['olasılık']:.0f})" if x.get("olasılık") else x["ad"]
                                    for x in a.get("scenarios", [])[:4])
                     self.store.insert("predictions", [_prediction_row(m, bp, "meclis_gorusu", why, scenario_note=sc,
                                                                       completeness=a["quality"]["score"])])
                     recorded += 1
-                    note = "kaydedildi"
                     self.log.append(f"📝 Meclis Görüşü: {m['home_name']} – {m['away_name']} → {lab}")
+                    self.store.upsert("analysis_queue", [{
+                        "match_id": m["id"], "status": "tamamlandi", "missing": a.get("missing", []),
+                        "attempts": attempts, "last_attempt_at": to_iso(now), "next_retry_at": None,
+                        "note": "yayımlandı"}])
+                    continue
                 except StoreError as e:
-                    note = "kayıt reddedildi"
                     self.log.append(f"⚠️ kayıt reddedildi ({m['home_name']} – {m['away_name']}): {e}")
-            elif bp:
+            elif bp and not record:
                 self.log.append(f"🧪 (kuru) {m['home_name']} – {m['away_name']} → "
-                                f"{pick_label(bp['market'], bp['selection'], bp.get('line'), m['home_name'], m['away_name'])}")
+                                f"{pick_label(bp['market'], bp['selection'], bp.get('line'), m['home_name'], m['away_name'])}"
+                                + ("" if can_publish else " (yayın penceresi dışında)"))
+            if bp:
+                waiting += 1
+            else:
+                nopick += 1
             if record:
+                note = ("değerli seçim var — yayın penceresi bekleniyor" if bp else
+                        "değer kuralını geçen seçim yok — güncel veriyle yeniden hesaplanacak")
                 self.store.upsert("analysis_queue", [{
-                    "match_id": m["id"], "status": "tamamlandi", "missing": [],
+                    "match_id": m["id"], "status": "bekliyor", "missing": a.get("missing", []),
                     "attempts": attempts, "last_attempt_at": to_iso(now), "next_retry_at": None, "note": note}])
         coupons = self._coupons(analyses, now) if record else []
         if record:
             self.update_trends()
-        self.log.append(f"Analiz: {len(analyses)} hazır, {postponed} ertelendi, {recorded} yeni tahmin, "
-                        f"{len(coupons)} yeni kupon")
-        return {"analyzed": len(analyses), "postponed": postponed, "recorded": recorded, "coupons": coupons,
+        self.log.append(f"Analiz: {len(analyses)} maç, {recorded} yeni Meclis Görüşü, {waiting} seçim yayın penceresini "
+                        f"bekliyor, {nopick} maçta değer yok (yeniden hesaplanacak), {len(coupons)} yeni kupon")
+        return {"analyzed": len(analyses), "postponed": 0, "recorded": recorded, "coupons": coupons,
                 "log": list(self.pool.log) + self.log}
 
     def update_trends(self) -> int:
@@ -196,23 +191,12 @@ class Bot:
         self.store.upsert("analyses", [{"match_id": match_id, "created_at": to_iso(now),
                                         "model_version": MODEL_VERSION, "payload": a}])
 
-    def _expire_queue(self, now) -> None:
-        """Başlama saatine 15 dk (BOT_MIN_MINUTES_BEFORE_KICKOFF) kala hâlâ eksikse: Karar Verilmedi."""
-        cutoff = now + timedelta(minutes=self.s.min_minutes_before_kickoff)
-        for q in self.store.select("analysis_queue", [("status", "in", ["bekliyor", "ertelendi"])]):
-            m = self.store.get("matches", id=q["match_id"])
-            if m and parse_dt(m["kickoff_at"]) <= cutoff:
-                self.store.update("analysis_queue", {
-                    "status": "yetismedi",
-                    "note": "Karar Verilmedi: veri yetersiz (eksik: " + ", ".join(q.get("missing") or ["?"]) + ")"},
-                    [("match_id", "eq", q["match_id"])])
-
     def _coupons(self, analyses: list[tuple[dict, dict]], now) -> list[str]:
         created = []
-        min_ko = now + timedelta(minutes=self.s.min_minutes_before_kickoff)
+        min_ko = now + self.lead()
         by_day: dict = {}
         for m, a in analyses:
-            if parse_dt(m["kickoff_at"]) > min_ko and a.get("ready"):
+            if parse_dt(m["kickoff_at"]) > min_ko and a.get("ready") and self.publishable(m, now):
                 by_day.setdefault(tr_date(m["kickoff_at"]), []).append((m, a))
         for day, items in sorted(by_day.items()):
             dstr = day.isoformat()
