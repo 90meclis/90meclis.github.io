@@ -21,12 +21,13 @@ from .store import get_store
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="python -m meclis", description="90 Meclis komut satırı")
     ap.add_argument("komut", choices=["yenile", "gundem", "bot", "sonuclandir", "sabah", "durum", "kadro",
-                                        "gecmis", "analiz"])
+                                        "gecmis", "analiz", "sezon", "yedek"])
     ap.add_argument("--zorla", action="store_true", help="kadro: 7 günlük önbelleği yok say")
     ap.add_argument("--saat", type=float, default=168, help="kadro: kaç saat sonrasına kadarki maçlar (varsayılan 168 = 7 gün)")
     ap.add_argument("--gecmis", action="store_true", help="geçmiş sezon verisini de çek")
     ap.add_argument("--kuru", action="store_true", help="bot: kayda yazmadan çalıştır")
     ap.add_argument("--ligler", help="virgülle lig kodları (ör. T1,E0)")
+    ap.add_argument("--cikti", help="yedek: çıktı klasörü (varsayılan ./yedek)")
     a = ap.parse_args(argv)
     s = load_settings()
     if a.ligler:
@@ -42,6 +43,13 @@ def main(argv=None) -> int:
 
     pool = DataPool(store, s)
     out_logs: list[str] = []
+    if not a.ligler:
+        from .leagues import discover
+
+        new = discover(store, s, pool.bsd)
+        pool.bsd._leagues = None  # lig eşlemesi yeni liglerle yeniden kurulsun
+        if new:
+            out_logs.append(f"ℹ️ ligler: çekirdek {len(s.leagues) - len(new)} + kaynaklardan keşfedilen {len(new)} lig")
     if a.komut in ("yenile", "sabah") and not s.demo_mode:
         r = pool.refresh(history=a.gecmis or a.komut == "sabah")
         out_logs += r["log"] + [f"Havuz: {r['records']} kaynak kaydı → {r['matches']} birleşik maç"]
@@ -66,6 +74,16 @@ def main(argv=None) -> int:
     if a.komut in ("bot", "sabah"):
         r = Bot(store, s, pool).run(record=not a.kuru)
         out_logs += r["log"]
+    if a.komut in ("sezon", "gecmis", "sabah") and not s.demo_mode:
+        from .season import SeasonFill
+
+        cap = {"sezon": 1500, "gecmis": 1500, "sabah": 400}[a.komut]  # BSD günlük kota 7.500
+        pool.bsd.max_calls = max(pool.bsd.max_calls, pool.bsd.calls + cap)
+        out_logs += SeasonFill(pool, max_calls=cap).run()["log"]
+    if a.komut == "yedek":
+        from .backup import export_all
+
+        out_logs += export_all(store, a.cikti or "yedek")["log"]
     if a.komut == "analiz":  # tüm maçların analizini yenile; tahmin/kupon yazmaz
         r = Bot(store, s, pool).run(record=not a.kuru, publish=False)
         out_logs += r["log"]

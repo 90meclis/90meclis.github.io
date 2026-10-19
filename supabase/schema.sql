@@ -270,11 +270,15 @@ create table if not exists agenda (
   match_ids    jsonb not null default '[]'::jsonb,               -- birden fazla maça bağlanırsa
   team_ids     jsonb not null default '[]'::jsonb,
   impact_note  text,                           -- etki notu
-  fetched_at   timestamptz not null default now()
+  fetched_at   timestamptz not null default now(),
+  sources_all  jsonb not null default '[]'::jsonb,  -- aynı haberi veren bütün kaynaklar (başlık benzerliğiyle birleşir)
+  cluster_size int not null default 1,
+  leagues      jsonb not null default '[]'::jsonb   -- lig etiketleri
 );
 create index if not exists agenda_published_idx on agenda (published_at desc);
 
--- Analiz kuyruğu: veri eksikse maç ELENMEZ. 'ertelendi' = Karar Bekliyor, 'yetismedi' = Karar Verilmedi.
+-- Analiz kuyruğu: her maç analiz edilir. 'bekliyor' = yayın penceresi/değer bekleniyor, 'tamamlandi' = yayımlandı.
+-- 'ertelendi' / 'yetismedi' yalnızca eski kayıtlar için izinli kalır (yeni kod yazmaz).
 create table if not exists analysis_queue (
   match_id        text primary key,
   status          text not null default 'bekliyor'
@@ -292,6 +296,57 @@ create table if not exists analyses (
   model_version text,
   payload       jsonb not null,
   primary key (match_id, created_at)
+);
+
+-- Kaynaklardan keşfedilen ligler (meclis/leagues.py). Çekirdek ligler koddadır (config.LEAGUES).
+create table if not exists leagues (
+  code       text primary key,          -- ör. "B96" (BSD lig kimliği 96)
+  name       text not null,
+  country    text,
+  bsd_id     int,
+  cup        boolean not null default false,
+  source     text,
+  updated_at timestamptz not null default now()
+);
+
+-- Bu sezonun oyuncu-maç kayıtları (BSD ilk 11 + oyuncu istatistiği): oyuncu önemi, yedek açığı, var/yok farkı
+create table if not exists player_matches (
+  match_id   text not null references matches(id),
+  team_id    text not null,
+  player_id  text not null,             -- "bsd:<id>"
+  name       text not null,
+  position   text,
+  started    boolean not null default false,
+  minutes    int not null default 0,
+  goals      int not null default 0,
+  assists    int not null default 0,
+  rating     numeric,
+  kickoff_at timestamptz,
+  source     text,
+  primary key (match_id, player_id)
+);
+create index if not exists player_matches_team_idx on player_matches (team_id, kickoff_at desc);
+
+-- Kendi oran anlık görüntülerimiz: başlamaya yakın her çalışmada matches.odds kopyalanır → kapanış oranı ve CLV
+create table if not exists odds_snapshots (
+  match_id   text not null references matches(id),
+  taken_at   timestamptz not null default now(),
+  kickoff_at timestamptz not null,
+  odds       jsonb not null,             -- {"1X2": {"1":..,"X":..,"2":..,"src":..}, "OU_GOALS_2.5": {...}, "BTTS": {...}}
+  primary key (match_id, taken_at)
+);
+create index if not exists odds_snapshots_match_idx on odds_snapshots (match_id, taken_at desc);
+
+-- Kaynak çekme işleri: hata → üstel geri çekilme; 3 hatadan sonra alan bir sonraki kaynağa devredilir
+create table if not exists fetch_jobs (
+  id           text primary key,         -- "<kaynak>:<iş>"
+  source       text not null,
+  attempts     int not null default 0,
+  status       text not null default 'tekrar' check (status in ('tekrar','devredildi','tamam')),
+  next_try_at  timestamptz,
+  last_error   text,
+  fallback     text,                     -- devredilen kaynak(lar)
+  updated_at   timestamptz not null default now()
 );
 
 create table if not exists source_status (
@@ -488,15 +543,7 @@ create trigger coupons_bt before truncate on coupons
 create or replace view v_tutanak with (security_invoker = true) as
   select p.id, p.recorded_at, p.kickoff_at, p.league, p.home_name, p.away_name, p.tag, p.market, p.selection,
          p.line, p.probability, p.odds, p.fair_odds, p.status, p.result_value, p.profit, p.clv, p.coupon_id
-  from predictions p
-  union all
-  -- Karar Bekliyor / Karar Verilmedi: tahmin üretilmemiş ama elenmemiş maçlar
-  select null, q.last_attempt_at, m.kickoff_at, m.league, m.home_name, m.away_name, null, null,
-         case q.status when 'ertelendi' then 'karar_bekliyor' else 'karar_verilmedi' end,
-         null, null, null, null, case q.status when 'ertelendi' then 'karar_bekliyor' else 'karar_verilmedi' end,
-         q.note, null, null, null
-  from analysis_queue q join matches m on m.id = q.match_id
-  where q.status in ('ertelendi','yetismedi');
+  from predictions p;
 
 create or replace view v_guven_haftalik with (security_invoker = true) as
   select to_char(kickoff_at at time zone 'Europe/Istanbul', 'IYYY-"H"IW') as hafta,
@@ -529,13 +576,14 @@ do $$
 declare t text;
 begin
   foreach t in array array['teams','matches','match_stats','players','injuries','trends','lineups','weather',
-                           'agenda','analysis_queue','analyses','coupons','predictions']
+                           'agenda','analysis_queue','analyses','coupons','predictions','leagues','odds_snapshots',
+                           'player_matches']
   loop
     execute format('alter table %I enable row level security', t);
     execute format('drop policy if exists "herkes_okur" on %I', t);
     execute format('create policy "herkes_okur" on %I for select to anon, authenticated using (true)', t);
   end loop;
-  foreach t in array array['sources','source_status']
+  foreach t in array array['sources','source_status','fetch_jobs']
   loop
     execute format('alter table %I enable row level security', t);
     -- politika yok: yalnızca service_role erişir

@@ -369,3 +369,103 @@ def test_bsd_aliases():
     assert canonical_key("Borussia M'gladbach") == "gladbach"
     assert canonical_key("Amed Sportif Faaliyetler") == "amedspor"
     assert canonical_key("Real Racing Club") == "santander"
+
+
+def test_news_dedup_by_title_similarity():
+    from meclis.news import dedup_news, same_story
+
+    a = {"id": "1", "title": "Galatasaray'da Icardi sakatlandı, derbide yok", "source": "A", "published_at": "2026-10-19T08:00:00+00:00"}
+    b = {"id": "2", "title": "Galatasaray'da Icardi sakatlandı derbide yok!", "source": "B", "published_at": "2026-10-19T09:00:00+00:00"}
+    c = {"id": "3", "title": "Fenerbahçe yeni teknik direktörünü açıkladı", "source": "A", "published_at": "2026-10-19T10:00:00+00:00"}
+    assert same_story(a["title"], b["title"]) and not same_story(a["title"], c["title"])
+    rows, dup = dedup_news([a, b, c])
+    assert dup == 1 and len(rows) == 2
+    g = next(r for r in rows if r["id"] == "1")
+    assert g["cluster_size"] == 2 and set(g["sources_all"]) == {"A", "B"}
+    # önceki taramadaki kayıtla eşleşen haber yeni satır açmaz
+    rows2, dup2 = dedup_news([dict(b, id="9")], previous=[g])
+    assert [r["id"] for r in rows2] == ["1"] and dup2 == 1
+
+
+def test_bsd_league_discovery_filters():
+    from meclis.leagues import from_bsd
+
+    raw = [{"id": 96, "name": "Austrian Bundesliga", "country": "Austria", "is_women": False, "is_active": True,
+            "current_season": {"end_date": "2027-06-30"}},
+           {"id": 1, "name": "Premier League", "country": "England"},  # çekirdekte var
+           {"id": 64, "name": "UEFA Nations League", "country": "Europe"},  # milli takım
+           {"id": 72, "name": "NWSL", "country": "USA", "is_women": True},
+           {"id": 44, "name": "Coupe de France", "country": "France", "current_season": {"end_date": "2026-06-30"}},
+           {"id": 43, "name": "DFB Pokal", "country": "Germany", "current_season": {"end_date": "2027-06-30"}}]
+    rows = {r["code"]: r for r in from_bsd(raw, "2026-10-20T00:00:00+00:00")}
+    assert set(rows) == {"B96", "B43"}
+    assert rows["B96"]["country"] == "Avusturya" and not rows["B96"]["cup"] and rows["B43"]["cup"]
+
+
+def test_closing_odds_from_own_snapshot():
+    from meclis.settlement import closing_odds
+    from meclis.store import SQLiteStore
+
+    st = SQLiteStore(":memory:")
+    st.upsert("teams", [{"id": "T1:a", "league": "T1", "name": "A"}, {"id": "T1:b", "league": "T1", "name": "B"}])
+    m = {"id": "T1:x", "league": "T1", "kickoff_at": "2026-10-20T17:00:00+00:00", "home_team_id": "T1:a",
+         "away_team_id": "T1:b", "home_name": "A", "away_name": "B", "status": "bitti", "odds": {}}
+    st.upsert("matches", [m])
+    st.upsert("odds_snapshots", [
+        {"match_id": "T1:x", "taken_at": "2026-10-20T13:00:00+00:00", "kickoff_at": m["kickoff_at"], "odds": {"BTTS": {"VAR": 1.9}}},
+        {"match_id": "T1:x", "taken_at": "2026-10-20T15:00:00+00:00", "kickoff_at": m["kickoff_at"], "odds": {"BTTS": {"VAR": 1.8}}},
+        {"match_id": "T1:x", "taken_at": "2026-10-20T18:00:00+00:00", "kickoff_at": m["kickoff_at"], "odds": {"BTTS": {"VAR": 1.2}}}])
+    p = {"match_id": "T1:x", "market": "BTTS", "selection": "VAR", "line": None, "kickoff_at": m["kickoff_at"]}
+    o, src = closing_odds(m, p, st)
+    assert o == 1.8 and "kendi" in src
+
+
+def test_season_players_bench_gap_and_with_without():
+    from meclis.model.injuries import player_importance
+    from meclis.season import parse_player_stats, team_season_players
+    from meclis.teamnews import current_players
+
+    team = "T1:a"
+    ms, pm = [], []
+    for i in range(6):
+        mid = f"T1:m{i}"
+        star_plays = i < 3
+        m = {"id": mid, "home_team_id": team, "away_team_id": "T1:b", "home_name": "A", "away_name": "B",
+             "kickoff_at": f"2026-09-0{i + 1}T18:00:00+00:00", "home_goals": 3 if star_plays else 0, "away_goals": 1}
+        ms.append(m)
+        lu = {"lineups": {"home": {"team_id": 1, "players": [{"id": 10, "name": "Yıldız Forvet", "position": "F"},
+                                                             {"id": 11, "name": "Diğer Forvet", "position": "F"}],
+                                   "substitutes": [{"id": 12, "name": "Yedek Forvet", "position": "F"}]}}}
+        st = {"player_stats": [{"player_id": 10, "team_id": 1, "minutes_played": 90 if star_plays else 0, "goals": 1 if star_plays else 0},
+                               {"player_id": 11, "team_id": 1, "minutes_played": 90},
+                               {"player_id": 12, "team_id": 1, "minutes_played": 10 if star_plays else 90}]}
+        pm += parse_player_stats(lu, st, m)
+    assert len(pm) == 18 and pm[0]["team_id"] == team
+    sp = {p["name"]: p for p in team_season_players(pm, ms, team)}
+    star = sp["Yıldız Forvet"]
+    assert star["minutes"] == 270 and star["goals"] == 3
+    assert star["d"] is not None and star["d"] > 0.5  # var/yok farkı: onunla +2, onsuz −1 averaj
+    assert star["r"] is not None and star["r"] >= 0  # yedek açığı hesaplandı
+    squad = [{"player_key": "k:yildizforvet", "name": "Yıldız Forvet", "position": "Forvet", "updated_at": "2026-10-19T00:00:00+00:00"},
+             {"player_key": "k:yenitransfer", "name": "Yeni Transfer", "position": "Forvet", "updated_at": "2026-10-19T00:00:00+00:00"}]
+    cur = {p["name"]: p for p in current_players(squad, list(sp.values()))}
+    assert cur["Yıldız Forvet"]["stats_source"].startswith("bsd 2026/27")
+    assert cur["Yeni Transfer"]["minutes"] == 0  # bu sezon oynamadı = bilinen sıfır
+    imp = player_importance(cur["Yıldız Forvet"], list(cur.values()))
+    assert "d" in imp["components"] and "r" in imp["components"]
+
+
+def test_backup_export(tmp_path):
+    import json
+
+    from meclis.backup import export_all
+    from meclis.store import SQLiteStore
+
+    st = SQLiteStore(":memory:")
+    st.upsert("teams", [{"id": "T1:a", "league": "T1", "name": "A"}, {"id": "T1:b", "league": "T1", "name": "B"}])
+    st.upsert("matches", [{"id": "T1:x", "league": "T1", "kickoff_at": "2026-10-20T17:00:00+00:00", "home_team_id": "T1:a",
+                           "away_team_id": "T1:b", "home_name": "A", "away_name": "B", "odds": {"1X2": {"1": 2.0}}}])
+    r = export_all(st, tmp_path)
+    assert r["counts"]["matches"] == 1
+    assert json.loads((tmp_path / "matches.json").read_text())[0]["odds"]["1X2"]["1"] == 2.0
+    assert (tmp_path / "predictions.csv").exists() and (tmp_path / "meta.json").exists()

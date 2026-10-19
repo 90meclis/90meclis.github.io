@@ -27,6 +27,56 @@ def link_news(items: list[dict], matches: list[dict]) -> list[dict]:
     return items
 
 
+_STOP = {"ve", "ile", "bir", "bu", "da", "de", "mi", "için", "the", "a", "an", "of", "to", "in", "and", "on", "for",
+         "is", "at", "after", "as", "with", "il", "la", "el", "di", "le", "les", "der", "die", "das"}
+
+
+def _tokens(title: str) -> set[str]:
+    import re
+    import unicodedata
+
+    t = unicodedata.normalize("NFKD", title.lower().replace("ı", "i"))
+    t = "".join(c for c in t if not unicodedata.combining(c))
+    return {w for w in re.findall(r"[a-z0-9]+", t) if len(w) > 1 and w not in _STOP}
+
+
+def same_story(a: str, b: str) -> bool:
+    """Başlık benzerliği: anlamlı kelimelerde Jaccard ≥ 0.6 ya da dizgi benzerliği ≥ 0.85."""
+    from difflib import SequenceMatcher
+
+    ta, tb = _tokens(a), _tokens(b)
+    if ta and tb and len(ta & tb) / len(ta | tb) >= 0.6:
+        return True
+    return SequenceMatcher(None, a.lower(), b.lower()).ratio() >= 0.85
+
+
+def dedup_news(items: list[dict], previous: list[dict] | None = None) -> tuple[list[dict], int]:
+    """Aynı haberi veren farklı siteleri tek kayıtta birleştirir. Önceki kayıtla eşleşen haber, önceki kaydın
+    kimliğini alır (yeni satır açılmaz). Birleşen kaynaklar 'sources_all', küme büyüklüğü 'cluster_size'."""
+    canon: list[dict] = []
+    dup = 0
+    for p in previous or []:
+        canon.append(dict(p, sources_all=list(p.get("sources_all") or [p.get("source")]), _prev=True))
+    for it in sorted(items, key=lambda x: x.get("published_at") or ""):
+        hit = next((c for c in canon if c["id"] == it["id"] or same_story(c["title"], it["title"])), None)
+        if hit is None:
+            canon.append(dict(it, sources_all=[it.get("source")], cluster_size=1))
+            continue
+        if hit["id"] != it["id"]:
+            dup += 1
+        if it.get("source") not in hit["sources_all"]:
+            hit["sources_all"].append(it.get("source"))
+        hit["cluster_size"] = len(hit["sources_all"])
+        hit["_touched"] = True
+    out = []
+    for c in canon:
+        if c.pop("_prev", False) and not c.pop("_touched", False):
+            continue  # değişmeyen eski kayıt yeniden yazılmaz
+        c.pop("_touched", None)
+        out.append(c)
+    return out, dup
+
+
 IMPACT = {
     "sakatlık": "Eksik okumasını etkileyebilir: Maç Merkezi'nde Eksik Etkisi'ni ve ilk 11'i kontrol et.",
     "teknik direktör": "Teknik direktör kararı/değişikliği: ilk maçlarda form verisi daha az güvenilir olabilir.",
@@ -54,15 +104,25 @@ def scan_news(store, settings, matches: list[dict] | None = None) -> dict:
         except Exception as e:
             log.append(f"⚠️ {url}: {e}")
     if matches is None:
-        lo, hi = now_utc() - timedelta(hours=6), now_utc() + timedelta(hours=48)
+        lo, hi = now_utc() - timedelta(hours=6), now_utc() + timedelta(days=7)
         matches = store.select("matches", [("kickoff_at", "gte", to_iso(lo)), ("kickoff_at", "lt", to_iso(hi))])
     seen = {}
     for it in items:
         seen.setdefault(it["id"], it)
-    rows = link_news(list(seen.values()), matches)
+    try:  # son 2 günün kayıtlı haberleriyle de tekilleştir (aynı haber sonraki taramada yeni satır olmasın)
+        prev = store.select("agenda", [("fetched_at", "gte", to_iso(now_utc() - timedelta(hours=48)))])
+    except Exception:
+        prev = []
+    rows, n_dup = dedup_news(list(seen.values()), prev)
+    rows = link_news(rows, matches)
     ts = to_iso(now_utc())
     for r in rows:
         r["fetched_at"] = ts
+        lgs = {m["league"] for m in matches if m["id"] in set(r.get("match_ids") or [])}
+        lgs |= {t.split(":", 1)[0] for t in r.get("team_ids") or []}
+        r["leagues"] = sorted(lgs)
+    if n_dup:
+        log.append(f"ℹ️ {n_dup} tekrar eden haber (başlık benzerliği) tek kayıtta birleştirildi")
     store.upsert("agenda", rows)
     linked = sum(1 for r in rows if r["match_ids"])
     log.append(f"{len(rows)} haber kaydedildi, {linked} tanesi maçlara bağlandı")

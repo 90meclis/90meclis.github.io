@@ -161,14 +161,14 @@ def test_app_rows_fit_schema_and_triggers(pg):
     st.upsert("agenda", [{"id": "n1", "title": "A'da sakatlık", "link": "https://ornek", "source": "rss",
                           "published_at": to_iso(now_utc()), "category": "sakatlık", "match_id": m["id"],
                           "match_ids": [m["id"]], "team_ids": ["T1:a"], "impact_note": "kadro zayıflayabilir"}])
-    st.upsert("analysis_queue", [{"match_id": m["id"], "status": "ertelendi", "missing": ["ilk 11"], "attempts": 1,
-                                  "last_attempt_at": to_iso(now_utc()), "note": "Karar Bekliyor"}])
+    st.upsert("analysis_queue", [{"match_id": m["id"], "status": "bekliyor", "missing": ["ilk 11"], "attempts": 1,
+                                  "last_attempt_at": to_iso(now_utc()), "note": "değer kuralını geçen seçim yok"}])
     with pg.cursor() as cur:
         cur.execute("set role anon")
         cur.execute("select count(*) from v_guven_haftalik")
         assert cur.fetchone()[0] == 1
-        cur.execute("select count(*) from v_tutanak where status = 'karar_bekliyor'")
-        assert cur.fetchone()[0] == 1
+        cur.execute("select count(*) from v_tutanak where status not in ('bekliyor','basladi','kazandi','kaybetti','iade')")
+        assert cur.fetchone()[0] == 0  # yalnızca yayımlanan tahminler; eski 'karar_bekliyor' satırları yok
         cur.execute("select count(*) from sources")
         assert cur.fetchone()[0] == 0  # sources herkese açık değil
         cur.execute("reset role")

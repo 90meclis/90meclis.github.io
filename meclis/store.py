@@ -24,14 +24,15 @@ JSON_COLS: dict[str, set[str]] = {
     "matches": {"ext_ids", "odds", "sources", "missing_fields"},
     "lineups": {"start_xi", "subs"},
     "weather": {"data"},
-    "agenda": {"team_ids", "match_ids"},
+    "agenda": {"team_ids", "match_ids", "sources_all", "leagues"},
     "trends": {"match_values"},
     "sources": {"fills_fields"},
     "analysis_queue": {"missing"},
     "analyses": {"payload"},
+    "odds_snapshots": {"odds"},
 }
 BOOL_COLS: dict[str, set[str]] = {"injuries": {"is_key"}, "source_status": {"ok"},
-                                  "sources": {"requires_key", "is_active"}}
+                                  "sources": {"requires_key", "is_active"}, "leagues": {"cup"}, "player_matches": {"started"}}
 
 PRIMARY_KEYS: dict[str, list[str]] = {
     "teams": ["id"],
@@ -46,10 +47,30 @@ PRIMARY_KEYS: dict[str, list[str]] = {
     "sources": ["name"],
     "analysis_queue": ["match_id"],
     "analyses": ["match_id", "created_at"],
+    "leagues": ["code"],
+    "odds_snapshots": ["match_id", "taken_at"],
+    "fetch_jobs": ["id"],
+    "player_matches": ["match_id", "player_id"],
     "source_status": ["source"],
     "coupons": ["id"],
     "predictions": ["id"],
 }
+
+
+def _with_retry(fn, tries: int = 4):
+    """Geçici ağ hatalarında (EAGAIN, bağlantı sıfırlama, HTTP/2 akış hatası) kısa bekleyip yeniden dener."""
+    import time
+
+    for i in range(tries):
+        try:
+            return fn()
+        except Exception as e:
+            msg = str(e).lower()
+            transient = any(x in msg for x in ("temporarily unavailable", "errno 11", "reset", "timed out", "timeout",
+                                               "connection", "stream", "remoteprotocol", "502", "503", "504"))
+            if not transient or i == tries - 1:
+                raise
+            time.sleep(0.5 * (2 ** i))
 
 
 class StoreError(RuntimeError):
@@ -133,12 +154,22 @@ create table if not exists lineups (match_id text not null, side text not null, 
 create table if not exists weather (match_id text primary key, data text not null, source text, updated_at text);
 create table if not exists agenda (id text primary key, title text not null, link text not null, source text,
   published_at text, summary text, category text, match_id text references matches(id) on delete set null,
-  match_ids text default '[]', team_ids text default '[]', impact_note text, fetched_at text);
+  match_ids text default '[]', team_ids text default '[]', impact_note text, fetched_at text,
+  sources_all text default '[]', cluster_size int default 1, leagues text default '[]');
 create table if not exists analysis_queue (match_id text primary key, status text not null default 'bekliyor'
   check (status in ('bekliyor','ertelendi','tamamlandi','yetismedi')), missing text default '[]', attempts int default 0,
   last_attempt_at text, next_retry_at text, note text);
 create table if not exists analyses (match_id text not null, created_at text not null, model_version text,
   payload text not null, primary key (match_id, created_at));
+create table if not exists leagues (code text primary key, name text not null, country text, bsd_id int,
+  cup int default 0, source text, updated_at text);
+create table if not exists player_matches (match_id text not null, team_id text not null, player_id text not null,
+  name text not null, position text, started int default 0, minutes int default 0, goals int default 0,
+  assists int default 0, rating real, kickoff_at text, source text, primary key (match_id, player_id));
+create table if not exists odds_snapshots (match_id text not null, taken_at text not null, kickoff_at text not null,
+  odds text not null, primary key (match_id, taken_at));
+create table if not exists fetch_jobs (id text primary key, source text not null, attempts int default 0,
+  status text default 'tekrar', next_try_at text, last_error text, fallback text, updated_at text);
 create table if not exists source_status (source text primary key, ok int, message text, calls_today int default 0,
   calls_date text, updated_at text);
 create table if not exists coupons (id text primary key, created_at text, coupon_date text not null,
@@ -531,7 +562,7 @@ class SupabaseStore(BaseStore):
                 end = start + page - 1
                 if limit:
                     end = min(end, limit - 1)
-                res = q.range(start, end).execute()
+                res = _with_retry(lambda: q.range(start, end).execute())
                 data = res.data or []
                 out.extend(data)
                 if len(data) < (end - start + 1) or (limit and len(out) >= limit):

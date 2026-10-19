@@ -109,17 +109,17 @@ def narrative(match: dict, payload: dict) -> str:
         p = bp["probability"]
         if bp.get("odds"):
             verdict = (f"🗳️ **Meclisin kararı: {lab}** — olasılık {_pct(p)}, adil oran {bp['fair_odds']:.2f}, "
-                       f"piyasa {bp['odds']:.2f} (değer {bp['edge'] * 100:+.1f}%). **Bunu oyna**, 1 birim.")
+                       f"piyasa {bp['odds']:.2f} (değer {bp['edge'] * 100:+.1f}%). Kayıtta 1 birim olarak izlenir.")
         else:
             verdict = (f"🗳️ **Meclisin kararı: {lab}** — olasılık {_pct(p)}, adil oran {bp['fair_odds']:.2f}. "
-                       "Piyasa oranı elimde yok; oranın adil oranın üstündeyse **bunu oyna**, altındaysa pas geç.")
+                       "Piyasa oranı elimde yok; bu seçimin değeri ancak oran adil oranın üstündeyse vardır.")
         lose = max(1, round((1 - p) * 10))
         lines.append(verdict)
         lines.append(f"Dürüst olayım: {_pct(p)} demek, bu tip 10 maçın yaklaşık {lose} tanesinde bu seçim kaybeder. "
                      "Garanti yok; kayıtta kayıplar da görünecek.")
     else:
-        lines.append("🗳️ **Meclisin kararı: pas.** Piyasa bu maçı doğru fiyatlamış görünüyor ya da güvenim eşiğin "
-                     "altında. Pas geçmek de bir karardır.")
+        lines.append("🗳️ **Meclisin kararı: bu maçta değer yok.** Piyasa bu maçı doğru fiyatlamış görünüyor ya da "
+                     "hiçbir pazar değer kuralını geçmedi. Analiz güncel veriyle yeniden hesaplanır.")
     if payload.get("postponed_markets"):
-        lines.append("Ertelenen pazarlar: " + "; ".join(payload["postponed_markets"].values()) + ".")
+        lines.append("Hesaplanmayan pazarlar: " + "; ".join(payload["postponed_markets"].values()) + ".")
     return "\n\n".join(lines)

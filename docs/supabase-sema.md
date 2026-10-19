@@ -63,9 +63,8 @@ Birleşik veri havuzundaki her maç tek satırdır; hiçbir maç eksik veri yüz
 | `result_value`, `profit`, `closing_odds`, `clv`, `settled_at`, `settlement_note` | Sonuçlandırma alanları |
 | `recorded_at` | Kayıt zamanı — **sunucu saatiyle** tetikleyici yazar |
 
-Yayımlanmamış adaylar tahmin satırı değildir (analiz `analyses`'te, durum `analysis_queue`'da tutulur);
-`analysis_queue` tablosunda tutulur ve `v_tutanak` görünümünde tahminlerle birlikte
-`karar_bekliyor` / `karar_verilmedi` durumuyla listelenir. Böylece maç hiçbir zaman kayıttan düşmez.
+Yayımlanmamış adaylar tahmin satırı değildir: her yaklaşan maçın en güncel tam analizi `analyses`'te, yayın
+durumu `analysis_queue`'da tutulur. `v_tutanak` yalnızca yayımlanan tahminleri listeler. Maç hiçbir zaman havuzdan düşmez.
 
 **Değiştirilemezlik (tetikleyiciler):**
 - `predictions_bi`: maç bulunamazsa, istemcinin yolladığı `kickoff_at` maç kaydıyla uyuşmazsa veya

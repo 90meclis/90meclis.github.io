@@ -5,17 +5,20 @@ on:
     - cron: "0 5 * * *"        # 08:00 TSİ — sabah: havuz + gündem + bot + sonuçlandırma
     - cron: "15 1-21/2 * * *"  # gece + gün içi her 2 saatte: havuz (7 gün) + kadro/eksik/ilk 11 + bot (yayımlanmamış adayları yeniden hesaplar) + sonuçlandırma
     - cron: "30 23 * * *"      # gece: sonuçlandırma
-    - cron: "40 0 * * *"       # 03:40 TSİ — API-Football günlük kotası sıfırlandıktan sonra geçmiş veri doldurma
+    - cron: "40 0 * * *"       # 03:40 TSİ — geçmiş veri + bu sezonun oyuncu dakikaları/istatistikleri (sezon) + gece yedeği (backups dalı)
   workflow_dispatch:
     inputs:
       komut:
-        description: "Komut (sabah / bot / sonuclandir / gundem / yenile / kadro / gecmis)"
+        description: "Komut (sabah / bot / analiz / sonuclandir / gundem / yenile / kadro / gecmis / sezon / yedek)"
         required: true
         default: "sabah"
 
 concurrency:
   group: meclis
   cancel-in-progress: false
+
+permissions:
+  contents: write  # yalnızca gece yedeğini 'backups' dalına yazmak için
 
 jobs:
   run:
@@ -34,7 +37,7 @@ jobs:
       CLUBELO_KEY: ${{ secrets.CLUBELO_KEY }}
       THESPORTSDB_KEY: ${{ secrets.THESPORTSDB_KEY }}
       BSD_API_KEY: ${{ secrets.BSD_API_KEY }}
-      LEAGUES: ${{ vars.LEAGUES }}  # boşsa meclis/config.py DEFAULT_LEAGUES (21 lig)
+      LEAGUES: ${{ vars.LEAGUES }}  # boşsa 23 çekirdek lig + AUTO (BSD'deki diğer kulüp ligleri/kupaları)
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -57,7 +60,7 @@ jobs:
         run: |
           if [ "$OLAY" = "workflow_dispatch" ]; then
             case "$GIRDI" in
-              sabah|bot|sonuclandir|gundem|yenile|durum|kadro|gecmis) komut="$GIRDI" ;;
+              sabah|bot|analiz|sonuclandir|gundem|yenile|durum|kadro|gecmis|sezon|yedek) komut="$GIRDI" ;;
               *) echo "::error::Geçersiz komut: $GIRDI"; exit 1 ;;
             esac
           elif [ "$ZAMAN" = "0 5 * * *" ]; then
@@ -82,3 +85,20 @@ jobs:
           else
             python -m meclis "$KOMUT"
           fi
+      - name: Gece yedeği → backups dalı (defterin ikinci kopyası + 60 gün hareketsizlik koruması)
+        if: steps.k.outputs.komut == 'gecmis' || steps.k.outputs.komut == 'yedek'
+        run: |
+          python -m meclis yedek --cikti /tmp/yedek
+          git config user.name "90-meclis-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git fetch -q origin backups; then
+            git worktree add -q -B backups /tmp/bk origin/backups
+          else
+            git worktree add -q --detach /tmp/bk
+            cd /tmp/bk && git checkout -q --orphan backups && git rm -rfq . && cd -
+          fi
+          rsync -a --delete --exclude .git /tmp/yedek/ /tmp/bk/
+          cd /tmp/bk
+          git add -A
+          git diff --cached --quiet || git commit -qm "Yedek $(date -u +%F)"
+          git push -q origin backups

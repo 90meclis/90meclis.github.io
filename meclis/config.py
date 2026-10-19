@@ -76,6 +76,7 @@ LEAGUES: dict[str, League] = {
     "E0": League("E0", "Premier Lig", "İngiltere", "4328", 39, "PL", 1),
     "E1": League("E1", "Championship", "İngiltere", "4329", 40, "ELC", 12),
     "E2": League("E2", "League One", "İngiltere", "4396", 41, None, 86),
+    "E3": League("E3", "League Two", "İngiltere", "4397", 42, None, 87),
     "SP1": League("SP1", "La Liga", "İspanya", "4335", 140, "PD", 3),
     "SP2": League("SP2", "La Liga 2", "İspanya", "4400", 141, None, 38),
     "I1": League("I1", "Serie A", "İtalya", "4332", 135, "SA", 4),
@@ -88,6 +89,7 @@ LEAGUES: dict[str, League] = {
     "P1": League("P1", "Liga Portugal", "Portekiz", "4344", 94, "PPL", 2),
     "B1": League("B1", "Belçika Pro Lig", "Belçika", "4338", 144, None, 14),
     "SC0": League("SC0", "İskoçya Premiership", "İskoçya", "4330", 179, None, 13),
+    "SC1": League("SC1", "İskoçya Championship", "İskoçya", "4395", 180, None, None),
     "G1": League("G1", "Yunanistan Süper Lig", "Yunanistan", "4336", 197, None, 24),
     "CL": League("CL", "UEFA Şampiyonlar Ligi", "Avrupa", "4480", 2, "CL", 7, fdcuk=False, cup=True),
     "EL": League("EL", "UEFA Avrupa Ligi", "Avrupa", "4481", 3, None, 8, fdcuk=False, cup=True),
@@ -96,7 +98,9 @@ LEAGUES: dict[str, League] = {
     "DEMO": League("DEMO", "Örnek Lig (ÖRNEK VERİ)", "—", None, None, None, fdcuk=False),
 }
 # Varsayılan sıra = arayüzdeki sıra: büyük 6 lig + Türkiye, Avrupa kupaları, sonra diğer ligler
-DEFAULT_LEAGUES = "T1,E0,SP1,I1,D1,F1,CL,EL,ECL,T2,E1,N1,P1,B1,SC0,G1,E2,SP2,I2,D2,F2"
+DEFAULT_LEAGUES = "T1,E0,SP1,I1,D1,F1,CL,EL,ECL,T2,E1,N1,P1,B1,SC0,G1,E2,SP2,I2,D2,F2,E3,SC1"
+# LEAGUES içinde AUTO (varsayılan açık): BSD'nin verdiği diğer bütün kulüp ligleri/kupaları da eklenir (meclis/leagues.py)
+DEFAULT_LEAGUES_SETTING = DEFAULT_LEAGUES + ",AUTO"
 
 FDORG_TO_LEAGUE = {lg.fdorg_code: lg.code for lg in LEAGUES.values() if lg.fdorg_code}
 APIF_TO_LEAGUE = {lg.apif_id: lg.code for lg in LEAGUES.values() if lg.apif_id}
@@ -117,12 +121,14 @@ class Settings:
     clubelo_key: str | None = None
     bsd_api_key: str | None = None
     keys: dict = field(default_factory=dict)  # ENV ADI -> değer (yalnızca "tanımlı mı" kontrolü için)
-    completeness_min: float = 60.0
     thesportsdb_key: str = "123"
     leagues: list[str] = field(default_factory=list)
+    auto_leagues: bool = False  # LEAGUES'te AUTO varsa BSD'deki diğer ligler de keşfedilir
+    bsd_odds_hours: float = 48.0  # BSD oranı bu kadar saat içindeki maçlar için istenir (kota)
+    bsd_max_calls: int = 1200  # tek çalışmada BSD istek tavanı (günlük kota 7.500, günde ~12 çalışma)
     demo_mode: bool = False
     horizon_hours: float = 168.0
-    min_minutes_before_kickoff: float = 15.0  # eski kural (kullanılmıyor; geriye uyumluluk)
+    live_extras_hours: float = 24.0
     publish_lead_hours: float = 3.0  # seçim en geç başlamadan bu kadar saat önce yayımlanır
     publish_window_hours: float = 12.0  # TR günü dışındaki maçlar için yayın penceresi
     require_injury_data: bool = False
@@ -174,8 +180,9 @@ def _all_keys() -> dict:
 
 
 def load_settings() -> Settings:
-    leagues = [x.strip().upper() for x in (get_setting("LEAGUES", DEFAULT_LEAGUES) or "").split(",") if x.strip()]
-    leagues = [x for x in leagues if x in LEAGUES and x != "DEMO"]
+    raw = [x.strip().upper() for x in (get_setting("LEAGUES", DEFAULT_LEAGUES_SETTING) or "").split(",") if x.strip()]
+    auto = "AUTO" in raw
+    leagues = [x for x in raw if x in LEAGUES and x != "DEMO"]
     demo = get_bool("DEMO_MODE", False)
     if demo:
         leagues = ["DEMO"]
@@ -194,12 +201,14 @@ def load_settings() -> Settings:
         clubelo_key=get_setting("CLUBELO_KEY"),
         bsd_api_key=get_setting("BSD_API_KEY"),
         keys=_all_keys(),
-        completeness_min=get_float("COMPLETENESS_MIN", 60.0),
         thesportsdb_key=get_setting("THESPORTSDB_KEY", "123") or "123",
         leagues=leagues,
+        auto_leagues=auto and not demo,
+        bsd_max_calls=int(get_float("BSD_MAX_CALLS", 1200)),
+        bsd_odds_hours=get_float("BSD_ODDS_HOURS", 48.0),
         demo_mode=demo,
         horizon_hours=get_float("BOT_HORIZON_HOURS", 168.0),
-        min_minutes_before_kickoff=get_float("BOT_MIN_MINUTES_BEFORE_KICKOFF", 15.0),
+        live_extras_hours=get_float("BOT_LIVE_EXTRAS_HOURS", 24.0),
         publish_lead_hours=get_float("BOT_PUBLISH_LEAD_HOURS", 3.0),
         publish_window_hours=get_float("BOT_PUBLISH_WINDOW_HOURS", 12.0),
         require_injury_data=get_bool("REQUIRE_INJURY_DATA", False),

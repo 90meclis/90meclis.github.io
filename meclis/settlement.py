@@ -24,14 +24,37 @@ def result_dict(match: dict, stats: list[dict]) -> dict:
     return r
 
 
-def closing_odds(match: dict, pred: dict) -> float | None:
-    """Kapanış oranı (football-data.co.uk 'C' sütunları): CLV = alınan oran / kapanış − 1."""
-    odds = match.get("odds") or {}
-    if pred["market"] == "1X2":
-        return (odds.get("1X2_closing") or {}).get(pred["selection"])
-    if pred["market"] == "OU_GOALS" and pred.get("line") == 2.5:
-        return (odds.get("OU_GOALS_2.5_closing") or {}).get(pred["selection"])
+def odds_key(market: str, line) -> str | None:
+    """Tahmin pazarı → matches.odds anahtarı (oranını tuttuğumuz bütün pazarlar)."""
+    if market in ("1X2", "BTTS"):
+        return market
+    if market == "OU_GOALS" and line is not None:
+        return f"OU_GOALS_{float(line):g}"
     return None
+
+
+def closing_odds(match: dict, pred: dict, store=None) -> tuple[float | None, str | None]:
+    """Kapanış oranı: önce football-data.co.uk 'C' sütunları, yoksa başlamadan önceki SON kendi oran görüntümüz.
+    CLV = alınan oran / kapanış − 1. Döner: (oran, kaynak)."""
+    key = odds_key(pred["market"], pred.get("line"))
+    if not key:
+        return None, None
+    odds = match.get("odds") or {}
+    v = (odds.get(f"{key}_closing") or {}).get(pred["selection"])
+    if v:
+        return float(v), "football-data.co.uk kapanış"
+    if store is not None:
+        try:
+            snaps = store.select("odds_snapshots", [("match_id", "eq", match.get("id") or pred["match_id"]),
+                                                    ("taken_at", "lte", pred["kickoff_at"])],
+                                 order="taken_at", desc=True, limit=1)
+        except Exception:
+            snaps = []
+        if snaps:
+            v = ((snaps[0].get("odds") or {}).get(key) or {}).get(pred["selection"])
+            if v:
+                return float(v), f"kendi görüntümüz {snaps[0]['taken_at'][:16]}"
+    return None, None
 
 
 def run_settlement(store, pool=None, now=None) -> dict:
@@ -64,7 +87,7 @@ def run_settlement(store, pool=None, now=None) -> dict:
                     res = result_dict(m, store.select("match_stats", [("match_id", "eq", mid)]))
                     st, val = settle_pick(p["market"], p["selection"], p.get("line"), res)
             if st:
-                close = closing_odds(m, p)
+                close, _src = closing_odds(m, p, store)
                 clv = round(p["odds"] / close - 1, 4) if close and p.get("odds") else None
                 store.update("predictions", {"status": st, "result_value": val,
                                              "profit": profit_for(st, p.get("odds"), p.get("stake") or 1),

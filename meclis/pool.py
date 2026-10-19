@@ -8,7 +8,7 @@ Birden fazla kaynaktan gelen maç kayıtları tek havuzda birleştirilir:
 """
 from __future__ import annotations
 
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 from . import names
 from .timeutil import now_utc, parse_dt, to_iso
@@ -358,7 +358,7 @@ class DataPool:
         self.apif = ApiFootball(settings.api_football_key, store, settings.apif_daily_budget)
         self.tsdb = TheSportsDB(settings.thesportsdb_key)
         self.oddsapi = OddsApi(settings.odds_api_key)
-        self.bsd = BSD(getattr(settings, "bsd_api_key", None))
+        self.bsd = BSD(getattr(settings, "bsd_api_key", None), getattr(settings, "bsd_max_calls", 1200))
         self.log: list[str] = []
         self.news = TeamNews(self)
 
@@ -465,6 +465,8 @@ class DataPool:
         elif self.apif.available:
             season = today.year if today.month >= 7 else today.year - 1
             for lg in leagues:
+                if lg not in LEAGUES or not LEAGUES[lg].apif_id:
+                    continue
                 try:
                     rows = self.apif.fixtures(lg, season, today - timedelta(days=days_back), today + timedelta(days=days_ahead))
                     recs += rows
@@ -487,7 +489,9 @@ class DataPool:
             self._waiting_key("the-odds-api", "ODDS_API_KEY", "çok şirketli 1X2/Alt-Üst oranları")
         if self.bsd.available:
             try:
-                rows = self.bsd.events(today - timedelta(days=days_back), today + timedelta(days=days_ahead), leagues)
+                rows = self.bsd.events(today - timedelta(days=days_back), today + timedelta(days=days_ahead), leagues,
+                                       known=self._bsd_known(today - timedelta(days=days_back)),
+                                       odds_hours=getattr(self.s, "bsd_odds_hours", 48.0))
                 recs += rows
                 self._note("bsd", True, f"{len(rows)} maç (sakat/cezalı ve ilk 11 için eşleştirme)", calls=1)
             except Exception as e:
@@ -496,6 +500,28 @@ class DataPool:
             self._waiting_key("bsd", "BSD_API_KEY", "maç başına sakat/cezalı listesi, resmî ve tahmini ilk 11, kadro uygunluğu")
         self._collect_extra(recs, today, days_back, days_ahead, history)
         return recs
+
+    def _bsd_known(self, d_from) -> dict:
+        """Havuzda hakem/stadyum/istatistiği zaten olan BSD maçları: aynı bilgi BSD'den yeniden istenmez (kota)."""
+        try:
+            ms = self.store.select("matches", [("kickoff_at", "gte", to_iso(datetime.combine(d_from, datetime.min.time(),
+                                                                                         tzinfo=timezone.utc)))])
+        except Exception:
+            return {}
+        with_stats: set = set()
+        fin = [m["id"] for m in ms if m.get("status") == "bitti"]
+        for i in range(0, len(fin), 200):
+            try:
+                with_stats |= {r["match_id"] for r in self.store.select("match_stats", [("match_id", "in", fin[i:i + 200])])}
+            except Exception:
+                break
+        out = {}
+        for m in ms:
+            eid = (m.get("ext_ids") or {}).get("bsd")
+            if eid:
+                out[eid] = {"referee": m.get("referee"), "venue": m.get("venue"), "city": m.get("city"),
+                            "stats": m["id"] in with_stats}
+        return out
 
     def _collect_extra(self, recs: list[dict], today, days_back: int, days_ahead: int, history: bool) -> None:
         from .sources import openfootball, openligadb
@@ -667,8 +693,33 @@ class DataPool:
         except Exception as e:
             self._note("wikidata", False, str(e))
         self.fill_venues()
+        try:
+            n_snap = self.snapshot_odds()
+            if n_snap:
+                self.log.append(f"ℹ️ oran anlık görüntüsü: {n_snap} maç (kapanış oranı / CLV için)")
+        except Exception as e:
+            self.log.append(f"⚠️ oran anlık görüntüsü yazılamadı: {e}")
         return {"records": len(recs), "matches": len(merged), "log": list(self.log),
                 "unmatched": list(getattr(reg, "unmatched", []))}
+
+    def snapshot_odds(self, hours: float = 30) -> int:
+        """Başlamasına ≤ hours kalan maçların oranlarını odds_snapshots'a yazar (değişmediyse yazmaz).
+        Çalışmalar 2 saatte bir olduğundan son görüntü başlama saatine en fazla ~2 saat uzaktır → kapanış oranı."""
+        now = now_utc()
+        ms = self.store.select("matches", [("kickoff_at", "gte", to_iso(now)),
+                                           ("kickoff_at", "lte", to_iso(now + timedelta(hours=hours)))])
+        rows = []
+        for m in ms:
+            odds = {k: v for k, v in (m.get("odds") or {}).items() if isinstance(v, dict) and not k.endswith("_closing")}
+            if not odds or m.get("status") not in ("planlandi", None):
+                continue
+            last = self.store.select("odds_snapshots", [("match_id", "eq", m["id"])], order="taken_at", desc=True, limit=1)
+            if last and last[0].get("odds") == odds:
+                continue
+            rows.append({"match_id": m["id"], "taken_at": to_iso(now), "kickoff_at": m["kickoff_at"], "odds": odds})
+        if rows:
+            self.store.upsert("odds_snapshots", rows)
+        return len(rows)
 
     def _save_learned_aliases(self, reg: "TeamRegistry", teams_all: list[dict]) -> None:
         """Fikstürden öğrenilen ad eşlemelerini hedef takımın aliases listesine ekler (silme yapılmaz)."""

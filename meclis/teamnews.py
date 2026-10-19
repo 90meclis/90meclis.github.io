@@ -64,11 +64,54 @@ def is_confirmed(lineup: dict) -> bool:
     return "tahmini" not in (lineup.get("source") or "")
 
 
-def current_players(rows: list[dict]) -> list[dict]:
-    """Takımın güncel oyuncu listesi: en son kadro yenilemesi; yoksa en son API-Football sezonu.
-    Kadro satırında istatistik yoksa (kadro, geçmiş veri dolmadan yazıldıysa) son API-Football sezonundan
-    okuma anında tamamlanır — geçmiş veri doldurma ilerledikçe önem puanı kendiliğinden iyileşir."""
+def season_players(store, team_id: str) -> list[dict]:
+    """Takımın BU SEZONKİ oyuncu özeti (player_matches; bkz. meclis/season.py). Tablo yoksa boş."""
+    from .analysis import season_start
+    from .season import team_season_players
+
+    lo = to_iso(season_start())
+    try:
+        pm = store.select("player_matches", [("team_id", "eq", team_id), ("kickoff_at", "gte", lo)])
+    except Exception:
+        return []
+    if not pm:
+        return []
+    lg = team_id.split(":", 1)[0]
+    cache = store.__dict__.setdefault("_season_matches_cache", {})
+    if (lg, lo) not in cache:  # lig başına bir kez (bot çalışması boyunca)
+        cache[(lg, lo)] = store.select("matches", [("league", "eq", lg), ("kickoff_at", "gte", lo),
+                                                   ("status", "eq", "bitti")])
+    ms = [m for m in cache[(lg, lo)] if team_id in (m["home_team_id"], m["away_team_id"])]
+    return team_season_players(pm, ms, team_id)
+
+
+def team_current_players(store, team_id: str) -> list[dict]:
+    return current_players(store.select("players", [("team_id", "eq", team_id)]), season_players(store, team_id))
+
+
+def current_players(rows: list[dict], season: list[dict] | None = None) -> list[dict]:
+    """Takımın güncel oyuncu listesi ve oyuncu önemi istatistiği.
+
+    Esas: BU SEZON (season = season_players(); dakika, ilk 11, G+A, yedek açığı r, var/yok farkı d).
+    Bu sezon verisi olan takımda kadrodaki ama bu sezon hiç oynamamış oyuncunun dakikası 0'dır (bilinen sıfır).
+    Bu sezon verisi yoksa yalnızca zayıf önsel olarak en son API-Football sezonu kullanılır (stats_source'ta yazar)."""
+    stat_f = ("minutes", "appearances", "lineups", "goals", "assists")
     squad = [r for r in rows if str(r.get("player_key", "")).startswith("k:")]
+    if season:
+        n = max((p.get("season_matches") or 0) for p in season)
+        label = f"bsd 2026/27 ({n} maç)"
+        if not squad:
+            return [dict(p, stats_source=label) for p in season]
+        out = []
+        for r in latest_batch(squad, "updated_at"):
+            h = find_player(r.get("name"), season)
+            if h:
+                r = dict(r, **{f: h.get(f) for f in stat_f}, r=h.get("r"), d=h.get("d"), stats_source=label)
+                r["position"] = r.get("position") or h.get("position")
+            else:
+                r = dict(r, **{f: 0 for f in stat_f}, stats_source=label + ": bu sezon oynamadı")
+            out.append(r)
+        return out
     hist = [r for r in rows if str(r.get("player_key", "")).startswith("apif:")]
     last = max((str(r.get("season") or "") for r in hist), default="")
     hist = [r for r in hist if str(r.get("season") or "") == last]
@@ -104,7 +147,7 @@ class TeamNews:
 
     # ------------------------------------------------------------------ kadro
     def team_players(self, team_id: str) -> list[dict]:
-        return current_players(self.store.select("players", [("team_id", "eq", team_id)]))
+        return team_current_players(self.store, team_id)
 
     def _hist_stats(self, team_id: str) -> tuple[list[dict], str | None]:
         rows = [r for r in self.store.select("players", [("team_id", "eq", team_id)])

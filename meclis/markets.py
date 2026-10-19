@@ -17,8 +17,7 @@ MARKET_GROUPS = {
 STATUS_LABELS = {"bekliyor": "Bekliyor", "basladi": "Başladı", "kazandi": "Kazandı", "kaybetti": "Kaybetti",
                  "iade": "İade"}
 STATUS_ICONS = {"bekliyor": "⏳", "basladi": "▶️", "kazandi": "✅", "kaybetti": "❌", "iade": "↩️"}
-QUEUE_LABELS = {"bekliyor": "Yayın bekliyor / yeniden hesaplanacak", "tamamlandi": "Yayımlandı",
-                "ertelendi": "Yeniden hesaplanacak", "yetismedi": "Yayımlanmadı"}
+QUEUE_LABELS = {"bekliyor": "Yayın bekliyor / yeniden hesaplanacak", "tamamlandi": "Yayımlandı"}
 TAG_LABELS = {"meclis_gorusu": "Meclis Görüşü", "gunun_karari": "Günün Kararı", "karar_birligi": "Karar Birliği"}
 
 

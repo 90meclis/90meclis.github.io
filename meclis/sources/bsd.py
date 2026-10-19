@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 
-from ..timeutil import to_iso
+from ..timeutil import now_utc, parse_dt, to_iso
 from .http import SourceError, get
 
 SOURCE = "bsd"
@@ -144,8 +144,9 @@ def parse_squad(data: dict) -> list[dict]:
 
 
 class BSD:
-    def __init__(self, key: str | None):
+    def __init__(self, key: str | None, max_calls: int = 1200):
         self.key = key
+        self.max_calls = max_calls
         self._leagues: dict[int, str] | None = None
         self._ref: dict[int, str | None] = {}
         self._venue: dict[int, dict] = {}
@@ -158,6 +159,8 @@ class BSD:
     def _get(self, path: str, params: dict | None = None) -> dict:
         if not self.key:
             raise SourceError("BSD_API_KEY tanımlı değil.")
+        if self.calls >= self.max_calls:
+            raise SourceError(f"BSD çalışma başı istek tavanı doldu ({self.max_calls}; günlük kota 7.500)")
         self.calls += 1
         r = get(f"{BASE}{path}", params=params, headers={"Authorization": f"Token {self.key}"})
         if r.status_code in (401, 403):
@@ -176,9 +179,14 @@ class BSD:
             self._leagues = {lg.bsd_id: code for code, lg in LEAGUES.items() if lg.bsd_id}
         return self._leagues
 
-    def events(self, d_from: date, d_to: date, leagues: list[str], enrich: bool = True) -> list[dict]:
-        """Maç kayıtları; enrich=True ise oynanacak maçlara oran, bitenlere istatistik, hepsine hakem ve stadyum
-        eklenir (maç başına 1–2 istek; günlük kota 7.500)."""
+    def events(self, d_from: date, d_to: date, leagues: list[str], enrich: bool = True,
+               known: dict | None = None, odds_hours: float = 96, stats_for=None) -> list[dict]:
+        """Maç kayıtları; enrich=True ise başlamasına ≤ odds_hours kalan maçlara oran (BSD daha uzağa oran vermez),
+        bitenlere istatistik (stats_for verilmişse yalnızca o BSD kimliklerine), hakem ve stadyum eklenir.
+        known = {bsd_event_id: {"referee", "venue", "city", "stats"}}: havuzda zaten olan bilgi yeniden istenmez."""
+        self._known = known or {}
+        self._odds_until = now_utc() + timedelta(hours=odds_hours)
+        self._stats_for = stats_for
         lm = {k: v for k, v in self.league_map().items() if v in leagues}
         out = []
         raw: dict[int, dict] = {}
@@ -204,18 +212,26 @@ class BSD:
 
     def _enrich(self, rec: dict, e: dict) -> None:
         eid = rec["ext_ids"]["bsd"]
+        kn = (getattr(self, "_known", None) or {}).get(eid) or {}
         try:
             if rec["status"] in ("planlandi", "basladi"):
-                odds = parse_odds(self._get(f"/events/{eid}/odds/"))
-                if odds:
-                    rec["odds"] = odds
-            elif rec["status"] == "bitti":
-                st = parse_stats(self._get(f"/events/{eid}/stats/"))
-                if st:
-                    rec["stats"] = st
-            if e.get("referee_id"):
+                if parse_dt(rec["kickoff_at"]) <= getattr(self, "_odds_until", parse_dt(rec["kickoff_at"])):
+                    odds = parse_odds(self._get(f"/events/{eid}/odds/"))
+                    if odds:
+                        rec["odds"] = odds
+            elif rec["status"] == "bitti" and not kn.get("stats"):
+                sf = getattr(self, "_stats_for", None)
+                if sf is None or eid in sf:
+                    st = parse_stats(self._get(f"/events/{eid}/stats/"))
+                    if st:
+                        rec["stats"] = st
+            if kn.get("referee"):
+                rec["referee"] = kn["referee"]
+            elif e.get("referee_id"):
                 rec["referee"] = self.referee(e["referee_id"])
-            if e.get("venue_id"):
+            if kn.get("venue"):
+                rec["venue"], rec["city"] = kn["venue"], kn.get("city")
+            elif e.get("venue_id"):
                 v = self.venue(e["venue_id"])
                 rec["venue"], rec["city"] = v.get("name"), v.get("city")
         except Exception:  # zenginleştirme isteğe bağlı değil ama bir maçın hatası diğerlerini durdurmasın

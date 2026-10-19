@@ -72,12 +72,11 @@ class Bot:
             except Exception as e:
                 self.log.append(f"⚠️ hava durumu alınamadı ({match['home_name']}): {e}")
         else:
-            from .teamnews import current_players, fresh_injuries
+            from .teamnews import fresh_injuries, team_current_players
 
             injuries = fresh_injuries(self.store, match["id"])
             for side in ("home", "away"):
-                players[match[f"{side}_team_id"]] = current_players(
-                    self.store.select("players", [("team_id", "eq", match[f"{side}_team_id"])]))
+                players[match[f"{side}_team_id"]] = team_current_players(self.store, match[f"{side}_team_id"])
             known = bool(self.store.get("source_status", source=f"injuries:{match['id']}"))
             w = self.store.get("weather", match_id=match["id"])
             weather = w["data"] if w else None
@@ -115,19 +114,20 @@ class Bot:
         self.log.append(f"Bülten: {len(matches)} maç ({len(self.s.leagues)} lig; {self.s.horizon_hours:.0f} saat; "
                         f"yayın: başlamadan ≥ {self.s.publish_lead_hours:g} saat önce)")
         analyses, recorded, waiting, nopick = [], 0, 0, 0
+        ids = {m["id"] for m in matches}
+        locked = {r["match_id"] for r in self.store.select(
+            "predictions", [("tag", "eq", "meclis_gorusu"), ("status", "eq", "bekliyor")]) if r["match_id"] in ids}
+        pre = self._analyze_all([m for m in matches if m["id"] not in locked], now, fetch_extras)
         for m in matches:
-            published = self.store.select("predictions", [("match_id", "eq", m["id"]), ("tag", "eq", "meclis_gorusu")],
-                                          limit=1)
-            if published:  # yayımlanan seçim kilitli: yeniden hesaplanmaz
+            if m["id"] in locked:  # yayımlanan seçim kilitli: yeniden hesaplanmaz
                 a = self._latest_analysis(m["id"])
                 if a:
                     analyses.append((m, a))
                 continue
             q = self.store.get("analysis_queue", match_id=m["id"]) or {"match_id": m["id"], "attempts": 0}
-            try:
-                a = self.analyze(m, fetch_extras)
-            except Exception as e:  # analiz hatası maçı ELEMEZ; sonraki çalışmada yeniden hesaplanır
-                self.log.append(f"⚠️ analiz hatası ({m['home_name']} – {m['away_name']}): {e}")
+            a = pre.get(m["id"])
+            if isinstance(a, Exception) or a is None:  # analiz hatası maçı ELEMEZ; sonraki çalışmada yeniden hesaplanır
+                self.log.append(f"⚠️ analiz hatası ({m['home_name']} – {m['away_name']}): {a}")
                 continue
             attempts = int(q.get("attempts") or 0) + 1
             if record:
@@ -175,6 +175,30 @@ class Bot:
                         f"bekliyor, {nopick} maçta değer yok (yeniden hesaplanacak), {len(coupons)} yeni kupon")
         return {"analyzed": len(analyses), "postponed": 0, "recorded": recorded, "coupons": coupons,
                 "log": list(self.pool.log) + self.log}
+
+    def _analyze_all(self, matches: list[dict], now, fetch_extras: bool) -> dict:
+        """Analizleri paralel hesaplar (G/Ç ağırlıklı). Canlı kaynak çağrıları yalnızca yayına yakın maçlar için;
+        uzaktaki maçlar 'kadro' işinin havuza yazdığı eksik/ilk 11/kadro verisiyle analiz edilir."""
+        from concurrent.futures import ThreadPoolExecutor
+
+        for lg in sorted({m["league"] for m in matches}):
+            try:
+                self.context(lg)
+            except Exception as e:
+                self.log.append(f"⚠️ lig bağlamı kurulamadı ({lg}): {e}")
+
+        def one(m):
+            try:
+                near = parse_dt(m["kickoff_at"]) - now <= timedelta(hours=self.s.live_extras_hours)
+                return m["id"], self.analyze(m, fetch_extras and near)
+            except Exception as e:
+                return m["id"], e
+
+        workers = 1 if self.store.kind == "sqlite" else 6
+        if workers == 1:
+            return dict(one(m) for m in matches)
+        with ThreadPoolExecutor(max_workers=workers) as ex:
+            return dict(ex.map(one, matches))
 
     def update_trends(self) -> int:
         from .lab import compute_trends

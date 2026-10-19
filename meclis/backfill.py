@@ -42,7 +42,10 @@ class Backfill:
         self.pool = pool
         self.store = pool.store
         self.apif = pool.apif
-        self.leagues = [lg for lg in pool.s.leagues if lg != "DEMO"]
+        from .config import LEAGUES
+
+        # API-Football geçmiş doldurma yalnızca API-Football kimliği olan ligler için
+        self.leagues = [lg for lg in pool.s.leagues if lg != "DEMO" and lg in LEAGUES and LEAGUES[lg].apif_id]
         self.reserve = reserve
         self.seasons = seasons
         self.log: list[str] = []

@@ -18,6 +18,12 @@ def _resources(_key: str):
     store = get_store(s)
     from .pool import DataPool
 
+    if s.auto_leagues:  # keşfedilmiş ligler (leagues tablosu): ad ve filtre için, anahtar gerekmez
+        from .leagues import load_known, register
+
+        for c in register(load_known(store, register_only=False)):
+            if c not in s.leagues:
+                s.leagues.append(c)
     return s, store, DataPool(store, s)
 
 
