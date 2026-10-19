@@ -21,7 +21,7 @@ from .store import get_store
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="python -m meclis", description="90 Meclis komut satırı")
     ap.add_argument("komut", choices=["yenile", "gundem", "bot", "sonuclandir", "sabah", "durum", "kadro",
-                                        "gecmis"])
+                                        "gecmis", "analiz"])
     ap.add_argument("--zorla", action="store_true", help="kadro: 7 günlük önbelleği yok say")
     ap.add_argument("--saat", type=float, default=168, help="kadro: kaç saat sonrasına kadarki maçlar (varsayılan 168 = 7 gün)")
     ap.add_argument("--gecmis", action="store_true", help="geçmiş sezon verisini de çek")
@@ -65,6 +65,9 @@ def main(argv=None) -> int:
         out_logs += Backfill(pool).run()["log"]
     if a.komut in ("bot", "sabah"):
         r = Bot(store, s, pool).run(record=not a.kuru)
+        out_logs += r["log"]
+    if a.komut == "analiz":  # tüm maçların analizini yenile; tahmin/kupon yazmaz
+        r = Bot(store, s, pool).run(record=not a.kuru, publish=False)
         out_logs += r["log"]
     if a.komut in ("sonuclandir", "sabah"):
         if a.komut == "sonuclandir" and not s.demo_mode:

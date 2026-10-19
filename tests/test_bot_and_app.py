@@ -222,3 +222,27 @@ def test_read_only_key_detection(monkeypatch):
     assert key_is_read_only("sb_publishable_xxx") and not key_is_read_only("sb_secret_xxx")
     monkeypatch.setenv("SUPABASE_READONLY", "1")
     assert key_is_read_only("sb_secret_xxx")
+
+
+def test_analysis_only_run_stores_every_match_once(demo_env):
+    from datetime import timedelta
+
+    from meclis.bot import Bot
+    from meclis.config import load_settings
+    from meclis.store import get_store
+    from meclis.timeutil import now_utc
+
+    s = load_settings()
+    st = get_store(s)
+    n_pred = len(st.select("predictions"))
+    b = Bot(st, s)
+    r1 = b.run(record=True, fetch_extras=False, publish=False)
+    Bot(st, s).run(record=True, fetch_extras=False, publish=False, now=now_utc() + timedelta(minutes=1))
+    assert len(st.select("predictions")) == n_pred  # analiz modu tahmin/kupon yazmaz
+    ms = b.candidates(now_utc() + timedelta(minutes=1))
+    assert r1["analyzed"] >= len(ms) > 0
+    for m in ms:
+        rows = st.select("analyses", [("match_id", "eq", m["id"])])
+        assert len(rows) == 1  # eski sürümler budanır
+        p = rows[0]["payload"]
+        assert p.get("markets") and "predicted_xi" in p and "scenarios" in p

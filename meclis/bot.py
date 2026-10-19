@@ -102,12 +102,14 @@ class Bot:
         return tr_date(m["kickoff_at"]) <= tr_date(to_iso(now)) or ko - now <= timedelta(hours=self.s.publish_window_hours)
 
     def candidates(self, now) -> list[dict]:
-        lo = now + self.lead()
+        """Başlamamış TÜM maçlar (ufuk boyunca). Yayın kararı ayrıca publishable() ile verilir."""
+        lo = now
         hi = now + timedelta(hours=self.s.horizon_hours)
         ms = self.pool.matches_between(to_iso(lo), to_iso(hi), self.s.leagues)
         return [m for m in ms if m.get("status") in ("planlandi", None)]
 
-    def run(self, record: bool = True, now=None, fetch_extras: bool = True) -> dict:
+    def run(self, record: bool = True, now=None, fetch_extras: bool = True, publish: bool = True) -> dict:
+        """record=False: kuru. publish=False: yalnızca analizleri kaydet (tahmin/kupon yazılmaz)."""
         now = now or now_utc()
         matches = self.candidates(now)
         self.log.append(f"Bülten: {len(matches)} maç ({len(self.s.leagues)} lig; {self.s.horizon_hours:.0f} saat; "
@@ -134,7 +136,7 @@ class Bot:
             analyses.append((m, a))
             bp = a.get("best_pick")
             can_publish = self.publishable(m, now)
-            if bp and can_publish and record:
+            if bp and can_publish and record and publish:
                 lab = pick_label(bp["market"], bp["selection"], bp.get("line"), m["home_name"], m["away_name"])
                 why = (f"{lab}: olasılık %{bp['probability'] * 100:.1f}; λ {a['lambdas']['home']:.2f}-{a['lambdas']['away']:.2f}; "
                        f"tür: {bp['kind']}; dayanak: {a.get('basis')}; tamlık (güven) {a['quality']['score']:.0f}/100")
@@ -166,7 +168,7 @@ class Bot:
                 self.store.upsert("analysis_queue", [{
                     "match_id": m["id"], "status": "bekliyor", "missing": a.get("missing", []),
                     "attempts": attempts, "last_attempt_at": to_iso(now), "next_retry_at": None, "note": note}])
-        coupons = self._coupons(analyses, now) if record else []
+        coupons = self._coupons(analyses, now) if record and publish else []
         if record:
             self.update_trends()
         self.log.append(f"Analiz: {len(analyses)} maç, {recorded} yeni Meclis Görüşü, {waiting} seçim yayın penceresini "
@@ -188,8 +190,13 @@ class Bot:
         return rows[0]["payload"] if rows else None
 
     def _save_analysis(self, match_id: str, a: dict, now) -> None:
-        self.store.upsert("analyses", [{"match_id": match_id, "created_at": to_iso(now),
+        ts = to_iso(now)
+        self.store.upsert("analyses", [{"match_id": match_id, "created_at": ts,
                                         "model_version": MODEL_VERSION, "payload": a}])
+        try:  # yalnızca en güncel analiz tutulur (yayımlanan seçimin analizi zaten yeniden hesaplanmaz)
+            self.store.prune("analyses", [("match_id", "eq", match_id), ("created_at", "lt", ts)])
+        except Exception as e:
+            self.log.append(f"⚠️ eski analizler budanamadı ({match_id}): {e}")
 
     def _coupons(self, analyses: list[tuple[dict, dict]], now) -> list[str]:
         created = []

@@ -77,6 +77,12 @@ class BaseStore:
     def update(self, table: str, values: dict, filters: Iterable[Filter]) -> None:
         raise NotImplementedError
 
+    # Silme yalnızca türetilmiş tablolara izinlidir (eski analiz sürümlerini budamak için).
+    PRUNABLE = ("analyses",)
+
+    def prune(self, table: str, filters: Iterable[Filter]) -> None:
+        raise NotImplementedError
+
     # Yardımcılar
     def get(self, table: str, **eq) -> dict | None:
         rows = self.select(table, [(k, "eq", v) for k, v in eq.items()], limit=1)
@@ -349,6 +355,16 @@ class SQLiteStore(BaseStore):
             rows = self.conn.execute(sql, args).fetchall()
         return [_decode(table, dict(r)) for r in rows]
 
+    def prune(self, table, filters):
+        if table not in self.PRUNABLE:
+            raise StoreError(f"{table} tablosundan silme yapılamaz.")
+        where, args = self._where(filters)
+        if not where:
+            raise StoreError("Filtresiz silme yapılamaz.")
+        with self._lock:
+            self.conn.execute(f"delete from {table}{where}", args)
+            self.conn.commit()
+
     def update(self, table, values, filters):
         enc = _encode(table, values)
         where, args = self._where(filters)
@@ -524,6 +540,17 @@ class SupabaseStore(BaseStore):
         except Exception as e:
             raise StoreError(f"Supabase okuma hatası ({table}): {e}") from e
         return out[:limit] if limit else out
+
+    def prune(self, table, filters):
+        filters = list(filters)
+        if table not in self.PRUNABLE or not filters:
+            raise StoreError(f"{table}: filtresiz ya da izinsiz silme yapılamaz.")
+        if not self._guard(table):
+            return
+        try:
+            self._apply(self.client.table(table).delete(), filters).execute()
+        except Exception as e:
+            raise StoreError(f"Supabase silme hatası ({table}): {e}") from e
 
     def update(self, table, values, filters):
         filters = list(filters)
