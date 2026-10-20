@@ -434,7 +434,9 @@ class TeamNews:
         if not final:
             return cached
         ts = to_iso(now)
-        rows = [{"match_id": match["id"], "side": side, **v, "updated_at": ts} for side, v in final.items()]
+        from .xi import with_grid
+
+        rows = [with_grid({"match_id": match["id"], "side": side, **v, "updated_at": ts}) for side, v in final.items()]
         self.store.upsert("lineups", rows)
         return rows
 

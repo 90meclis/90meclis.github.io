@@ -152,6 +152,23 @@ def assign_grid(players: list[dict], formation: str | None) -> tuple[str | None,
     return formation, out
 
 
+def with_grid(row: dict) -> dict:
+    """lineups satırı → start_xi oyuncularına 'grid' ('satır:sütun') eklenir (kaynak vermişse korunur, örn.
+    API-Football). Mevki alanı 'pos' (BSD: G/D/M/F) ya da 'position' olabilir."""
+    xi = row.get("start_xi") or []
+    if not xi or all(p.get("grid") for p in xi):
+        return row
+    tmp = [dict(p, position=p.get("position") or p.get("pos")) for p in xi]
+    formation, placed = assign_grid(tmp, row.get("formation"))
+    out = []
+    for p in placed:
+        q = {k: v for k, v in p.items() if k != "position"}
+        if xi and "position" in xi[0]:
+            q["position"] = p.get("position")
+        out.append(q)
+    return dict(row, start_xi=out, formation=row.get("formation") or formation)
+
+
 def xi_uncertainty(xi_side: dict) -> float:
     """İlk 11'deki kilit oyuncuların (en yüksek 5 olasılık) oynama belirsizliği: 1 − ortalama olasılık, 'şüpheli'
     notu ek ceza. 0 = kesin, 1 = tamamen belirsiz."""

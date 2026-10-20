@@ -164,10 +164,12 @@ class SeasonFill:
                         n_pm += 1
                     lu = parse_lineups(lraw)
                     if lu.get("status") == "resmi" and lu.get("lineups"):
-                        self.store.upsert("lineups", [
+                        from .xi import with_grid
+
+                        self.store.upsert("lineups", [with_grid(
                             {"match_id": m["id"], "side": side, "formation": v.get("formation"),
                              "start_xi": v["start_xi"], "subs": v["subs"], "source": "bsd",
-                             "lineup_status": "resmi", "updated_at": to_iso(now_utc())}
+                             "lineup_status": "resmi", "updated_at": to_iso(now_utc())})
                             for side, v in lu["lineups"].items()])
                         n_lu += 1
             except Exception as e:

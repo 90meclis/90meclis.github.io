@@ -118,7 +118,9 @@ class Backfill:
                                              "source": "api-football", "lineup_status": "resmi",
                                              "updated_at": to_iso(now_utc())})
                         if rows:
-                            self.store.upsert("lineups", rows)
+                            from .xi import with_grid
+
+                            self.store.upsert("lineups", [with_grid(r) for r in rows])
                             self.counts["lineups"] += 1
                 except SourceError as e:
                     self.log.append(f"⚠️ {m['id']} {job}: {e}")

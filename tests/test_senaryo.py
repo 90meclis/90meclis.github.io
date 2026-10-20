@@ -51,3 +51,16 @@ def test_registry_never_maps_distinct_clubs_with_shared_suffix():
     reg.add("T1", "trabzonspor", "Trabzonspor")
     reg.prune_conflicting()
     assert reg.resolve("T1", "Trabzonspor") == "trabzonspor"
+
+
+def test_lineup_with_grid_bsd_pos():
+    from meclis.xi import with_grid
+
+    xi = [{"pos": "G", "name": "K"}] + [{"pos": "D", "name": f"D{i}"} for i in range(4)] + \
+         [{"pos": "M", "name": f"M{i}"} for i in range(5)] + [{"pos": "F", "name": "F"}]
+    row = with_grid({"match_id": "x", "side": "home", "formation": "4-2-3-1", "start_xi": xi})
+    grids = [p["grid"] for p in row["start_xi"]]
+    assert grids[0] == "1:1" and grids[1:5] == ["2:1", "2:2", "2:3", "2:4"] and grids[-1] == "5:1"
+    assert row["start_xi"][0]["pos"] == "G" and "position" not in row["start_xi"][0]
+    keep = with_grid({"start_xi": [{"name": "a", "grid": "1:1"}]})
+    assert keep["start_xi"][0]["grid"] == "1:1"
