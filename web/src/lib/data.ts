@@ -199,14 +199,12 @@ export async function analysesLite(ids: string[], light = false): Promise<Record
     ? "match_id,created_at,ready:payload->ready,basis:payload->>basis,markets:payload->markets,model_matches:payload->model_matches,min_team_matches:payload->min_team_matches"
     : "match_id,created_at,ready:payload->ready,basis:payload->>basis,markets:payload->markets,scenarios:payload->scenarios,model_matches:payload->model_matches,min_team_matches:payload->min_team_matches,lambdas:payload->lambdas,injury_effect:payload->injury_effect,form:payload->form,top_scores:payload->top_scores";
   const analyses: Record<string, BotAnalysis> = {};
-  for (let i = 0; i < ids.length; i += 40) {
-    const rows = await run<BotAnalysis>(
-      db().from("analyses")
-        .select(cols)
-        .in("match_id", ids.slice(i, i + 40)).order("created_at", { ascending: false }),
-    );
-    for (const r of rows) if (!analyses[r.match_id]) analyses[r.match_id] = r;
-  }
+  const chunks: string[][] = [];
+  for (let i = 0; i < ids.length; i += 40) chunks.push(ids.slice(i, i + 40));
+  // parçalar paralel (sırayla beklemek LCP'yi saniyelerce geciktiriyordu)
+  const parts = await Promise.all(chunks.map((c) => run<BotAnalysis>(
+    db().from("analyses").select(cols).in("match_id", c).order("created_at", { ascending: false }))));
+  for (const rows of parts) for (const r of rows) if (!analyses[r.match_id]) analyses[r.match_id] = r;
   return analyses;
 }
 
@@ -372,22 +370,20 @@ export async function leagueNames(): Promise<{ code: string; name: string | null
 /** Birden çok takımın bu sezonki maç maç satırları (Seri Avcısı). Görünüm yoksa null. */
 export async function statRowsForSlugs(slugs: string[], sinceIso: string, beforeIso: string): Promise<TeamStatRow[] | null> {
   try {
-    const out: TeamStatRow[] = [];
-    for (let i = 0; i < slugs.length; i += 50) {
-      const part = slugs.slice(i, i + 50);
-      out.push(...(await all<TeamStatRow>(() => db().from("v_takim_mac_istatistik").select("match_id,kickoff_at,league,competition,side,team_slug,team_name,goals_for,goals_against,corners_for,corners_against,cards_for,cards_against,sot_for,sot_against,xg_for,xg_against")
-        .in("team_slug", part).gte("kickoff_at", sinceIso).lt("kickoff_at", beforeIso).order("kickoff_at", { ascending: false }))));
-    }
-    return out;
+    const parts: string[][] = [];
+    for (let i = 0; i < slugs.length; i += 50) parts.push(slugs.slice(i, i + 50));
+    const res = await Promise.all(parts.map((part) => all<TeamStatRow>(() => db().from("v_takim_mac_istatistik").select("match_id,kickoff_at,league,competition,side,team_slug,team_name,goals_for,goals_against,corners_for,corners_against,cards_for,cards_against,sot_for,sot_against,xg_for,xg_against")
+      .in("team_slug", part).gte("kickoff_at", sinceIso).lt("kickoff_at", beforeIso).order("kickoff_at", { ascending: false }))));
+    return res.flat();
   } catch { return null; }
 }
 
 /** Bülten genelinde oran hareketi (Piyasa Nabzı). Görünüm yoksa ya da boşsa []. */
 export async function oddsMovesFor(ids: string[]): Promise<OddsMove[]> {
   try {
-    const out: OddsMove[] = [];
-    for (let i = 0; i < ids.length; i += 40) out.push(...(await run<OddsMove>(db().from("v_oran_hareketi").select("*").in("match_id", ids.slice(i, i + 40)))));
-    return out;
+    const parts: string[][] = [];
+    for (let i = 0; i < ids.length; i += 40) parts.push(ids.slice(i, i + 40));
+    return (await Promise.all(parts.map((p) => run<OddsMove>(db().from("v_oran_hareketi").select("*").in("match_id", p))))).flat();
   } catch { return []; }
 }
 

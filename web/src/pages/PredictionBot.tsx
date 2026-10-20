@@ -78,11 +78,15 @@ export default function PredictionBot() {
   const d = useAsync(`ortak:${day}`, async () => {
     const [lo, hi] = dayBoundsUtc(day);
     const [b, preds, saved] = await Promise.all([api.bulletin(day), api.predictionsBetween(lo, hi), api.botBulten(day)]);
-    const ids = b.matches.map((m) => m.id);
-    const slugs = [...new Set(b.matches.flatMap((m) => [api.slugOf(m.home_team_id), api.slugOf(m.away_team_id)]))];
-    const [stat, moves] = await Promise.all([api.statRowsForSlugs(slugs, api.seasonStartIso(new Date(lo)), lo), api.oddsMovesFor(ids)]);
-    return { ...b, preds, saved: saved ?? [], stat, moves };
+    return { ...b, preds, saved: saved ?? [] };
   }, [day]);
+  // İkinci aşama (ağır): seri avı için takım istatistikleri ve oran hareketleri; maç kartları beklemeden çizilir
+  const d2 = useAsync(d.data ? `ortak2:${day}` : null, async () => {
+    const ms = d.data!.matches, [lo] = dayBoundsUtc(day);
+    const slugs = [...new Set(ms.flatMap((m) => [api.slugOf(m.home_team_id), api.slugOf(m.away_team_id)]))];
+    const [stat, moves] = await Promise.all([api.statRowsForSlugs(slugs, api.seasonStartIso(new Date(lo)), lo), api.oddsMovesFor(ms.map((m) => m.id))]);
+    return { stat, moves };
+  }, [day, !!d.data]);
 
   const all = useMemo(() => {
     if (!d.data) return [];
@@ -96,7 +100,7 @@ export default function PredictionBot() {
     });
   }, [d.data, ns]);
   const scans = useMemo(() => new Map(all.map((x) => [x.m.id, x.rows])), [all]);
-  const finds: Find[] = useMemo(() => d.data?.stat ? huntFinds(d.data.matches, d.data.stat, api.slugOf, scans) : [], [d.data, scans]);
+  const finds: Find[] = useMemo(() => d.data && d2.data?.stat ? huntFinds(d.data.matches, d2.data.stat, api.slugOf, scans) : [], [d.data, d2.data, scans]);
   const leagues = [...new Set(all.map((x) => x.m.league))].sort((a, b) => league(a).order - league(b).order);
   const list = all.filter(({ m, v }) => (!lg || m.league === lg) && (!onlyValue || v.kind === "deger" || v.kind === "secim") &&
     (!q || `${m.home_name} ${m.away_name}`.toLocaleLowerCase("tr-TR").includes(q.toLocaleLowerCase("tr-TR"))));
@@ -113,7 +117,7 @@ export default function PredictionBot() {
     return Math.max(...rs.map((r) => r.edge ?? -1));
   }) })).filter((r) => r.cells.some((c) => c != null)).sort((a, b) => Math.max(...b.cells.map((c) => c ?? -1)) - Math.max(...a.cells.map((c) => c ?? -1))).slice(0, 14);
   const radarCols = RADAR_GROUPS.filter((_, i) => radar.some((r) => r.cells[i] != null));
-  const moves = (d.data?.moves ?? []).map((mv) => {
+  const moves = (d2.data?.moves ?? []).map((mv) => {
     const m = d.data!.matches.find((x) => x.id === mv.match_id);
     const o = mv.acilis?.["1X2"], c = mv.guncel?.["1X2"];
     if (!m || !o || !c) return null;
