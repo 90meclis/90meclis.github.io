@@ -40,12 +40,15 @@ export function story(i: StoryIn): string[] {
   const p1 = a?.markets?.filter((x) => x.market === "1X2");
   const mp = p1?.length === 3 ? Object.fromEntries(p1.map((x) => [x.selection, x.probability])) as Record<string, number> : null;
   const modelOwn = (a?.basis ?? "").startsWith("model");
+  // model 1X2'si piyasadan 20 puandan fazla uzaksa (veri/model hatası şüphesi) modelin sayıları anlatılmaz
+  const off = !!(mp && i.implied && [mp["1"] - i.implied[0], mp["X"] - i.implied[1], mp["2"] - i.implied[2]].some((d) => Math.abs(d) > 0.2));
   if (i.implied) {
     const [q1, qx, q2] = i.implied;
     const favH = q1 >= q2, fq = favH ? q1 : q2, fav = favH ? H : A;
     let s = fq - Math.min(q1, q2) < 0.08 ? `Piyasa iki tarafı neredeyse eşit görüyor (${pct(q1)} – ${pct(q2)}, beraberlik ${pct(qx)}).`
       : `Piyasa ${fav} tarafında: galibiyet ihtimali ${pct(fq)}, beraberlik ${pct(qx)}.`;
-    if (mp && modelOwn) {
+    if (mp && modelOwn && off) s += " Meclis modelinin bu maçtaki sayıları piyasadan çok uzak; veri kontrol edilene kadar modelin yorumu yok.";
+    else if (mp && modelOwn) {
       const mq = favH ? mp["1"] : mp["2"];
       const diff = mq - fq;
       s += Math.abs(diff) < 0.03 ? ` Meclis modeli de aynı yerde (${pct(mq)}).` : diff > 0 ? ` Meclis modeli ${fav} için daha iddialı: ${pct(mq)}.` : ` Meclis modeli ${fav} konusunda daha temkinli: ${pct(mq)}.`;
@@ -54,7 +57,7 @@ export function story(i: StoryIn): string[] {
   }
 
   // 3) Gol beklentisi
-  if (a?.lambdas) {
+  if (a?.lambdas && !off) {
     const s = a.lambdas.home + a.lambdas.away;
     const tempo = s >= 3.1 ? "açık ve gollü bir oyun" : s <= 2.2 ? "kapalı, az pozisyonlu bir oyun" : "dengeli bir gol temposu";
     const ts = a.top_scores?.[0];

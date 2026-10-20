@@ -246,7 +246,7 @@ function Countdown({ iso }: { iso: string }) {
 }
 function HeroProb({ m, d }: { m: Match; d: Dossier }) {
   const p1 = Object.fromEntries((d.a?.markets ?? []).filter((x) => x.market === "1X2").map((x) => [x.selection, x.probability]));
-  const own = modelOwn(d.a) && p1["1"] !== undefined;
+  const own = modelOwn(d.a) && p1["1"] !== undefined && !modelOff(m, d.a);
   const imp = implied1x2(m);
   const v = own ? [p1["1"], p1["X"], p1["2"]] : imp;
   if (!v) return null;
@@ -308,6 +308,8 @@ function injuryCount(d: Dossier, m: Match): number {
 }
 
 const modelOwn = (a?: AnalysisPayload) => (a?.basis ?? "").startsWith("model");
+/** Model 1X2'si piyasadan 20 puandan fazla ayrışıyor mu (veri kontrol)? Öyleyse modelin olasılıkları gösterilmez. */
+const modelOff = (m: Match, a?: AnalysisPayload) => modelOwn(a) && scanMatch(m, a?.markets, true).some((r) => r.market === "1X2" && r.wild);
 const rowsFor = (_m: Match, d: Dossier, side: "home" | "away") => (side === "home" ? d.hRows : d.aRows);
 
 // ---------------------------------------------------------------------------------------------
@@ -346,7 +348,7 @@ function Ozet({ m, d, go }: { m: Match; d: Dossier; go: (k: TabKey) => void }) {
         <TopScenario m={m} d={d} go={go} />
         <Card title="Maç konuşuyor" className="analysis">
           {lines.length > 0 && <div className="story">{lines.map((x, i) => <p key={i}>{x}</p>)}</div>}
-          {p1["1"] !== undefined && modelOwn(a) ? (
+          {p1["1"] !== undefined && modelOwn(a) && !modelOff(m, a) ? (
             <div className="pb-block"><span className="kicker">Meclis olasılıkları</span><ProbBar p1={p1["1"]} px={p1["X"]} p2={p1["2"]} home={m.home_name} away={m.away_name} /></div>
           ) : imp ? (
             <div className="pb-block"><span className="kicker">Piyasanın gördüğü (marjsız)</span><ProbBar p1={imp[0]} px={imp[1]} p2={imp[2]} home={m.home_name} away={m.away_name} /></div>
@@ -360,7 +362,7 @@ function Ozet({ m, d, go }: { m: Match; d: Dossier; go: (k: TabKey) => void }) {
               {a.count_info?.shots_on_target && <Stat label="İsabetli şut bekl." value={num(a.count_info.shots_on_target.total, 1)} />}
             </div>
           )}
-          {bp && !published && modelOwn(a) && (
+          {bp && !published && modelOwn(a) && !modelOff(m, a) && (
             <div className="best-pick">
               <span className="kicker">Meclis'in eğilimi</span>
               <strong>{pickLabel(bp.market, bp.selection, bp.line, m.home_name, m.away_name)}</strong>
