@@ -52,11 +52,12 @@ class Bot:
 
             if league in LEAGUES and LEAGUES[league].cup:
                 ms, stats = self._with_domestic(league, ms, stats)
+            sp = self._league_strength_prior(league, ms) if league in LEAGUES and LEAGUES[league].cup else None
             try:
                 priors = self.pool.elo_priors(league) if league != "DEMO" else {}
             except Exception:
                 priors = {}
-            self.contexts[league] = LeagueContext.build(league, ms, stats, elo_priors=priors)
+            self.contexts[league] = LeagueContext.build(league, ms, stats, elo_priors=priors, strength_prior=sp)
         return self.contexts[league]
 
     def _with_domestic(self, league: str, ms: list[dict], stats: dict) -> tuple[list[dict], dict]:
@@ -78,7 +79,7 @@ class Bot:
                 continue
             hs, as_ = m["home_team_id"].split(":", 1)[-1], m["away_team_id"].split(":", 1)[-1]
             if hs in slugs or as_ in slugs:
-                extra.append(dict(m, home_team_id=f"{league}:{hs}" if hs in slugs else m["home_team_id"],
+                extra.append(dict(m, dom_league=m["league"], home_team_id=f"{league}:{hs}" if hs in slugs else m["home_team_id"],
                                   away_team_id=f"{league}:{as_}" if as_ in slugs else m["away_team_id"]))
         ids = [m["id"] for m in extra]
         stats = dict(stats)
@@ -88,6 +89,51 @@ class Bot:
         if extra:
             self.log.append(f"ℹ️ {league}: modele takımların bu sezonki {len(extra)} lig maçı eklendi")
         return sorted(ms + extra, key=lambda m: m["kickoff_at"]), stats
+
+    def league_strength(self) -> dict[str, dict]:
+        """Lig gücü (BU SEZON): ligin kulüplerinin bu sezonki Avrupa maçlarındaki (ön eleme dahil) maç başı averajı,
+        örneklem azsa sıfıra büzülür. Log-gol ölçeğinde: s = 0.35 × averaj × n/(n+20). Harici katsayı kullanılmaz."""
+        if "_lstr" in self.__dict__:
+            return self._lstr
+        from .analysis import season_start
+        from .config import LEAGUES
+
+        if "_all_season" not in self.__dict__:
+            self._all_season = self.store.select("matches", [("status", "eq", "bitti"),
+                                                             ("kickoff_at", "gte", to_iso(season_start()))])
+        dom = {}
+        for m in self._all_season:
+            if m["league"] in LEAGUES and not LEAGUES[m["league"]].cup:
+                for t in (m["home_team_id"], m["away_team_id"]):
+                    dom[t.split(":", 1)[-1]] = m["league"]
+        agg: dict[str, list] = {}
+        for m in self._all_season:
+            if not (m["league"] in LEAGUES and LEAGUES[m["league"]].cup) or m.get("home_goals") is None:
+                continue
+            for t, gd in ((m["home_team_id"], m["home_goals"] - m["away_goals"]),
+                          (m["away_team_id"], m["away_goals"] - m["home_goals"])):
+                lg = dom.get(t.split(":", 1)[-1])
+                if lg:
+                    a = agg.setdefault(lg, [0, 0])
+                    a[0] += gd
+                    a[1] += 1
+        self._lstr = {lg: {"mac": n, "averaj_mac": round(g / n, 3), "s": round(0.35 * (g / n) * n / (n + 20), 4)}
+                      for lg, (g, n) in agg.items() if n}
+        return self._lstr
+
+    def _league_strength_prior(self, league: str, ms: list[dict]) -> dict[str, float]:
+        """Kupa bağlamında yalnızca yerel lig maçlarında görünen rakiplere kendi liglerinin gücü önsel olarak verilir;
+        böylece zayıf ligde rakip ezmek, güçlü ligde ezmekle aynı sayılmaz."""
+        ls = self.league_strength()
+        out = {}
+        for m in ms:
+            if not m.get("dom_league"):
+                continue
+            s = ls.get(m["dom_league"], {}).get("s", 0.0)
+            for t in (m["home_team_id"], m["away_team_id"]):
+                if not t.startswith(f"{league}:"):
+                    out[t] = s
+        return out
 
     def analyze(self, match: dict, fetch_extras: bool = True) -> dict:
         ctx = self.context(match["league"])
@@ -122,7 +168,34 @@ class Bot:
         except Exception as e:  # tahmini 11 kurulamazsa sakat listesiyle devam
             self.log.append(f"⚠️ tahmini ilk 11 kurulamadı ({match['home_name']}): {e}")
             xi = {}
-        return analyze_match(match, ctx, self.s, injuries, known, players, weather, xi=xi)
+        a = analyze_match(match, ctx, self.s, injuries, known, players, weather, xi=xi)
+        from .config import LEAGUES
+
+        if match["league"] in LEAGUES and LEAGUES[match["league"]].cup and isinstance(a, dict):
+            a["avrupa_baglam"] = self._europe_context(match, ctx)
+        return a
+
+    def _europe_context(self, match: dict, ctx) -> dict:
+        """Avrupa izi: her takımın bu sezonki Avrupa maçları (ön eleme dahil) ve lig maçları ayrı ayrı + lig gücü."""
+        ls = self.league_strength()
+        out = {"lig_gucu": ls, "harmanlama": "Avrupa maçları ağırlık 1.0, lig maçları 0.6; lig rakiplerine lig gücü önseli"}
+        for side in ("home", "away"):
+            tid = match[f"{side}_team_id"]
+            eu, dom = [], []
+            for m in ctx.matches:
+                if m.get("home_goals") is None or tid not in (m["home_team_id"], m["away_team_id"]):
+                    continue
+                home = m["home_team_id"] == tid
+                r = {"tarih": m["kickoff_at"][:10], "rakip": m["away_name"] if home else m["home_name"],
+                     "saha": "İç" if home else "Dış", "lehte": m["home_goals"] if home else m["away_goals"],
+                     "aleyhte": m["away_goals"] if home else m["home_goals"]}
+                (dom if m.get("dom_league") else eu).append(dict(r, lig=m.get("dom_league")) if m.get("dom_league") else r)
+            dl = next((r["lig"] for r in dom), None)
+            out[side] = {"yerel_lig": dl, "lig_gucu": ls.get(dl) if dl else None,
+                         "avrupa": {"mac": len(eu), "atti": sum(r["lehte"] for r in eu), "yedi": sum(r["aleyhte"] for r in eu),
+                                    "maclar": eu[-8:]},
+                         "lig": {"mac": len(dom), "atti": sum(r["lehte"] for r in dom), "yedi": sum(r["aleyhte"] for r in dom)}}
+        return out
 
     def lead(self) -> timedelta:
         return timedelta(hours=self.s.publish_lead_hours)

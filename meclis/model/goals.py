@@ -48,8 +48,10 @@ def _tau(x, y, lh, la, rho):
 
 
 def fit_dixon_coles(matches: list[dict], xi: float = 0.0019, ridge: float = 0.5,
-                    ref_time=None) -> GoalModel:
-    """matches: [{'home','away','hg','ag','days_ago', 'hthg','htag'}]"""
+                    ref_time=None, prior: dict[str, float] | None = None) -> GoalModel:
+    """matches: [{'home','away','hg','ag','days_ago', 'hthg','htag'}]
+    prior: takım → log-ölçekte güç önseli (ridge bu değere çeker: hücum = +s, savunma = +s). Avrupa kupası
+    bağlamında yalnızca yerel ligde oynayan rakiplere lig gücü önseli verilir."""
     rows = [m for m in matches if m.get("hg") is not None and m.get("ag") is not None]
     if len(rows) < 10:
         raise ValueError("Model için yeterli maç yok (en az 10).")
@@ -64,6 +66,8 @@ def fit_dixon_coles(matches: list[dict], xi: float = 0.0019, ridge: float = 0.5,
     w = np.exp(-xi * np.array([max(0.0, m.get("days_ago", 0.0)) for m in rows])) * \
         np.array([float(m.get("weight", 1.0)) for m in rows])
 
+    pri = np.array([float((prior or {}).get(t, 0.0)) for t in teams])
+
     def unpack(p):
         return p[:n], p[n:2 * n], p[2 * n], p[2 * n + 1], p[2 * n + 2]
 
@@ -72,7 +76,7 @@ def fit_dixon_coles(matches: list[dict], xi: float = 0.0019, ridge: float = 0.5,
         lh = np.exp(mu + gam + a[hi] - d[ai])
         la = np.exp(mu + a[ai] - d[hi])
         ll = np.log(_tau(x, y, lh, la, rho)) + x * np.log(lh) - lh + y * np.log(la) - la
-        return -(w * ll).sum() + ridge * (np.sum(a ** 2) + np.sum(d ** 2))
+        return -(w * ll).sum() + ridge * (np.sum((a - pri) ** 2) + np.sum((d - pri) ** 2))
 
     def grad(p):
         a, d, mu, gam, rho = unpack(p)
@@ -106,8 +110,8 @@ def fit_dixon_coles(matches: list[dict], xi: float = 0.0019, ridge: float = 0.5,
             g[2 * n] -= (dth.sum() + dta.sum())
             g[2 * n + 1] -= dth.sum()
             g[2 * n + 2] = -(w * (np.log(_tau(x, y, lh, la, rho + eps)) - base_tau) / eps).sum()
-        g[:n] += 2 * ridge * a
-        g[n:2 * n] += 2 * ridge * d
+        g[:n] += 2 * ridge * (a - pri)
+        g[n:2 * n] += 2 * ridge * (d - pri)
         return g
 
     p0 = np.zeros(2 * n + 3)

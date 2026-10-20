@@ -40,7 +40,8 @@ class LeagueContext:
 
     @classmethod
     def build(cls, league: str, matches: list[dict], stats: dict[str, dict],
-              elo_priors: dict[str, float] | None = None) -> "LeagueContext":
+              elo_priors: dict[str, float] | None = None,
+              strength_prior: dict[str, float] | None = None) -> "LeagueContext":
         ctx = cls(league, matches, stats)
         now = now_utc()
         s0 = season_start(now)
@@ -50,7 +51,8 @@ class LeagueContext:
         ctx.matches = matches
 
         def wt(m):
-            return 1.0
+            # Avrupa kupası bağlamı: takımın bu sezonki lig maçları da modele girer ama Avrupa formu ağır basar
+            return 0.6 if m.get("dom_league") else 1.0
 
         for m in matches:
             if m.get("home_goals") is None:
@@ -62,7 +64,7 @@ class LeagueContext:
                          "ag": m["away_goals"], "hthg": m.get("ht_home_goals"), "htag": m.get("ht_away_goals"),
                          "days_ago": (now - parse_dt(m["kickoff_at"])).total_seconds() / 86400, "weight": wt(m)})
         try:
-            ctx.goal_model = fit_dixon_coles(rows)
+            ctx.goal_model = fit_dixon_coles(rows, prior=strength_prior)
         except Exception as e:
             ctx.error = f"Gol modeli kurulamadı: {e}"
         try:

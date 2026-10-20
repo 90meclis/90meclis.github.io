@@ -362,3 +362,18 @@ def test_public_singles_exclude_same_day_coupon_legs():
              {"match_id": "g", "tag": "meclis_gorusu", "kickoff_at": "2026-10-19T17:00:00+00:00"},
              {"match_id": "x", "tag": "meclis_gorusu", "kickoff_at": "2026-10-19T17:00:00+00:00"}]
     assert [p["match_id"] for p in public_singles(preds)] == ["x"]
+
+
+def test_dixon_coles_strength_prior_shifts_weak_league_opponents():
+    from meclis.model.goals import fit_dixon_coles
+
+    rows = []
+    for i in range(12):  # A takımı zayıf ligde 'w*' rakiplerini 2-0 yener; B güçlü ligde 's*' rakiplerini 2-0 yener
+        rows.append({"home": "CL:a", "away": f"X:w{i % 4}", "hg": 2, "ag": 0, "days_ago": i})
+        rows.append({"home": "CL:b", "away": f"Y:s{i % 4}", "hg": 2, "ag": 0, "days_ago": i})
+    rows.append({"home": "CL:a", "away": "CL:b", "hg": 1, "ag": 1, "days_ago": 1})
+    pr = {f"X:w{i}": -0.3 for i in range(4)} | {f"Y:s{i}": 0.3 for i in range(4)}
+    m = fit_dixon_coles(rows, prior=pr)
+    m0 = fit_dixon_coles(rows)
+    gap = lambda mm: mm.attack["CL:b"] - mm.attack["CL:a"]  # noqa: E731
+    assert gap(m) > gap(m0) + 0.05
