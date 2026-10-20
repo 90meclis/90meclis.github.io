@@ -34,7 +34,6 @@ jobs:
       SPORTMONKS_KEY: ${{ secrets.SPORTMONKS_KEY }}
       FOOTYSTATS_KEY: ${{ secrets.FOOTYSTATS_KEY }}
       SPORTDEVS_KEY: ${{ secrets.SPORTDEVS_KEY }}
-      CLUBELO_KEY: ${{ secrets.CLUBELO_KEY }}
       THESPORTSDB_KEY: ${{ secrets.THESPORTSDB_KEY }}
       BSD_API_KEY: ${{ secrets.BSD_API_KEY }}
       LEAGUES: ${{ vars.LEAGUES }}  # boşsa 23 çekirdek lig + AUTO (BSD'deki diğer kulüp ligleri/kupaları)

@@ -1,8 +1,7 @@
 """Takım gücü önseli: Elo puanları.
 
-Club Elo (clubelo.com) API'si 2026 Eylül'ünden beri kimlik doğrulama istiyor; bu yüzden puanlar,
-havuzdaki gerçek maç sonuçlarından (football-data.co.uk, OpenLigaDB, …) kendi içimizde hesaplanır
-("Meclis Elo"). Club Elo erişimi açılırsa (CLUBELO_KEY) başlangıç puanı oradan alınır.
+Dış Elo kaynağı kullanılmaz (Club Elo kapalı: kimlik istiyor, kayıt kapalı); puanlar havuzdaki bu sezonun
+gerçek maç sonuçlarından kendi içimizde hesaplanır ("Meclis Elo").
 
 Elo → gol beklentisi: lig geçmişinde maç öncesi Elo farkı (Δ) ile atılan gol arasında Poisson
 regresyonu kurulur:  log λ_ev = b0 + b1·Δ/400,  log λ_dep = c0 − c1·Δ/400.

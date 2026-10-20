@@ -118,7 +118,6 @@ class Settings:
     footystats_key: str | None = None
     sportdevs_key: str | None = None
     oddspapi_key: str | None = None
-    clubelo_key: str | None = None
     bsd_api_key: str | None = None
     keys: dict = field(default_factory=dict)  # ENV ADI -> değer (yalnızca "tanımlı mı" kontrolü için)
     thesportsdb_key: str = "123"
@@ -171,6 +170,18 @@ DEFAULT_FEEDS = [
     "https://www.skysports.com/rss/12040",
     "https://www.marca.com/rss/futbol/primera-division.xml",
     "https://www.gazzetta.it/rss/calcio.xml",
+    # 2026-10-20 kaynak taraması (yalnızca başlık + özet + bağlantı)
+    "https://www.mynet.com/spor/rss",
+    "https://www.fotospor.com/feed/rss_sondakika.xml",
+    "https://www.yenisafak.com/rss?xml=spor",
+    "https://www.90min.com/posts.rss",
+    "https://www.football-italia.net/feed",
+    "https://as.com/rss/futbol/portada.xml",
+    "https://www.mundodeportivo.com/rss/futbol",
+    "https://www.corrieredellosport.it/rss/calcio",
+    "https://rmcsport.bfmtv.com/rss/football/",
+    "https://www.telegraph.co.uk/football/rss.xml",
+    "https://www.dailymail.co.uk/sport/football/index.rss",
 ]
 
 
@@ -199,7 +210,6 @@ def load_settings() -> Settings:
         footystats_key=get_setting("FOOTYSTATS_KEY"),
         sportdevs_key=get_setting("SPORTDEVS_KEY"),
         oddspapi_key=get_setting("ODDSPAPI_KEY"),
-        clubelo_key=get_setting("CLUBELO_KEY"),
         bsd_api_key=get_setting("BSD_API_KEY"),
         keys=_all_keys(),
         thesportsdb_key=get_setting("THESPORTSDB_KEY", "123") or "123",

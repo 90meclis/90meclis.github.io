@@ -17,7 +17,7 @@ from ..timeutil import to_iso
 from .http import cached_text
 
 SOURCE = "football-data.co.uk"
-BASE = "https://www.football-data.co.uk"
+BASE = "https://football-data.co.uk"  # www. 302 ile çıplak alana yönleniyor
 LONDON = ZoneInfo("Europe/London")
 
 

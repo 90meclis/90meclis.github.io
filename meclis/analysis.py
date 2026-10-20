@@ -68,7 +68,7 @@ class LeagueContext:
         try:
             ctx.elo_model = fit_elo(rows, elo_priors)
             if elo_priors:
-                ctx.elo_model.source = "clubelo+meclis-elo"
+                ctx.elo_model.source = "meclis-elo"
         except Exception:
             ctx.elo_model = None  # az maç: yalnızca Dixon-Coles
         for stat in STATS:

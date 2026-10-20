@@ -77,7 +77,6 @@ Secrets / Supabase Vault'a yazın):
 | `SPORTMONKS_KEY` | Sportmonks Football API v3 | https://my.sportmonks.com/register | Ücretsiz plan: yalnızca Danimarka Superliga + İskoçya Premiership (180 istek/saat/varlık); bizim liglerimiz ücretli planda |
 | `FOOTYSTATS_KEY` | FootyStats API | https://footystats.org/api | Ücretsiz: yalnızca Premier Lig, 180 istek/saat; Süper Lig ücretli (Hobby £29.99/ay) |
 | `SPORTDEVS_KEY` | SportDevs Football API | https://sportdevs.com/football | Ücretsiz: 300 istek/gün, 10 büyük lig |
-| `CLUBELO_KEY` | Club Elo | http://clubelo.com/API | Eskiden anahtarsızdı; Eylül 2026'dan beri API kimlik doğrulama istiyor, kayıt henüz kapalı |
 | `BSD_API_KEY` | Bzzoiro Sports Data (BSD) | https://sports.bzzoiro.com/register/ | Ücretsiz futbol planı, kota yok: maç başına sakat/cezalı, resmî + tahmini ilk 11, kadro uygunluğu (6 lig) |
 
 Diğer ayarlar için `.env.example` dosyasına bakın. **Gerçek anahtar hiçbir dosyada depoya girmez.**
@@ -112,7 +111,7 @@ Aynı işlemler arayüzde **Tahmin Botu** sayfasından da yapılabilir (anon ana
 - Repo → Settings → Secrets and variables → Actions → **Secrets**: `SUPABASE_URL`,
   `SUPABASE_SERVICE_ROLE_KEY` ve yukarıdaki tablodaki tüm veri anahtarları (`API_FOOTBALL_KEY`,
   `FOOTBALL_DATA_TOKEN`, `ODDS_API_KEY`, `ODDSPAPI_KEY`, `SPORTMONKS_KEY`, `FOOTYSTATS_KEY`, `SPORTDEVS_KEY`,
-  `CLUBELO_KEY`, `THESPORTSDB_KEY`, `BSD_API_KEY`). Tanımlanmayan secret boş geçer; bot o kaynağı "anahtar bekleniyor" diye raporlar.
+  `THESPORTSDB_KEY`, `BSD_API_KEY`). Tanımlanmayan secret boş geçer; bot o kaynağı "anahtar bekleniyor" diye raporlar.
   **Variables**: `LEAGUES` (boşsa 23 çekirdek lig + AUTO keşfi — bkz. `meclis/config.py`).
   Gece işi (03:40 TSİ) tabloları `backups` dalına JSON/CSV olarak commit'ler (defterin ikinci kopyası; düzenli
   commit GitHub'ın 60 gün hareketsizlikte zamanlanmış işleri kapatmasını da önler).

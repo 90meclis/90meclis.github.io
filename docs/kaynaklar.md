@@ -34,7 +34,6 @@ Supabase Vault içinde durur; kodda, depoda veya tabloda yalnızca değişkenin 
 | **Sportmonks Football API v3** | `SPORTMONKS_KEY` | Ücretsiz plan: yalnızca Danimarka Superliga + İskoçya Premiership (180 istek/saat/varlık); bizim liglerimiz ücretli planda | fikstür, sonuç, İY skoru, stadyum, hakem, maç istatistiği | https://my.sportmonks.com/register |
 | **FootyStats API** | `FOOTYSTATS_KEY` | Ücretsiz: yalnızca Premier Lig, 180 istek/saat; Süper Lig ücretli (Hobby £29.99/ay) | sonuç, İY skoru, korner, kart, isabetli şut, faul, stadyum, 1X2 ve 2.5 Alt/Üst oranı | https://footystats.org/api |
 | **SportDevs Football API** | `SPORTDEVS_KEY` | Ücretsiz: 300 istek/gün, 10 büyük lig | fikstür, sonuç, İY skoru, stadyum, ilk 11 (`matches-lineups`), kadro içindeki eksikler | https://sportdevs.com/football |
-| **Club Elo** | `CLUBELO_KEY` | Eskiden anahtarsızdı; Eylül 2026'dan beri API kimlik doğrulama istiyor, kayıt henüz kapalı | takım gücü (Elo) başlangıç puanı | http://clubelo.com/API |
 
 ## Tüm anahtarlar
 
@@ -48,7 +47,6 @@ Supabase Vault içinde durur; kodda, depoda veya tabloda yalnızca değişkenin 
 | `SPORTMONKS_KEY` | Sportmonks Football API v3 | https://my.sportmonks.com/register | Ücretsiz plan: yalnızca Danimarka Superliga + İskoçya Premiership (180 istek/saat/varlık); bizim liglerimiz ücretli planda |
 | `FOOTYSTATS_KEY` | FootyStats API | https://footystats.org/api | Ücretsiz: yalnızca Premier Lig, 180 istek/saat; Süper Lig ücretli (Hobby £29.99/ay) |
 | `SPORTDEVS_KEY` | SportDevs Football API | https://sportdevs.com/football | Ücretsiz: 300 istek/gün, 10 büyük lig |
-| `CLUBELO_KEY` | Club Elo | http://clubelo.com/API | Eskiden anahtarsızdı; Eylül 2026'dan beri API kimlik doğrulama istiyor, kayıt henüz kapalı |
 | `BSD_API_KEY` | Bzzoiro Sports Data (BSD) | https://sports.bzzoiro.com/register/ | Ücretsiz futbol planı, kota yok; sakat/cezalı + resmî/tahmini ilk 11 + kadro uygunluğu |
 
 GitHub: Repo → Settings → Secrets and variables → Actions → **New repository secret** (adlar yukarıdaki gibi).
@@ -141,7 +139,7 @@ Denenip eklenmeyenler: NTV Spor kök `/rss` (HTML dönüyor), Fanatik, Milliyet,
 ## Elo önseli (gol modeli)
 
 `meclis/model/elo.py`: havuzdaki gerçek sonuçlardan maç öncesi Elo hesaplanır (K=20, ev avantajı 65, gol farkı
-çarpanı). Club Elo API'si açılıp `CLUBELO_KEY` tanımlanırsa başlangıç puanı olarak Club Elo kullanılır. Gol
+çarpanı). Dış Elo kaynağı yok (Club Elo kapalı; Understat robots.txt ile yasak): xG yalnızca BSD'den, takım gücü Meclis Elo'dan. Gol
 sayıları maç öncesi Elo farkına Poisson regresyonuyla bağlanır; elde edilen λ, Dixon-Coles λ ile log uzayında
 **%45 Elo** ağırlığıyla harmanlanır.
 
@@ -157,7 +155,7 @@ Geriye dönük test (T1, E0, SP1, I1; 752 maç; her maç yalnızca kendinden ön
 | Kaynak | Neden |
 |---|---|
 | FotMob, SofaScore, Flashscore, WhoScored | Koşulları otomatik erişimi / kazımayı yasaklıyor; resmî açık API yok. |
-| Transfermarkt, Forebet, Understat, FBref | Koşullar kazımayı yasaklıyor (Transfermarkt: "bot, spider, screen scraping veya başka otomatik süreçle erişim yasak" — robots.txt açık olsa da; FBref/Sports-Reference otomatik erişimi açıkça sınırlıyor). |
+| Transfermarkt, Forebet, Understat, FBref, Club Elo | Koşullar kazımayı yasaklıyor (Understat robots.txt: Disallow: /; Club Elo API kimlik istiyor, kayıt kapalı) (Transfermarkt: "bot, spider, screen scraping veya başka otomatik süreçle erişim yasak" — robots.txt açık olsa da; FBref/Sports-Reference otomatik erişimi açıkça sınırlıyor). |
 | Nesine iç uç noktaları | Belgelenmemiş iç API; kullanım koşulları izin vermiyor. |
 | ESPN belgelenmemiş API (site.api.espn.com) | Teknik olarak çalışıyor (6 ligde kadro + oyuncu istatistiği + maç sonrası ilk 11; sakatlık alanı boş), ama ESPN/Disney kullanım koşulları robot/script ile erişimi ve veri çıkarmayı açıkça yasaklıyor; resmî API değil. |
 | Fantasy Premier League API | Teknik olarak çalışıyor (yalnızca Premier Lig: sakat/cezalı + oynama ihtimali), ama FPL koşulları otomatik sistemle bilgi çıkarmayı ve ticari kullanımı yasaklıyor. |

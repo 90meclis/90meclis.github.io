@@ -61,7 +61,7 @@ class Bot:
 
     def _with_domestic(self, league: str, ms: list[dict], stats: dict) -> tuple[list[dict], dict]:
         """Avrupa kupası: takımın kupada bu sezon 2-3 maçı vardır; model takımın BU SEZONKİ lig maçlarını da görür
-        (kimlikler 'lig:slug' → kupa kimliğine eşlenir). Ligler arası güç farkını Elo (clubelo) ve piyasa kalibrasyonu
+        (kimlikler 'lig:slug' → kupa kimliğine eşlenir). Ligler arası güç farkını Meclis Elo ve piyasa kalibrasyonu
         dengeler."""
         from .analysis import season_start
 

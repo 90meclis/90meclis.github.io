@@ -85,10 +85,7 @@ insert into sources (name, api_key_secret, key_storage, daily_limit, fills_field
    'Ücretsiz katman: Ücretsiz: 300 istek/gün, 10 büyük lig. Kayıt/bilgi: https://sportdevs.com/football'),
   ('bsd', 'BSD_API_KEY', 'env + GitHub Actions Secrets + Supabase Vault', null,
    '["sakat/cezalı/şüpheli (maç başına, 7 gün önceden)","resmî ilk 11 (~1 saat önce)","tahmini ilk 11 (AI)","kadro + oyuncu uygunluğu","fikstür","sonuç","İY skoru","konsensüs oranları (1X2, A/Ü 1.5/2.5/3.5, KG)","maç istatistiği (şut, isabetli şut, korner, faul, kart, kale vuruşu, xG, topla oynama)","hakem","stadyum"]', true,
-   'Ücretsiz katman: Ücretsiz futbol planı: tüm v2 uç noktaları, günlük 7.500 istek (IP başına 10 istek/sn); 6 ligin hepsi kapsamda. Lisans v4.0: iç kullanım için saklama ve kendi uygulamanda gösterim serbest; ham verinin yeniden satışı yasak. Kayıt/bilgi: https://sports.bzzoiro.com/register/'),
-  ('clubelo', 'CLUBELO_KEY', 'env + GitHub Actions Secrets + Supabase Vault', null,
-   '["takım gücü (Elo) başlangıç puanı"]', false,
-   'Ücretsiz katman: Eskiden anahtarsızdı; Eylül 2026''dan beri API kimlik doğrulama istiyor, kayıt henüz kapalı. Web sayfaları kazınmaz; API açılınca CLUBELO_KEY ile kullanılır. O zamana kadar Meclis Elo devrede. Kayıt/bilgi: http://clubelo.com/API')
+   'Ücretsiz katman: Ücretsiz futbol planı: tüm v2 uç noktaları, günlük 7.500 istek (IP başına 10 istek/sn); 6 ligin hepsi kapsamda. Lisans v4.0: iç kullanım için saklama ve kendi uygulamanda gösterim serbest; ham verinin yeniden satışı yasak. Kayıt/bilgi: https://sports.bzzoiro.com/register/')
 on conflict (name) do update set
   api_key_secret = excluded.api_key_secret, key_storage = excluded.key_storage, daily_limit = excluded.daily_limit,
   fills_fields = excluded.fills_fields, requires_key = excluded.requires_key, license_note = excluded.license_note,

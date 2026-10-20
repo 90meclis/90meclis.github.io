@@ -107,10 +107,6 @@ SOURCES: list[SourceDef] = [
                "kadro + oyuncu uygunluğu", "fikstür", "sonuç", "İY skoru", "konsensüs oranları (1X2, A/Ü 1.5/2.5/3.5, KG)",
                "maç istatistiği (şut, isabetli şut, korner, faul, kart, kale vuruşu, xG, topla oynama)", "hakem", "stadyum"],
               "Lisans v4.0: iç kullanım için saklama ve kendi uygulamanda gösterim serbest; ham verinin yeniden satışı yasak."),
-    SourceDef("clubelo", "Club Elo", "CLUBELO_KEY", False, None,
-              "Eskiden anahtarsızdı; Eylül 2026'dan beri API kimlik doğrulama istiyor, kayıt henüz kapalı",
-              "http://clubelo.com/API", ["takım gücü (Elo) başlangıç puanı"],
-              "Web sayfaları kazınmaz; API açılınca CLUBELO_KEY ile kullanılır. O zamana kadar Meclis Elo devrede."),
 ]
 
 BY_NAME = {s.name: s for s in SOURCES}

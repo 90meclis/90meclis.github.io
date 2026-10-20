@@ -8,7 +8,7 @@ import pytest
 
 from meclis.model.elo import BLEND_WEIGHT, blend, fit_elo, run_elo
 from meclis.pool import merge_records
-from meclis.sources import clubelo, footystats, oddspapi, openfootball, openligadb, sportdevs, sportmonks, wikidata
+from meclis.sources import footystats, oddspapi, openfootball, openligadb, sportdevs, sportmonks, wikidata
 from meclis.sources.registry import SECRET_NAMES, SOURCES, key_state
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -58,12 +58,6 @@ def test_wikidata_pick_skips_women_and_wrong_country_and_takes_latest():
     assert p["wikidata"] == "Q2" and p["stadium"] == "Papara Park" and p["capacity"] == 41500
     assert p["coach"] == "Yeni Hoca" and p["city"] == "Trabzon" and math.isclose(p["lat"], 41.0)
     assert wikidata.pick(rows[3:], "Q43") is None
-
-
-def test_clubelo_parse_csv():
-    txt = "Rank,Club,Country,Level,Elo,From,To\n1,Liverpool,ENG,1,2010.5,2026-10-01,2026-10-19\nbad,row\n"
-    rows = clubelo.parse_csv(txt)
-    assert rows == [{"club": "Liverpool", "country": "ENG", "level": "1", "elo": 2010.5}]
 
 
 def test_sportmonks_parse():

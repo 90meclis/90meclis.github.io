@@ -671,34 +671,9 @@ class DataPool:
             self._waiting_key("oddspapi", "ODDSPAPI_KEY", "Pinnacle 1X2 oranı")
 
     def elo_priors(self, league: str) -> dict[str, float]:
-        """Club Elo başlangıç puanları (API erişilebilirse). Erişilemezse boş — Meclis Elo yine çalışır."""
-        from .sources import clubelo
-
-        if getattr(self, "_clubelo_failed", False):
-            return {}
-        cache = getattr(self, "_clubelo_rows", None)
-        if cache is None:
-            try:
-                cache = clubelo.ratings(now_utc().date(), self.s.clubelo_key)
-                self._clubelo_rows = cache
-                self._note("clubelo", True, f"{len(cache)} kulüp puanı")
-            except Exception as e:
-                self._clubelo_failed = True
-                hint = "" if self.s.clubelo_key else " (CLUBELO_KEY bekleniyor; API Eylül 2026'dan beri kimlik istiyor)"
-                self._note("clubelo", False, f"{e}{hint} — Meclis Elo iç hesabı kullanılıyor")
-                return {}
-        country = clubelo.COUNTRY.get(league)
-        reg = TeamRegistry()
-        for t in self.store.select("teams", [("league", "eq", league)]):
-            reg.add(league, t["id"].split(":", 1)[1], t["name"])
-        out = {}
-        for r in cache:
-            if r["country"] != country:
-                continue
-            k = reg.lookup(league, r["club"])
-            if k:
-                out[f"{league}:{k}"] = r["elo"]
-        return out
+        """Dış Elo kaynağı yok (Club Elo kapalı: kimlik istiyor, kayıt kapalı). Takım gücü Meclis Elo'dur
+        (bu sezonun maçlarından, iç hesap)."""
+        return {}
 
     def enrich_teams(self, max_lookups: int = 200) -> int:
         """Wikidata'dan stadyum/şehir/kapasite/koordinat/teknik direktör doldurur (takım başına 14 günde bir)."""
