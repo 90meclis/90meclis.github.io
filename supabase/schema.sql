@@ -722,12 +722,29 @@ create or replace view v_takim_mac_istatistik with (security_invoker = true) as
          me.shots_on_target as sot_for, op.shots_on_target as sot_against,
          me.goal_kicks as goal_kicks_for, op.goal_kicks as goal_kicks_against,
          me.fouls as fouls_for, op.fouls as fouls_against, me.xg as xg_for, op.xg as xg_against,
-         me.possession as possession, m.referee
+         me.possession as possession, m.referee,
+         case when m.competition = 'Lig' then 'Lig'
+              when m.kickoff_at < make_date(extract(year from m.s0)::int, 9, 1) then 'Ön eleme/play-off'
+              when m.kickoff_at < make_date(extract(year from m.s0)::int + 1, 2, 1) then 'Lig aşaması'
+              else 'Eleme turları' end as asama
   from m
   cross join (values ('home'), ('away')) t(side)
   left join match_stats me on me.match_id = m.id and me.side = t.side
   left join match_stats op on op.match_id = m.id and op.side = case when t.side = 'home' then 'away' else 'home' end
   where m.kickoff_at >= m.s0;
+
+
+create or replace view v_avrupa_puan_durumu with (security_invoker = true) as
+  select league, team_slug, max(team_name) as team_name, count(*) as o,
+         count(*) filter (where goals_for > goals_against) as g, count(*) filter (where goals_for = goals_against) as b,
+         count(*) filter (where goals_for < goals_against) as m, sum(goals_for) as ag, sum(goals_against) as yg,
+         sum(goals_for) - sum(goals_against) as av,
+         3 * count(*) filter (where goals_for > goals_against) + count(*) filter (where goals_for = goals_against) as puan,
+         rank() over (partition by league order by
+           3 * count(*) filter (where goals_for > goals_against) + count(*) filter (where goals_for = goals_against) desc,
+           sum(goals_for) - sum(goals_against) desc, sum(goals_for) desc) as sira
+  from v_takim_mac_istatistik where competition = 'Avrupa' and asama = 'Lig aşaması'
+  group by league, team_slug;
 
 -- Hakem: bu sezon maç başına kart / faul (penaltı verisi kaynaklarda yok → gösterilmez)
 create or replace view v_hakem_sezon with (security_invoker = true) as
@@ -772,7 +789,7 @@ create or replace view v_oran_hareketi with (security_invoker = true) as
   from odds_snapshots o
   window w as (partition by o.match_id order by o.taken_at rows between unbounded preceding and unbounded following);
 
-grant select on v_takim_mac_istatistik, v_hakem_sezon, v_puan_durumu, v_dinlenme, v_oran_hareketi to anon, authenticated;
+grant select on v_takim_mac_istatistik, v_hakem_sezon, v_puan_durumu, v_dinlenme, v_oran_hareketi, v_avrupa_puan_durumu to anon, authenticated;
 
 -- Kaynak durumu (herkese açık, temizlenmiş): arayüz anon anahtarıyla source_status tablosunu okuyamaz.
 -- Bu görünüm yalnızca kaynak adı / başarı / zaman / temizlenmiş mesajı verir (URL'deki anahtar/jeton maskelenir).
