@@ -200,10 +200,19 @@ def analyze_match(match: dict, ctx: LeagueContext, settings, injuries: list[dict
         el = ctx.elo_model.lambdas(hid, aid) if ctx.elo_model else None
         lh0, la0 = blend(dc, el)
         basis = "model (güncel sezon ağırlıklı Dixon-Coles" + (" + Elo)" if el else ")")
-        if mkt and min(nh_cur, na_cur) < THIN_CURRENT:
-            lh0, la0 = blend((lh0, la0), mkt, 0.5)
-            basis += " + piyasa oranı (bu sezon verisi az)"
-            gaps.append(f"bu sezon az maç ({nh_cur}/{na_cur}) — piyasa oranıyla güçlendirildi")
+        from .config import LEAGUES
+
+        euro = match["league"] in LEAGUES and LEAGUES[match["league"]].cup
+        if mkt:
+            # Geri test (20.10.2026): güncel sezon modeli kapanış oranını tek başına yenemiyor → gol beklentisi her
+            # zaman piyasayla harmanlanır. Avrupa kupası: ligler arası güç belirsiz → piyasa ağırlığı 0.70.
+            wm = 0.70 if euro else (0.55 if min(nh_cur, na_cur) < THIN_CURRENT else 0.40)
+            lh0, la0 = blend((lh0, la0), mkt, wm)
+            basis += f" + piyasa oranı (ağırlık {wm:.2f}" + ("; Avrupa kupası" if euro else
+                                                              "; bu sezon verisi az" if wm == 0.55 else "") + ")"
+            payload["market_weight"] = wm
+            if min(nh_cur, na_cur) < THIN_CURRENT:
+                gaps.append(f"bu sezon az maç ({nh_cur}/{na_cur}) — piyasa oranıyla güçlendirildi")
     elif mkt:
         lh0, la0 = mkt
         basis = "piyasa oranı (lig geçmişi yok)"
