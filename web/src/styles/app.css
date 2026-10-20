@@ -981,3 +981,5 @@ html, body { overflow-x: clip; }
 .seal-verdict { font-weight: 700; padding: 10px 12px; border-radius: 12px; } .seal-verdict.ok { color: var(--lime); background: rgba(198,255,61,.08); } .seal-verdict.bad { color: #ff7a7a; background: rgba(255,107,107,.08); }
 .seal-list { list-style: none; margin: 0; padding: 0; display: grid; } .seal-list li button { width: 100%; display: grid; grid-template-columns: 18px 44px 1fr auto; gap: 8px; align-items: center; text-align: left; padding: 9px 2px; background: none; border: 0; border-top: 1px solid var(--line); color: var(--text); cursor: pointer; font-size: 13px; }
 .seal-list .ok { color: var(--lime); } .seal-list .bad { color: #ff7a7a; } .seal-list .sl-l { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .seal-list code { color: var(--muted); font-size: 11px; }
+/* CLS: yükleme sırasında alt bilgi ekranda görünüp aşağı itilmesin */
+main.main { min-height: 100vh; }

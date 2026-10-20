@@ -288,7 +288,8 @@ export default function Trust() {
           </>
         )}
       </Gate>
-      <Card title="Ölçütler nasıl hesaplanıyor?" className="how">
+      {/* veriler gelmeden çizilmez: aksi halde yükleme sonrası aşağı kayar (CLS) */}
+      {d.data && <Card title="Ölçütler nasıl hesaplanıyor?" className="how">
         <ul className="steps">
           <li><b>Tekliler</b>: Meclis Görüşü kayıtları. <b>Kuponlar</b>: Günün Kararı ve Karar Birliği, kupon düzeyinde; kupon ayakları ayrı bahis sayılmaz. <b>Toplam</b> = tekliler + kuponlar.</li>
           <li><b>İsabet</b> = kazanan / (kazanan + kaybeden). İadeler hariç.</li>
@@ -296,7 +297,7 @@ export default function Trust() {
           <li><b>Brier skoru</b> olasılıkların ne kadar iyi kalibre edildiğini ölçer (0 mükemmel, 0,25 yazı-tura).</li>
           <li><b>Değiştirilemezlik</b>: maç başladıktan sonra ekleme, düzenleme ve silme veritabanı tetikleyicileriyle engellenir.</li>
         </ul>
-      </Card>
+      </Card>}
     </>
   );
 }
