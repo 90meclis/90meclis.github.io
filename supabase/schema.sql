@@ -95,9 +95,6 @@ insert into sources (name, api_key_secret, key_storage, daily_limit, fills_field
   ('nosyapi', 'NOSYAPI_KEY', 'env + GitHub Actions Secrets + Supabase Vault', null,
    '["sonuç","İY skoru","korner","kart"]', true,
    'Ücretsiz katman: 500 kredi (kredi = dönen satır). YALNIZCA sonuç/istatistik uç noktaları; iddaa oranı kullanılmaz (kullanıcı kararı: oranlar yalnızca yabancı kaynaklardan). Anahtar tanımlanınca etkinleşir. Kayıt/bilgi: https://www.nosyapi.com/'),
-  ('soccerdata', 'SOCCERDATA_KEY', 'env + GitHub Actions Secrets + Supabase Vault', 75,
-   '["tahmini ilk 11","sakat/cezalı"]', true,
-   'Ücretsiz katman: 75 istek/gün; ücretsiz planda yalnızca UEL + E1. Anahtar tanımlanınca etkinleşir. Kayıt/bilgi: https://soccerdataapi.com/'),
   ('playerelo', 'PLAYERELO_KEY', 'env + GitHub Actions Secrets + Supabase Vault', null,
    '["oyuncu Elo (Eksik Etkisi için iç model girdisi)"]', true,
    'Ücretsiz katman: 500 istek/ay, 10/dk. Ücretsiz katman değerlendirme/hobi amaçlı: yalnızca iç model girdisi, yayımlanmaz. Anahtar tanımlanınca etkinleşir. Kayıt/bilgi: https://playerelo.football/api-access')

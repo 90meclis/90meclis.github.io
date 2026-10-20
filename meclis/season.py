@@ -124,7 +124,16 @@ class SeasonFill:
         ids = [m["id"] for m in ms]
         for i in range(0, len(ids), 200):
             have_st |= {r["match_id"] for r in self.store.select("match_stats", [("match_id", "in", ids[i:i + 200])])}
-        return sorted(ms, key=lambda m: m["kickoff_at"], reverse=True), have_pm, have_st
+        # önce önümüzdeki 36 saatte oynayacak takımların maçları (yarının bülteni), sonra en yeni maç önce
+        from datetime import timedelta
+
+        from .timeutil import now_utc, to_iso
+
+        soon = self.store.select("matches", [("kickoff_at", "gte", to_iso(now_utc())),
+                                             ("kickoff_at", "lt", to_iso(now_utc() + timedelta(hours=36)))])
+        hot = {t for x in soon for t in (x.get("home_team_id"), x.get("away_team_id"))}
+        return sorted(ms, key=lambda m: (m.get("home_team_id") in hot or m.get("away_team_id") in hot, m["kickoff_at"]),
+                      reverse=True), have_pm, have_st
 
     def run(self) -> dict:
         from .sources.bsd import parse_lineups, parse_stats

@@ -118,8 +118,6 @@ SOURCES: list[SourceDef] = [
               "https://www.nosyapi.com/", ["sonuç", "İY skoru", "korner", "kart"],
               "YALNIZCA sonuç/istatistik uç noktaları; iddaa oranı kullanılmaz (kullanıcı kararı: oranlar yalnızca yabancı "
               "kaynaklardan). Anahtar tanımlanınca etkinleşir."),
-    SourceDef("soccerdata", "SoccerdataAPI", "SOCCERDATA_KEY", True, 75, "75 istek/gün; ücretsiz planda yalnızca UEL + E1",
-              "https://soccerdataapi.com/", ["tahmini ilk 11", "sakat/cezalı"], "Anahtar tanımlanınca etkinleşir."),
     SourceDef("playerelo", "PlayerElo", "PLAYERELO_KEY", True, None, "500 istek/ay, 10/dk",
               "https://playerelo.football/api-access", ["oyuncu Elo (Eksik Etkisi için iç model girdisi)"],
               "Ücretsiz katman değerlendirme/hobi amaçlı: yalnızca iç model girdisi, yayımlanmaz. Anahtar tanımlanınca etkinleşir."),

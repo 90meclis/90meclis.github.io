@@ -234,3 +234,22 @@ def test_met_norway_parse_nearest_hour():
     assert w["temperature_c"] == 11.2 and w["wind_kmh"] == 18.0 and w["summary"] == "Yağmurlu"
     assert w["attribution"] == "Data from MET Norway"
     assert met_no.parse(data, "2026-10-25T18:00:00+00:00") is None
+
+
+def test_extra_stats_parsers():
+    from meclis.sources.extra_stats import parse_bigballs_stats, parse_highlightly_stats
+
+    hl = [{"team": {"name": "Guabirá"}, "statistics": [{"displayName": "Shots on target", "value": 2},
+                                                          {"displayName": "Shots off target", "value": 6},
+                                                          {"displayName": "Blocked shots", "value": 6},
+                                                          {"displayName": "Corners", "value": 4},
+                                                          {"displayName": "Yellow cards", "value": 3},
+                                                          {"displayName": "Possession", "value": 0.58},
+                                                          {"displayName": "Goal Kicks", "value": 8}]},
+          {"team": {"name": "Oriente Petrolero"}, "statistics": [{"displayName": "Corners", "value": 5}]}]
+    st = parse_highlightly_stats(hl, "Guabira", "Oriente Petrolero")
+    assert st["home"] == {"shots_on_target": 2, "corners": 4, "yellow": 3, "goal_kicks": 8, "shots": 14, "possession": 58.0}
+    assert st["away"] == {"corners": 5}
+    bb = {"data": {"home": {"total_shots": 14, "shots_on_target": 2, "corner_kicks": 8, "yellow_cards": 1, "fouls": 14},
+                   "away": {"total_shots": 9}}}
+    assert parse_bigballs_stats(bb)["home"]["corners"] == 8 and parse_bigballs_stats(bb)["away"] == {"shots": 9}

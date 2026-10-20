@@ -112,6 +112,12 @@ def main(argv=None) -> int:
         cap = {"sabah": 400, "gunici": 300}.get(a.komut, 1500)  # BSD günlük kota 7.500
         pool.bsd.max_calls = max(pool.bsd.max_calls, pool.bsd.calls + cap)
         out_logs += SeasonFill(pool, max_calls=cap).run()["log"]
+        from .gapstats import GapStats
+
+        try:  # BSD'nin vermediği istatistikler: Highlightly / Big Balls (anahtar varsa, günlük bütçeyle)
+            out_logs += GapStats(pool).run()["log"]
+        except Exception as e:
+            out_logs.append(f"⚠️ ek istatistik: {e}")
         _done(store, "sezon")
     if "yedek" in steps:
         if a.komut == "gunici":  # telafi: yedeği iş akışının 'backups' adımı yazar (bayrak dosyası)
