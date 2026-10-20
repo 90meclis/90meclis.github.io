@@ -6,7 +6,7 @@ import { dateShort, num, pct, time, dayLabel, trDay } from "../lib/format";
 import { fmtLine, league, registerLeagues } from "../lib/labels";
 import { matchPath } from "../lib/match";
 import { usePageMeta, ROUTES } from "../lib/seo";
-import { Card, Disclaimer, Empty, Gate } from "../components/ui";
+import { Card, Empty, Gate } from "../components/ui";
 import { HBar, LineBars, Ring, Seg } from "../components/elite/viz";
 import {
   STATS, YON_LABEL, SAHA_LABEL, KULVAR_LABEL, statDef, linesFor, defaultLine, filterRows, series, avg, hits, streak,
@@ -118,7 +118,6 @@ export default function Lab() {
           <li>Yalnızca <b>bu sezonun</b> maçları. Avrupa kupa maçları ayrı işaretlenir (🇪🇺) ve "Avrupa / Lig" seçimiyle ayrıştırılır. Kaynakta olmayan değer "–" görünür, tahmin edilmez.</li>
         </ul>
       </Card>
-      <Disclaimer />
     </div>
   );
 }

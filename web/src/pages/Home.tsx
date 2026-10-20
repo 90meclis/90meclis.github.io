@@ -8,7 +8,7 @@ import { league, pickLabel, TAG_LABELS } from "../lib/labels";
 import { matchPath, matchState } from "../lib/match";
 import { dedupNews } from "../lib/news";
 import { usePageMeta, ROUTES } from "../lib/seo";
-import { Disclaimer, Empty, Gate, Skeleton, StatusPill } from "../components/ui";
+import { Empty, Gate, Skeleton, StatusPill } from "../components/ui";
 import { CountUp, LineBars } from "../components/elite/viz";
 import { useCountdown } from "../lib/useCountdown";
 import { NAV } from "../lib/nav";
@@ -149,7 +149,8 @@ export default function Home() {
     return a && (a.basis ?? "").startsWith("model") && a.ready && (a.markets ?? []).some((x) => x.market === "1X2");
   }).slice(0, 6);
   // Önce Ortak'ın gerçekten seçtikleri; seçim yoksa değer eşiğini geçenler
-  const valueRows = (nd?.scan ?? []).filter((r) => r.deger && r.odds && (r.edge ?? 0) >= 0.03 && !gkMatchIds.has(r.match_id));
+  // Vitrinde aşırı uç değerler (>%40, çoğunlukla veri/oran eşleme hatası) gösterilmez; Ortak sayfasında hepsi durur
+  const valueRows = (nd?.scan ?? []).filter((r) => r.deger && r.odds && (r.edge ?? 0) >= 0.03 && (r.edge ?? 0) <= 0.4 && !gkMatchIds.has(r.match_id));
   const chosen = valueRows.filter((r) => r.secildi);
   const picks = (chosen.length ? chosen : valueRows).sort((a, b) => (b.edge ?? 0) - (a.edge ?? 0));
   const picksAreChoices = chosen.length > 0;
@@ -244,7 +245,7 @@ export default function Home() {
             <div className="fx-grid">
               {featured.map((m) => {
                 const mk = Object.fromEntries((nd!.an[m.id]?.markets ?? []).filter((x) => x.market === "1X2").map((x) => [x.selection, x.probability]));
-                const val = (nd!.scan ?? []).filter((r) => r.match_id === m.id && r.deger && r.odds && (r.edge ?? 0) >= 0.03).sort((a, b) => (b.edge ?? 0) - (a.edge ?? 0))[0];
+                const val = (nd!.scan ?? []).filter((r) => r.match_id === m.id && r.deger && r.odds && (r.edge ?? 0) >= 0.03 && (r.edge ?? 0) <= 0.4).sort((a, b) => (b.edge ?? 0) - (a.edge ?? 0))[0];
                 return (
                   <Link key={m.id} to={matchPath(m.id)} className="fx">
                     <span className="fx-top"><span>{league(m.league).flag} {league(m.league).name}{UEFA.has(m.league) && <i className="cupb">{m.league}</i>}</span><span>{dayLabel(trDay(m.kickoff_at)).top} {time(m.kickoff_at)}</span></span>
@@ -310,7 +311,6 @@ export default function Home() {
           <li><b>Ölçülebilir</b><span>İsabet, ROI, kapanış oranı farkı ve kalibrasyon herkese açık.</span></li>
         </ul>
       </section>
-      <Disclaimer />
     </div>
   );
 }

@@ -6,7 +6,7 @@ import { usePageMeta, ROUTES } from "../lib/seo";
 import { calibration, clvStat, curves, groupBy, isoWeek, sampleLevel, summarize, toBets, verdictLine, wilson, type Bet, type Summary } from "../lib/trust";
 import { CalibrationChart, EquityChart } from "../components/charts";
 import { PickCard } from "../components/PickCard";
-import { Card, Disclaimer, Empty, Gate, PageHead, Stat, StatusPill } from "../components/ui";
+import { Card, Empty, Gate, PageHead, Stat, StatusPill } from "../components/ui";
 import { Link } from "react-router-dom";
 import type { Tag, Coupon } from "../lib/types";
 import { asBt, backtest, streaks, weekly, type Bt, type WeekPt } from "../lib/trust2";
@@ -296,7 +296,6 @@ export default function Trust() {
           <li><b>Değiştirilemezlik</b>: maç başladıktan sonra ekleme, düzenleme ve silme veritabanı tetikleyicileriyle engellenir.</li>
         </ul>
       </Card>
-      <Disclaimer />
     </>
   );
 }
