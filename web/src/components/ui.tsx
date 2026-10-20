@@ -108,7 +108,7 @@ export function Chips<T extends string>({ options, value, onChange, label, rende
 export function Disclaimer({ compact = false }: { compact?: boolean }) {
   return (
     <p className={`disclaimer ${compact ? "compact" : ""}`}>
-      <span className="age">18+</span> Tahminler olasılık hesabıdır, kesinlik ya da kazanç garantisi değildir. Sorumlu oyna; kaybetmeyi göze alamayacağın tutarı riske atma.
+      <span className="age">18+</span> <span>Tahminler olasılık hesabıdır, kesinlik ya da kazanç garantisi değildir. Sorumlu oyna; kaybetmeyi göze alamayacağın tutarı riske atma. Bahis bağımlılığı için ücretsiz destek: Yeşilay Danışmanlık Merkezi (YEDAM) <a href="tel:115">115</a>.</span>
     </p>
   );
 }
