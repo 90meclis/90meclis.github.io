@@ -6,7 +6,7 @@ from __future__ import annotations
 import os
 from datetime import timedelta
 
-from .sources.extra_stats import BB_LEAGUES, BigBalls, Highlightly
+from .sources.extra_stats import BB_LEAGUES, BigBalls, Highlightly, NosyResults
 from .timeutil import now_utc, to_iso
 
 NEED = ("shots", "shots_on_target", "corners", "yellow")
@@ -20,6 +20,8 @@ class GapStats:
         self.bb = BigBalls(keys.get("BIGBALLS_KEY") or os.environ.get("BIGBALLS_KEY"))
         self.hl_budget = int(float(os.environ.get("HIGHLIGHTLY_DAILY_CALLS", "90")))
         self.bb_budget = int(float(os.environ.get("BIGBALLS_DAILY_CALLS", "200")))
+        self.nosy = NosyResults(keys.get("NOSYAPI_KEY") or os.environ.get("NOSYAPI_KEY"))
+        self.nosy_budget = int(float(os.environ.get("NOSYAPI_DAILY_CALLS", "2")))  # 500 kredi/ay; kredi = satır
         self.log: list[str] = []
 
     def _used(self, source: str) -> int:
@@ -68,12 +70,12 @@ class GapStats:
         return bool(rows)
 
     def run(self) -> dict:
-        if not (self.hl.available or self.bb.available):
+        if not (self.hl.available or self.bb.available or self.nosy.available):
             return {"log": ["ℹ️ ek istatistik: HIGHLIGHTLY_KEY / BIGBALLS_KEY yok — atlandı"], "filled": 0}
         hl_left = self.hl_budget - self._used("highlightly") if self.hl.available else 0
         bb_left = self.bb_budget - self._used("bigballs") if self.bb.available else 0
         todo = self.pending()
-        n = {"highlightly": 0, "bigballs": 0, "eşleşmedi": 0}
+        n = {"highlightly": 0, "bigballs": 0, "nosyapi": 0, "eşleşmedi": 0}
         for m in todo:
             if hl_left - self.hl.calls < 2 and bb_left - self.bb.calls < 2:
                 break
@@ -89,6 +91,16 @@ class GapStats:
                     except Exception as e:
                         self.bb._day.setdefault(day, [])
                         self.log.append(f"ℹ️ big balls ({day}): {e}")
+                if not done and self.nosy.available and (day in self.nosy._day or
+                                                         self.nosy.calls < self.nosy_budget - self._used("nosyapi")):
+                    try:
+                        x = self.nosy.find(day, m["home_name"], m["away_name"])
+                        if x:
+                            done = self._write(m, {"home": x["home_stats"], "away": x["away_stats"]}, "nosyapi")
+                            n["nosyapi"] = n.get("nosyapi", 0) + int(done)
+                    except Exception as e:
+                        self.nosy.key = None  # bu çalıştırmada bir daha denenmez
+                        self.log.append(f"⚠️ nosyapi: {e}")
                 if not done and hl_left - self.hl.calls >= 2:
                     mid = self.hl.find_match(day, m["home_name"], m["away_name"])
                     if mid:
@@ -99,7 +111,7 @@ class GapStats:
             except Exception as e:
                 self.log.append(f"⚠️ ek istatistik ({m['home_name']} – {m['away_name']}): {e}")
                 break
-        for src, cl in (("highlightly", self.hl), ("bigballs", self.bb)):
+        for src, cl in (("highlightly", self.hl), ("bigballs", self.bb), ("nosyapi", self.nosy)):
             if cl.calls:
                 self.store.set_source_status(src, True, f"{n[src]} maçın eksik istatistiği dolduruldu ({cl.calls} istek)",
                                              add_calls=cl.calls)

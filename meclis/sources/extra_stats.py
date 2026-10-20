@@ -115,3 +115,55 @@ class BigBalls:
 
     def stats(self, match_id: str) -> dict:
         return parse_bigballs_stats(self._get(f"/v1/matches/{match_id}/statistics"))
+
+
+NOSY_BASE = "https://www.nosyapi.com/apiv2/service"
+
+
+def parse_nosy_results(data: dict) -> list[dict]:
+    """matches-result → [{home, away, date, ht_home, ht_away, corners_h/a, yellow_h/a, red_h/a}] (oran alanları ATILIR)."""
+    out = []
+    for x in (data or {}).get("data") or []:
+        meta = {r.get("metaName"): r.get("value") for r in x.get("matchResult") or []}
+
+        def iv(k):
+            try:
+                return int(meta[k]) if meta.get(k) not in (None, "") else None
+            except (TypeError, ValueError):
+                return None
+        out.append({"home": x.get("Team1"), "away": x.get("Team2"), "date": x.get("Date"),
+                    "ht_home": iv("htHomeScore"), "ht_away": iv("htAwayScore"),
+                    "home_stats": {k: v for k, v in (("corners", iv("homeCorner")), ("yellow", iv("homeyellowCard")),
+                                                      ("red", iv("homeredCard"))) if v is not None},
+                    "away_stats": {k: v for k, v in (("corners", iv("awayCorner")), ("yellow", iv("awayyellowCard")),
+                                                      ("red", iv("awayredCard"))) if v is not None}})
+    return out
+
+
+class NosyResults:
+    """NosyAPI 'Maç Sonuçları' — yalnızca sonuç/İY/korner/kart (iddaa oranı kullanılmaz)."""
+
+    def __init__(self, key: str | None):
+        self.key = key
+        self.calls = 0
+        self._day: dict = {}
+
+    @property
+    def available(self) -> bool:
+        return bool(self.key)
+
+    def day(self, d: str) -> list[dict]:
+        if d not in self._day:
+            r = get(f"{NOSY_BASE}/matches-result", params={"type": 1, "date": d}, headers={"X-NSYP": self.key})
+            self.calls += 1
+            data = r.json() if r.headers.get("content-type", "").startswith("application/json") else {}
+            if r.status_code != 200 or data.get("status") != "success":
+                raise SourceError(f"NosyAPI HTTP {r.status_code}: {(data.get('messageTR') or data.get('message') or '')[:120]}")
+            self._day[d] = parse_nosy_results(data)
+        return self._day[d]
+
+    def find(self, d: str, home: str, away: str) -> dict | None:
+        for x in self.day(d):
+            if names.same_team(x["home"] or "", home, 0.8) and names.same_team(x["away"] or "", away, 0.8):
+                return x
+        return None

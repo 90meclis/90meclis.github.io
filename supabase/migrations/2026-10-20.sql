@@ -121,7 +121,7 @@ begin
 end $$;
 
 -- görünümler yeniden kurulur (sütun listesi değişen eski görünümler için önce düşürülür; veri tablolarına dokunulmaz)
-drop view if exists v_bot_tarama, v_arsiv, v_bot_bulten, v_guven_pazar, v_guven_haftalik, v_tutanak, v_kayit, v_kayit_tekli, v_kaynak_durumu cascade;
+drop view if exists v_oran_hareketi, v_dinlenme, v_puan_durumu, v_hakem_sezon, v_takim_mac_istatistik, v_bot_tarama, v_arsiv, v_bot_bulten, v_guven_pazar, v_guven_haftalik, v_tutanak, v_kayit, v_kayit_tekli, v_kaynak_durumu cascade;
 
 -- Kural: aynı gün Günün Kararı ayağı olan maç o gün Meclis Görüşü olarak SAYILMAZ (19.10.2026 Getafe/Parma
 -- çakışması kilitli satırlarda kalır ama hiçbir herkese açık görünümde ayrı kayıt olarak görünmez/sayılmaz).
@@ -205,6 +205,86 @@ create or replace view v_bot_tarama with (security_invoker = true) as
   cross join lateral jsonb_array_elements(a.payload->'markets') x
   where (a.payload->>'kickoff_at')::timestamptz > now() - interval '3 hours';
 grant select on v_bot_bulten, v_arsiv, v_bot_tarama to anon, authenticated;
+
+-- ---------------------------------------------------------------------
+-- Maç sayfası veri görünümleri (yalnızca BU SEZON; 1 Temmuz'dan itibaren). Takım kimliği 'lig:slug'tır;
+-- Avrupa kupası ile lig maçlarını birleştirmek için team_slug kullanılır. competition: 'Avrupa' | 'Lig'.
+-- ---------------------------------------------------------------------
+create or replace view v_takim_mac_istatistik with (security_invoker = true) as
+  with m as (
+    select m.*, case when m.league in ('CL','EL','ECL') then 'Avrupa' else 'Lig' end as competition,
+           case when extract(month from now()) >= 7 then make_date(extract(year from now())::int, 7, 1)
+                else make_date(extract(year from now())::int - 1, 7, 1) end as s0
+    from matches m where m.status = 'bitti' and m.home_goals is not null
+  )
+  select m.id as match_id, m.kickoff_at, m.league, m.competition, t.side,
+         case when t.side = 'home' then 'İç saha' else 'Deplasman' end as venue,
+         case when t.side = 'home' then m.home_team_id else m.away_team_id end as team_id,
+         split_part(case when t.side = 'home' then m.home_team_id else m.away_team_id end, ':', 2) as team_slug,
+         case when t.side = 'home' then m.home_name else m.away_name end as team_name,
+         case when t.side = 'home' then m.away_name else m.home_name end as opponent,
+         case when t.side = 'home' then m.home_goals else m.away_goals end as goals_for,
+         case when t.side = 'home' then m.away_goals else m.home_goals end as goals_against,
+         case when t.side = 'home' then m.ht_home_goals else m.ht_away_goals end as ht_for,
+         case when t.side = 'home' then m.ht_away_goals else m.ht_home_goals end as ht_against,
+         (m.home_goals > 0 and m.away_goals > 0) as btts,
+         me.corners as corners_for, op.corners as corners_against,
+         (me.yellow + coalesce(me.red, 0)) as cards_for, (op.yellow + coalesce(op.red, 0)) as cards_against,
+         me.shots as shots_for, op.shots as shots_against,
+         me.shots_on_target as sot_for, op.shots_on_target as sot_against,
+         me.goal_kicks as goal_kicks_for, op.goal_kicks as goal_kicks_against,
+         me.fouls as fouls_for, op.fouls as fouls_against, me.xg as xg_for, op.xg as xg_against,
+         me.possession as possession, m.referee
+  from m
+  cross join (values ('home'), ('away')) t(side)
+  left join match_stats me on me.match_id = m.id and me.side = t.side
+  left join match_stats op on op.match_id = m.id and op.side = case when t.side = 'home' then 'away' else 'home' end
+  where m.kickoff_at >= m.s0;
+
+-- Hakem: bu sezon maç başına kart / faul (penaltı verisi kaynaklarda yok → gösterilmez)
+create or replace view v_hakem_sezon with (security_invoker = true) as
+  select referee, count(distinct match_id) as mac,
+         round(avg(coalesce(cards_for, 0) + coalesce(cards_against, 0)) filter (where cards_for is not null), 2) as kart_mac,
+         round(avg(coalesce(fouls_for, 0) + coalesce(fouls_against, 0)) filter (where fouls_for is not null), 2) as faul_mac,
+         round(avg(goals_for + goals_against), 2) as gol_mac
+  from v_takim_mac_istatistik where side = 'home' and referee is not null and referee <> ''
+  group by referee;
+
+-- Puan durumu (bu sezon, lig maçlarından hesaplanır)
+create or replace view v_puan_durumu with (security_invoker = true) as
+  select league, team_id, max(team_name) as team_name, count(*) as o,
+         count(*) filter (where goals_for > goals_against) as g, count(*) filter (where goals_for = goals_against) as b,
+         count(*) filter (where goals_for < goals_against) as m, sum(goals_for) as ag, sum(goals_against) as yg,
+         sum(goals_for) - sum(goals_against) as av,
+         3 * count(*) filter (where goals_for > goals_against) + count(*) filter (where goals_for = goals_against) as puan,
+         rank() over (partition by league order by
+           3 * count(*) filter (where goals_for > goals_against) + count(*) filter (where goals_for = goals_against) desc,
+           sum(goals_for) - sum(goals_against) desc, sum(goals_for) desc) as sira
+  from v_takim_mac_istatistik group by league, team_id;
+
+-- Dinlenme / yoğunluk: yaklaşan maçta her takımın son maçından bu yana gün ve son 14 gündeki maç sayısı (tüm turnuvalar)
+create or replace view v_dinlenme with (security_invoker = true) as
+  select u.id as match_id, u.kickoff_at, s.side,
+         case when s.side = 'home' then u.home_name else u.away_name end as team_name,
+         round(extract(epoch from (u.kickoff_at - (select max(x.kickoff_at) from v_takim_mac_istatistik x
+               where x.team_slug = split_part(case when s.side = 'home' then u.home_team_id else u.away_team_id end, ':', 2)
+                 and x.kickoff_at < u.kickoff_at))) / 86400.0, 1) as dinlenme_gun,
+         (select count(*) from v_takim_mac_istatistik x
+           where x.team_slug = split_part(case when s.side = 'home' then u.home_team_id else u.away_team_id end, ':', 2)
+             and x.kickoff_at between u.kickoff_at - interval '14 days' and u.kickoff_at) as son14_mac
+  from matches u cross join (values ('home'), ('away')) s(side)
+  where u.kickoff_at > now() - interval '3 hours' and u.kickoff_at < now() + interval '8 days';
+
+-- Oran hareketi: açılış (ilk görüntü) ve güncel (son görüntü) oranlar
+create or replace view v_oran_hareketi with (security_invoker = true) as
+  select distinct on (o.match_id) o.match_id, o.kickoff_at,
+         first_value(o.odds) over w as acilis, first_value(o.taken_at) over w as acilis_zamani,
+         last_value(o.odds) over w as guncel, last_value(o.taken_at) over w as guncel_zamani,
+         count(*) over (partition by o.match_id) as goruntu
+  from odds_snapshots o
+  window w as (partition by o.match_id order by o.taken_at rows between unbounded preceding and unbounded following);
+
+grant select on v_takim_mac_istatistik, v_hakem_sezon, v_puan_durumu, v_dinlenme, v_oran_hareketi to anon, authenticated;
 
 create or replace view v_kaynak_durumu as
   select source, ok,

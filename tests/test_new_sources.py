@@ -253,3 +253,14 @@ def test_extra_stats_parsers():
     bb = {"data": {"home": {"total_shots": 14, "shots_on_target": 2, "corner_kicks": 8, "yellow_cards": 1, "fouls": 14},
                    "away": {"total_shots": 9}}}
     assert parse_bigballs_stats(bb)["home"]["corners"] == 8 and parse_bigballs_stats(bb)["away"] == {"shots": 9}
+
+
+def test_nosy_results_parser_drops_odds():
+    from meclis.sources.extra_stats import parse_nosy_results
+
+    d = {"data": [{"Team1": "Boyaca Patr.", "Team2": "R Aguilas", "Date": "2024-01-31", "HomeWin": 2.84,
+                   "matchResult": [{"metaName": "htHomeScore", "value": "0"}, {"metaName": "homeCorner", "value": "7"},
+                                   {"metaName": "awayyellowCard", "value": "3"}]}]}
+    x = parse_nosy_results(d)[0]
+    assert x["ht_home"] == 0 and x["home_stats"] == {"corners": 7} and x["away_stats"] == {"yellow": 3}
+    assert "HomeWin" not in str(x)
