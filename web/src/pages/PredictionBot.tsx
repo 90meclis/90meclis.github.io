@@ -2,152 +2,136 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import * as api from "../lib/data";
 import { useAsync } from "../lib/useAsync";
-import { addDays, dateLong, num, pct, relTime, signed, time, trDay, dayBoundsUtc } from "../lib/format";
-import { league, pickLabel, sourceLabel } from "../lib/labels";
+import { addDays, dateLong, num, pct, signed, time, trDay, dayBoundsUtc } from "../lib/format";
+import { MARKET_GROUPS, TAG_LABELS, league, pickLabel } from "../lib/labels";
 import { matchPath } from "../lib/match";
 import { usePageMeta, ROUTES } from "../lib/seo";
-import { valuePicks, type BotPick } from "../lib/bot";
-import { Card, Chips, Disclaimer, Empty, Gate, PageHead, Stat, TagPill } from "../components/ui";
-import type { Match, Prediction } from "../lib/types";
+import { scanMatch, EDGE_MIN, type ScanRow } from "../lib/scan";
+import { ScanTable } from "../components/ScanTable";
+import { Chips, Disclaimer, Empty, Gate, PageHead } from "../components/ui";
+import type { Prediction } from "../lib/types";
+import type { BotAnalysis, BotBultenRow } from "../lib/data";
 
-function reason(p: BotPick): string {
-  if (p.odds) return `Piyasa ${pct(1 / p.odds)} görüyor, Meclis ${pct(p.probability)}: fiyat yüksek.`;
-  return "Piyasa oranı yok: modelin adil oranı, arşive girmez.";
+type Verdict = { kind: "secim" | "deger" | "pas" | "bekliyor"; text: string };
+
+function verdictOf(a: BotAnalysis | undefined, rows: ScanRow[], pub: Prediction[], saved: BotBultenRow[]): Verdict {
+  if (pub.length) return { kind: "secim", text: pub.map((p) => `${TAG_LABELS[p.tag]}`).filter((x, i, l) => l.indexOf(x) === i).join(" + ") };
+  if (saved.some((x) => x.arsiv_durumu && x.arsiv_durumu !== "aday")) return { kind: "secim", text: "Masaya alındı" };
+  if (!a) return { kind: "bekliyor", text: "Model analizi bu tarama turunda henüz yazılmadı" };
+  if (!a.ready) return { kind: "pas", text: "Model kurulamadı: takımların bu sezonki maç verisi yetersiz" };
+  const mm = a.model_matches ?? {};
+  const modelBased = (a.basis ?? "").startsWith("model");
+  if (!modelBased) return { kind: "pas", text: "Olasılıklar piyasa oranından türetildi; piyasaya karşı değer iddiası kurulamaz" };
+  if (Math.min(mm.home ?? 0, mm.away ?? 0) < (a.min_team_matches ?? 4)) return { kind: "pas", text: `Modelde takım başına bu sezon az maç var (${mm.home ?? 0}/${mm.away ?? 0})` };
+  const val = rows.filter((r) => r.value);
+  if (val.length) return { kind: "deger", text: `${val.length} pazarda değer` };
+  const best = rows.filter((r) => r.edge != null && r.pModel != null && r.odds).sort((x, y) => (y.edge ?? 0) - (x.edge ?? 0))[0];
+  const priced = rows.filter((r) => r.odds && r.pModel != null).length;
+  if (!priced) return { kind: "pas", text: "Modelin hesapladığı pazarlarda piyasa oranı yok" };
+  return { kind: "pas", text: `Piyasa doğru fiyatlamış: en iyi fark ${best ? `${signed((best.edge ?? 0) * 100, 1)}%` : "—"} (eşik +%${EDGE_MIN * 100})` };
 }
+
+const WINDOWS = ["Tümü", "3 saat", "Akşam"] as const;
 
 export default function PredictionBot() {
   const meta = ROUTES[2];
   usePageMeta(meta.title, meta.description);
   const today = trDay();
   const [day, setDay] = useState(today);
-  const [showPass, setShowPass] = useState(false);
-  const d = useAsync(`bot:bulletin:${day}`, async () => {
+  const [lg, setLg] = useState("");
+  const [grp, setGrp] = useState("Tümü");
+  const [win, setWin] = useState<(typeof WINDOWS)[number]>("Tümü");
+  const [onlyValue, setOnlyValue] = useState(false);
+  const [q, setQ] = useState("");
+  const [open, setOpen] = useState<Record<string, boolean>>({});
+  const d = useAsync(`bot:wb:${day}`, async () => {
     const [lo, hi] = dayBoundsUtc(day);
     const [b, preds, saved] = await Promise.all([api.bulletin(day), api.predictionsBetween(lo, hi), api.botBulten(day)]);
-    return { ...b, preds, saved: saved && saved.length ? saved : null };
+    return { ...b, preds, saved: saved ?? [] };
   }, [day]);
 
-  const rows = useMemo(() => {
+  const all = useMemo(() => {
     if (!d.data) return [];
-    const pub = new Map<string, Prediction[]>();
-    for (const p of d.data.preds) pub.set(p.match_id, [...(pub.get(p.match_id) ?? []), p]);
     return d.data.matches.map((m) => {
       const a = d.data!.analyses[m.id];
-      const top = (a?.scenarios ?? []).filter((x) => x.olasılık !== null).sort((x, y) => (y.olasılık ?? 0) - (x.olasılık ?? 0))[0]?.ad;
-      const saved = d.data!.saved?.filter((x) => x.match_id === m.id).map((x) => ({
-        market: x.market, selection: x.selection, line: x.line, probability: x.probability, odds: x.odds, fair_odds: x.fair_odds,
-        edge: x.edge, kind: x.kind ?? "değer", score: x.confidence ?? 0, status: x.arsiv_durumu,
-      } as BotPick));
-      return { m, a, picks: saved ?? valuePicks(a), pub: pub.get(m.id) ?? [], top };
+      const rows = scanMatch(m, a?.markets, (a?.basis ?? "").startsWith("model") && !!a?.ready &&
+        Math.min(a?.model_matches?.home ?? 0, a?.model_matches?.away ?? 0) >= (a?.min_team_matches ?? 4));
+      const pub = d.data!.preds.filter((p) => p.match_id === m.id);
+      const saved = d.data!.saved.filter((x) => x.match_id === m.id);
+      return { m, a, rows, pub, v: verdictOf(a, rows, pub, saved) };
     });
   }, [d.data]);
-  const withValue = rows.filter((r) => r.picks.length || r.pub.length);
-  const pass = rows.filter((r) => !r.picks.length && !r.pub.length);
-  const analysed = rows.filter((r) => r.a).length;
-  const nPicks = withValue.reduce((a, r) => a + r.picks.length, 0);
-  const last = [...rows.map((r) => r.a?.created_at), ...(d.data?.saved ?? []).map((x) => x.computed_at)].filter(Boolean).sort().pop();
-  const byLeague = groupLeague(withValue);
+  const leagues = [...new Set(all.map((x) => x.m.league))].sort((a, b) => league(a).order - league(b).order);
+  const now = Date.now();
+  const list = all.filter(({ m, v }) =>
+    (!lg || m.league === lg) &&
+    (win === "Tümü" || (win === "3 saat" ? new Date(m.kickoff_at).getTime() - now < 3 * 3600e3 && new Date(m.kickoff_at).getTime() > now - 2 * 3600e3 : Number(time(m.kickoff_at).slice(0, 2)) >= 18)) &&
+    (!onlyValue || v.kind === "deger" || v.kind === "secim") &&
+    (!q || `${m.home_name} ${m.away_name}`.toLocaleLowerCase("tr-TR").includes(q.toLocaleLowerCase("tr-TR"))));
+  const groups = grp === "Tümü" ? undefined : [grp];
+  const scanned = all.filter((x) => x.a).length;
+  const nRows = all.reduce((s, x) => s + x.rows.filter((r) => r.pModel != null).length, 0);
+  const nValue = all.reduce((s, x) => s + x.rows.filter((r) => r.value).length, 0);
+  const nPick = all.filter((x) => x.v.kind === "secim").length;
+  const last = Object.values(d.data?.analyses ?? {}).map((x) => x.created_at).sort().pop();
   const days = [0, 1, 2].map((i) => addDays(today, i));
 
   return (
-    <>
+    <div className="bot-wb">
       <PageHead kicker={`Bülten · ${dateLong(day + "T12:00:00+03:00")}`} title="Tahmin Botu">
-        Botun ham çıktısı: bültendeki her maç taranır, her pazar modellenir; değer kuralını geçen <b>bütün</b> seçimler burada maç maç listelenir. Masanın seçtiği kararlar ise <Link to="/tahmin-arsivi">Tahmin Arşivi</Link>'nde.
+        Botun çalışma masası: günün bütün maçları, her maçta bütün pazarlar. Model olasılığı ile piyasa fiyatı yan yana; değer nerede, bot neyi seçti, neyi neden geçti.
       </PageHead>
-      <Chips label="Bülten günü" value={day} onChange={setDay} options={days}
+      <Chips label="Bülten günü" value={day} onChange={(x) => { setDay(x); setOpen({}); }} options={days}
         render={(x) => x === today ? "Bugün" : x === days[1] ? "Yarın" : dateLong(x + "T12:00:00+03:00").split(" ").slice(0, 2).join(" ")} />
-      <Gate loading={d.loading} error={d.error} rows={5}>
-        <div className="kpis bot-kpis">
-          <Stat label="Bültendeki maç" value={rows.length} />
-          <Stat label="Analiz edilen" value={analysed} sub={last ? `son tarama ${relTime(last)}` : undefined} />
-          <Stat label="Değerli maç" value={withValue.length} />
-          <Stat label="Değer seçimi" value={nPicks} sub="kuralı geçen pazarlar" />
+      <Gate loading={d.loading} error={d.error} rows={6}>
+        <div className="term" role="status">
+          <span><b>{all.length}</b> maç tarandı</span>
+          <span><b>{scanned}</b> model analizi</span>
+          <span><b>{nRows}</b> pazar</span>
+          <span className="pos"><b>{nValue}</b> değer bulundu</span>
+          <span><b>{nPick}</b> maç masada</span>
+          {last && <span className="muted">son tarama {time(last)} TSİ</span>}
         </div>
-        {!rows.length ? (
-          <Empty title="Bu gün bültende maç yok" icon="◆" />
-        ) : !withValue.length ? (
-          <Empty title="Bot bu bültende henüz değer bulmadı" icon="◆">Maçlar her çalışmada (gece dahil) güncel veriyle yeniden hesaplanır. Analizler için <Link to="/mac-merkezi">Maç Merkezi</Link>.</Empty>
-        ) : byLeague.map(([lg, list]) => (
-          <section key={lg} className="bot-league">
-            <h2 className="sub">{league(lg).flag} {league(lg).name} <span className="muted">· {list.length} maç</span></h2>
-            <div className="bot-list">
-              {list.map((r) => <BotMatch key={r.m.id} m={r.m} picks={r.picks} pub={r.pub} top={r.top} />)}
-            </div>
-          </section>
-        ))}
-        {withValue.length > 0 && <p className="muted tiny"><sup>a</sup> Piyasa oranı yok; modelin adil oranı. Vurgulu satırlar masaya alınan (Tahmin Arşivi) seçimlerdir.</p>}
-        {pass.length > 0 && (
-          <Card title={`Değer çıkmayan maçlar · ${pass.length}`} aside={<button className="btn ghost small" onClick={() => setShowPass(!showPass)}>{showPass ? "Gizle" : "Göster"}</button>}>
-            {showPass ? (
-              <ul className="bot-pass">{pass.map((r) => (
-                <li key={r.m.id}><span className="muted small">{time(r.m.kickoff_at)}</span> <Link to={matchPath(r.m.id)}>{r.m.home_name} – {r.m.away_name}</Link> <span className="muted small">{league(r.m.league).name} · {r.a ? "pas: piyasa doğru fiyatlamış" : "analiz sırada"}</span></li>
-              ))}</ul>
-            ) : <p className="muted small">Bot bu maçları da analiz etti; değer kuralını geçen pazar çıkmadı. Pas da bir karardır.</p>}
-          </Card>
+        <div className="filters wb-filters">
+          <label><span>Lig</span><select value={lg} onChange={(e) => setLg(e.target.value)}><option value="">Bütün ligler ({all.length})</option>{leagues.map((x) => <option key={x} value={x}>{league(x).name} ({all.filter((y) => y.m.league === x).length})</option>)}</select></label>
+          <label><span>Saat</span><select value={win} onChange={(e) => setWin(e.target.value as typeof win)}>{WINDOWS.map((w) => <option key={w}>{w}</option>)}</select></label>
+          <label className="grow"><span>Takım</span><input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Takım ara" /></label>
+          <label className="toggle"><input type="checkbox" checked={onlyValue} onChange={(e) => setOnlyValue(e.target.checked)} /> Yalnızca değer</label>
+        </div>
+        <div className="chips scroll" role="radiogroup" aria-label="Pazar">
+          {["Tümü", ...Object.keys(MARKET_GROUPS)].map((g) => <button key={g} type="button" role="radio" aria-checked={grp === g} className={`chip ${grp === g ? "on" : ""}`} onClick={() => setGrp(g)}>{g}</button>)}
+        </div>
+        {!list.length ? <Empty title="Bu filtrede maç yok" icon="◆" /> : (
+          <div className="wb-list">
+            {list.map(({ m, rows, pub, v, a }) => {
+              const isOpen = open[m.id] ?? false;
+              const g = groups ? rows.filter((r) => groups.includes(r.group)) : rows;
+              const top = g.filter((r) => r.value).sort((x, y) => (y.edge ?? 0) - (x.edge ?? 0)).slice(0, 3);
+              const r1 = (s: string) => rows.find((r) => r.market === "1X2" && r.selection === s);
+              const picked = new Set(pub.map((p) => `${p.market}|${p.selection}|${p.line ?? ""}`));
+              return (
+                <article key={m.id} className={`wb-match v-${v.kind}`}>
+                  <button className="wb-head" onClick={() => setOpen({ ...open, [m.id]: !isOpen })} aria-expanded={isOpen}>
+                    <span className="wb-time">{time(m.kickoff_at)}</span>
+                    <span className="wb-teams"><small>{league(m.league).flag} {league(m.league).name}</small><b>{m.home_name} – {m.away_name}</b></span>
+                    <span className="wb-1x2">{(["1", "X", "2"] as const).map((s) => { const r = r1(s); return <span key={s}><small>{s}</small>{r?.pModel != null ? pct(r.pModel) : "—"}<i>{r?.odds ? num(r.odds) : ""}</i></span>; })}</span>
+                    <span className={`wb-v ${v.kind}`}>{v.kind === "secim" ? "SEÇİM" : v.kind === "deger" ? "DEĞER" : v.kind === "pas" ? "PAS" : "SIRADA"}</span>
+                  </button>
+                  <div className="wb-line">
+                    {v.kind === "secim" ? pub.map((p) => <span key={p.id} className="wb-pick">▸ {pickLabel(p.market, p.selection, p.line, m.home_name, m.away_name)} <b>{num(p.odds ?? p.fair_odds)}</b> · {TAG_LABELS[p.tag]}</span>)
+                      : top.length ? top.map((r, i) => <span key={i} className="wb-val">▸ {pickLabel(r.market, r.selection, r.line, m.home_name, m.away_name)} <b>{num(r.odds)}</b> <em className="pos">{signed((r.edge ?? 0) * 100, 1)}%</em></span>)
+                      : <span className="muted">{v.text}</span>}
+                    {a?.lambdas && <span className="muted">xG {num(a.lambdas.home)}–{num(a.lambdas.away)}</span>}
+                    <Link to={matchPath(m.id)} className="wb-link">Maç dosyası →</Link>
+                  </div>
+                  {isOpen && <div className="wb-body"><ScanTable rows={g} home={m.home_name} away={m.away_name} groups={groups} picked={picked} />{v.kind !== "secim" && v.kind !== "deger" && <p className="muted small">Bot kararı: {v.text}.</p>}</div>}
+                </article>
+              );
+            })}
+          </div>
         )}
       </Gate>
-
-      <Card title="Bot nasıl karar verir?" className="how">
-        <ol className="steps">
-          <li><b>Bülten taraması.</b> Önümüzdeki maçlar çok kaynaklı veri havuzundan alınır; her maç analiz edilir.</li>
-          <li><b>Veri.</b> Bu sezonun maçları, maç maç istatistik, oranlar, ağırlıklı eksikler, hakem, hava ve Meclis tahmini 11.</li>
-          <li><b>Modeller.</b> Gol için zaman ağırlıklı Dixon-Coles (Poisson) ve Meclis Elo; korner, kart, isabetli şut ve kale vuruşu için negatif binom/Poisson.</li>
-          <li><b>Değer kuralı.</b> Bütün pazarlar adaydır; sıralama olasılığa değil değere göre yapılır. Model olasılığı piyasanın marjsız olasılığıyla kalibre edilir; değer ≥ %3 ve oran 1,50–5,00 olan seçim listeye girer. Piyasa oranı olmayan pazarlar "adil oran" olarak görünür, arşive girmez.</li>
-          <li><b>Masa.</b> Bu listeden <i>Günün Kararı</i> (2–3 maç, 2,30–4,00), <i>Meclis Görüşü</i> (tekli) ve <i>Karar Birliği</i> (5+ görüş varsa) seçilir, maçtan saatler önce kilitlenir.</li>
-        </ol>
-      </Card>
       <Disclaimer />
-    </>
-  );
-}
-
-type Row = { m: Match; picks: BotPick[]; pub: Prediction[]; top?: string };
-function groupLeague(rows: Row[]): [string, Row[]][] {
-  const g = new Map<string, Row[]>();
-  for (const r of rows) g.set(r.m.league, [...(g.get(r.m.league) ?? []), r]);
-  return [...g.entries()].sort((a, b) => league(a[0]).order - league(b[0]).order)
-    .map(([k, v]) => [k, v.sort((x, y) => x.m.kickoff_at.localeCompare(y.m.kickoff_at))] as [string, Row[]]);
-}
-
-function BotMatch({ m, picks, pub, top }: Row) {
-  const pubKey = new Set(pub.map((p) => `${p.market}|${p.selection}|${p.line ?? ""}`));
-  const extra = pub.filter((p) => !picks.some((x) => `${x.market}|${x.selection}|${x.line ?? ""}` === `${p.market}|${p.selection}|${p.line ?? ""}`));
-  return (
-    <article className="bot-match">
-      <Link to={matchPath(m.id)} className="bot-head">
-        <span className="bot-time">{time(m.kickoff_at)}</span>
-        <strong>{m.home_name} – {m.away_name}</strong>
-        <span className="muted small">{picks.length + extra.length} seçim →</span>
-      </Link>
-      {top && <p className="bot-flow muted small">Beklenen akış: <b>{top}</b></p>}
-      <table className="tbl tight bot-picks">
-        <thead><tr><th>Pazar</th><th>Oran</th><th>Model</th><th>Değer</th><th>Kısa gerekçe</th></tr></thead>
-        <tbody>
-          {picks.map((p, i) => {
-            const k = `${p.market}|${p.selection}|${p.line ?? ""}`;
-            const st = p.status === "gunun_karari" || p.status === "meclis_gorusu" ? p.status : undefined;
-            const tag = pub.find((x) => `${x.market}|${x.selection}|${x.line ?? ""}` === k)?.tag ?? st;
-            return (
-              <tr key={i} className={`${pubKey.has(k) || tag ? "on" : ""} ${p.odds ? "" : "fair"}`}>
-                <td data-label="Pazar"><b>{pickLabel(p.market, p.selection, p.line, m.home_name, m.away_name)}</b>{tag && <> <TagPill tag={tag} /></>}</td>
-                <td data-label="Oran">{p.odds ? <>{num(p.odds)} <small className="muted">{sourceLabel(p.odds_source ?? "")}</small></> : <>{num(p.fair_odds)}<sup>a</sup></>}</td>
-                <td data-label="Model">{pct(p.probability)}</td>
-                <td data-label="Değer" className={p.edge && p.edge > 0 ? "pos" : ""}>{p.edge != null ? `${signed(p.edge * 100, 1)}%` : "—"}</td>
-                <td data-label="Gerekçe" className="muted small">{reason(p)}</td>
-              </tr>
-            );
-          })}
-          {extra.map((p) => (
-            <tr key={p.id} className="on">
-              <td data-label="Pazar"><b>{pickLabel(p.market, p.selection, p.line, m.home_name, m.away_name)}</b> <TagPill tag={p.tag} /></td>
-              <td data-label="Oran">{p.odds ? num(p.odds) : <>{num(p.fair_odds)}<sup>a</sup></>}</td>
-              <td data-label="Model">{pct(p.probability)}</td>
-              <td data-label="Değer">{p.edge != null ? `${signed(p.edge * 100, 1)}%` : "—"}</td>
-              <td data-label="Gerekçe" className="muted small">Kilitli kayıt · {p.scenario_note ?? ""}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </article>
+    </div>
   );
 }

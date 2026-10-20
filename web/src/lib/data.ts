@@ -9,6 +9,16 @@ export class NoDataError extends Error {}
 type Res = PromiseLike<{ data: unknown; error: { message: string } | null }>;
 interface Sel { range: (from: number, to: number) => Res }
 
+/**
+ * Kural: Günün Kararı'ndaki bir maç Meclis Görüşü olamaz. Kural konmadan önce kaydedilmiş (19.10.2026) bu tür tekliler
+ * veritabanında değiştirilmeden durur (defter değiştirilemez) ama hiçbir herkese açık listeye, sayıma, isabet ve K/Z'ye girmez.
+ */
+export function publicPreds(rows: Prediction[]): Prediction[] {
+  const gk = new Set(rows.filter((p) => p.tag === "gunun_karari").map((p) => p.match_id));
+  return rows.filter((p) => !(p.tag === "meclis_gorusu" && gk.has(p.match_id)));
+}
+const pub = (q: Promise<Prediction[]>) => q.then(publicPreds);
+
 function db() {
   if (!supabase) throw new NoDataError("no-client");
   return supabase;
@@ -128,19 +138,19 @@ export const weatherFor = (id: string) => run<Weather>(db().from("weather").sele
 export const analysisFor = (id: string) =>
   run<Analysis>(db().from("analyses").select("*").eq("match_id", id).order("created_at", { ascending: false }).limit(1));
 export const predictionsForMatch = (id: string) =>
-  run<Prediction>(db().from("predictions").select("*").eq("match_id", id).order("recorded_at"));
+  pub(run<Prediction>(db().from("predictions").select("*").eq("match_id", id).order("recorded_at")));
 export const newsForMatch = (id: string) =>
   run<Agenda>(db().from("agenda").select("*").contains("match_ids", JSON.stringify([id])).order("published_at", { ascending: false }).limit(12));
 export const teamsIn = (ids: string[]) => run<Team>(db().from("teams").select("*").in("id", ids));
 
 export const allPredictions = () =>
-  all<Prediction>(() => db().from("predictions").select("*").order("kickoff_at", { ascending: false }));
+  pub(all<Prediction>(() => db().from("predictions").select("*").order("kickoff_at", { ascending: false })));
 export const allCoupons = () => all<Coupon>(() => db().from("coupons").select("*").order("coupon_date", { ascending: false }));
 export const queue = () => all<QueueItem>(() => db().from("analysis_queue").select("*"));
 
 export async function upcomingPredictions(): Promise<Prediction[]> {
   const [lo] = dayBoundsUtc(addDays(trDay(), -1));
-  return all<Prediction>(() => db().from("predictions").select("*").gte("kickoff_at", lo).order("kickoff_at"));
+  return pub(all<Prediction>(() => db().from("predictions").select("*").gte("kickoff_at", lo).order("kickoff_at")));
 }
 
 export const news = (limit = 400) =>
@@ -159,7 +169,7 @@ export async function predictionsForMatches(ids: string[]): Promise<Prediction[]
   if (!ids.length) return [];
   const out: Prediction[] = [];
   for (let i = 0; i < ids.length; i += 100) out.push(...(await run<Prediction>(db().from("predictions").select("*").in("match_id", ids.slice(i, i + 100)))));
-  return out;
+  return publicPreds(out);
 }
 
 
@@ -168,6 +178,8 @@ export interface BotAnalysis {
   match_id: string; created_at: string; ready: boolean | null; basis: string | null;
   markets: import("./types").MarketRow[] | null; scenarios: { ad: string; anlatım: string; olasılık: number | null }[] | null;
   model_matches: { home?: number; away?: number } | null; min_team_matches: number | null;
+  lambdas: { home: number; away: number } | null; injury_effect: Record<string, unknown> | null;
+  form: { home?: import("./types").FormRow[]; away?: import("./types").FormRow[] } | null; top_scores: [string, number][] | null;
 }
 export async function bulletin(day: string): Promise<{ matches: Match[]; analyses: Record<string, BotAnalysis> }> {
   const matches = await matchesOnDay(day);
@@ -176,7 +188,7 @@ export async function bulletin(day: string): Promise<{ matches: Match[]; analyse
   for (let i = 0; i < ids.length; i += 40) {
     const rows = await run<BotAnalysis>(
       db().from("analyses")
-        .select("match_id,created_at,ready:payload->ready,basis:payload->>basis,markets:payload->markets,scenarios:payload->scenarios,model_matches:payload->model_matches,min_team_matches:payload->min_team_matches")
+        .select("match_id,created_at,ready:payload->ready,basis:payload->>basis,markets:payload->markets,scenarios:payload->scenarios,model_matches:payload->model_matches,min_team_matches:payload->min_team_matches,lambdas:payload->lambdas,injury_effect:payload->injury_effect,form:payload->form,top_scores:payload->top_scores")
         .in("match_id", ids.slice(i, i + 40)).order("created_at", { ascending: false }),
     );
     for (const r of rows) if (!analyses[r.match_id]) analyses[r.match_id] = r;
@@ -185,7 +197,7 @@ export async function bulletin(day: string): Promise<{ matches: Match[]; analyse
 }
 
 export const predictionsBetween = (fromIso: string, toIso: string) =>
-  all<Prediction>(() => db().from("predictions").select("*").gte("kickoff_at", fromIso).lt("kickoff_at", toIso).order("kickoff_at"));
+  pub(all<Prediction>(() => db().from("predictions").select("*").gte("kickoff_at", fromIso).lt("kickoff_at", toIso).order("kickoff_at")));
 
 /** Botun kaydettiği bülten (v_bot_bulten). Görünüm henüz yoksa null döner; sayfa analizlerden türetir. */
 export interface BotBultenRow {

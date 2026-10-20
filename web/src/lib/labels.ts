@@ -54,13 +54,13 @@ export const STATUS_LABELS: Record<PredStatus, string> = {
 };
 
 export const MARKET_LABELS: Record<string, string> = {
-  "1X2": "Maç Sonucu", DC: "Çifte Şans", OU_GOALS: "Toplam Gol", BTTS: "Karşılıklı Gol",
+  "1X2": "Maç Sonucu", DC: "Çifte Şans", AH: "Asya Handikap", OU_GOALS: "Toplam Gol", BTTS: "Karşılıklı Gol",
   TEAM_GOALS_HOME: "Ev Sahibi Gol", TEAM_GOALS_AWAY: "Deplasman Gol", CS: "Skor",
   HT_OU_GOALS: "İlk Yarı Gol", CORNERS_OU: "Toplam Korner", CARDS_OU: "Toplam Kart",
   SOT_OU: "Toplam İsabetli Şut", GOAL_KICKS_OU: "Toplam Kale Vuruşu",
 };
 export const MARKET_GROUPS: Record<string, string[]> = {
-  "Skor / Sonuç": ["1X2", "DC", "CS"],
+  "Skor / Sonuç": ["1X2", "DC", "AH", "CS"],
   Gol: ["OU_GOALS", "BTTS", "TEAM_GOALS_HOME", "TEAM_GOALS_AWAY", "HT_OU_GOALS"],
   Korner: ["CORNERS_OU"],
   Kart: ["CARDS_OU"],
@@ -76,6 +76,7 @@ export function pickLabel(market: string, selection: string, line: number | null
   const lab = MARKET_LABELS[market] ?? market;
   if (market === "1X2") return ({ "1": `MS 1 · ${home}`, X: "MS X · Beraberlik", "2": `MS 2 · ${away}` } as Record<string, string>)[selection] ?? selection;
   if (market === "DC") return `Çifte Şans ${selection}`;
+  if (market === "AH" && line != null) return `AH ${selection === "1" ? home : away} ${line > 0 ? "+" : ""}${fmtLine(line)}`;
   if (market === "BTTS") return `KG ${titleTr(selection)}`;
   if (market === "CS") return `Skor ${selection}`;
   if (line !== null && line !== undefined) return `${lab} ${fmtLine(line)} ${titleTr(selection)}`;

@@ -3,13 +3,13 @@ import { Link } from "react-router-dom";
 import * as api from "../lib/data";
 import { useAsync } from "../lib/useAsync";
 import { dateLong, dateShort, dateTime, hoursBefore, num, pct, signed, time, trDay } from "../lib/format";
-import { MARKET_LABELS, STATUS_LABELS, TAG_LABELS, league, pickLabel } from "../lib/labels";
+import { MARKET_LABELS, STATUS_LABELS, league, pickLabel } from "../lib/labels";
 import { matchPath } from "../lib/match";
 import { usePageMeta, ROUTES } from "../lib/seo";
 import { CouponCard, CouponHero } from "../components/CouponCard";
 import { PickCard } from "../components/PickCard";
 import { Disclaimer, Empty, Gate, PageHead, StatusPill, TagPill } from "../components/ui";
-import type { PredStatus, Tag } from "../lib/types";
+import type { PredStatus } from "../lib/types";
 
 const PAGE = 40;
 
@@ -20,7 +20,6 @@ export default function Archive() {
     const [preds, coupons] = await Promise.all([api.allPredictions(), api.allCoupons()]);
     return { preds, coupons };
   });
-  const [tag, setTag] = useState<Tag | "">("");
   const [status, setStatus] = useState<PredStatus | "">("");
   const [lg, setLg] = useState("");
   const [market, setMarket] = useState("");
@@ -41,8 +40,12 @@ export default function Archive() {
   const leagues = useMemo(() => [...new Set(preds.map((p) => p.league ?? ""))].filter(Boolean).sort((a, b) => league(a).order - league(b).order), [preds]);
   const coupons = (d.data?.coupons ?? []).filter((c) => inRange(c.first_kickoff_at));
   const markets = useMemo(() => [...new Set(preds.map((p) => p.market))].sort(), [preds]);
-  const rows = preds.filter((p) => inRange(p.kickoff_at) &&
-    (!tag || p.tag === tag) && (!status || p.status === status) && (!lg || p.league === lg) && (!market || p.market === market) &&
+  const inScope = preds.filter((p) => inRange(p.kickoff_at));
+  const scopeCount = `${new Set(inScope.map((p) => p.match_id)).size} maç · ${coupons.length} kupon · ${inScope.filter((p) => p.tag === "meclis_gorusu").length} tekli`;
+  // Tekliler sekmesi yalnızca Meclis Görüşü kayıtlarını listeler; kupon bacakları kuponlarının altında durur.
+  const singlesAll = preds.filter((p) => p.tag === "meclis_gorusu");
+  const rows = singlesAll.filter((p) => inRange(p.kickoff_at) &&
+    (!status || p.status === status) && (!lg || p.league === lg) && (!market || p.market === market) &&
     (!qText || `${p.home_name} ${p.away_name}`.toLocaleLowerCase("tr-TR").includes(qText.toLocaleLowerCase("tr-TR"))),
   );
 
@@ -66,7 +69,7 @@ export default function Archive() {
         Her karar maç başlamadan önce kilitlenir. Kayıt anı sunucu saatiyle damgalanır; seçim, oran ve olasılık sonradan değiştirilemez, hiçbir kayıt silinemez.
       </PageHead>
       <div className="seg" role="tablist" aria-label="Arşiv görünümü">
-        {([["masa", "Masa"], ["kayit", "Kayıtlar"], ["kupon", "Kuponlar"]] as const).map(([k, l]) => (
+        {([["masa", "Masa"], ["kayit", "Tekliler"], ["kupon", "Kuponlar"]] as const).map(([k, l]) => (
           <button key={k} role="tab" aria-selected={view === k} className={view === k ? "on" : ""} onClick={() => setView(k)}>{l}</button>
         ))}
       </div>
@@ -89,7 +92,7 @@ export default function Archive() {
               )}
             </div>
             {gk.length ? gk.map((c) => <CouponHero key={c.id} c={c} legs={legsOf(c.id)} />) : (
-              <div className="coupon-hero empty"><span className="kicker">Günün Kararı</span><p className="muted">Bu gün için Günün Kararı kurulmadı: 2,30–4,00 bandında yeterince değerli 2–3 maçlık kombinasyon çıkmadı.</p></div>
+              <div className="coupon-hero empty"><span className="kicker">Günün Kararı</span><p className="muted">Bu gün için Günün Kararı yok.</p></div>
             )}
             <h3 className="sub">Meclis Görüşleri <span className="muted">· {daySingles.length} tekli</span></h3>
             {daySingles.length ? <div className="picks grid">{daySingles.map((p) => <PickCard key={p.id} p={p} />)}</div>
@@ -100,19 +103,18 @@ export default function Archive() {
                 <div className="coupons">{kb.map((c) => <CouponCard key={c.id} c={c} legs={legsOf(c.id)} />)}</div>
               </>
             )}
-            <p className="muted tiny">Günün Kararı'ndaki bir maç Meclis Görüşleri arasında ayrıca gösterilmez. Botun bütün değer seçimleri için <Link to="/tahmin-botu">Tahmin Botu</Link>.</p>
+            
           </div>
         )}
         {view === "kayit" && (
           <>
             <div className="filters">
-              <label><span>Etiket</span><select value={tag} onChange={(e) => setTag(e.target.value as Tag | "")}><option value="">Tümü</option>{Object.entries(TAG_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
               <label><span>Durum</span><select value={status} onChange={(e) => setStatus(e.target.value as PredStatus | "")}><option value="">Tümü</option>{Object.entries(STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
               <label><span>Lig</span><select value={lg} onChange={(e) => setLg(e.target.value)}><option value="">Tümü</option>{leagues.map((l) => <option key={l} value={l}>{league(l).name}</option>)}</select></label>
               <label><span>Pazar</span><select value={market} onChange={(e) => setMarket(e.target.value)}><option value="">Tümü</option>{markets.map((m) => <option key={m} value={m}>{MARKET_LABELS[m] ?? m}</option>)}</select></label>
               <label className="grow"><span>Takım ara</span><input type="search" value={qText} onChange={(e) => setQ(e.target.value)} placeholder="ör. Galatasaray" /></label>
             </div>
-            <p className="muted small">{rows.length} kayıt</p>
+            <p className="muted small">{scopeCount}{rows.length !== inScope.filter((p) => p.tag === "meclis_gorusu").length ? ` · filtrede ${rows.length} tekli` : ""}</p>
             {rows.length === 0 ? <Empty title="Bu filtrelerde kayıt yok" icon="▤" /> : (
               <div className="table-wrap">
                 <table className="tbl ledger">
@@ -139,10 +141,11 @@ export default function Archive() {
             <p className="muted tiny"><sup>a</sup> Kayıt anında piyasa oranı yoktu; modelin adil oranı gösterilir. Bu kayıtlar isabete dahildir, kâr/zarara dahil değildir.</p>
           </>
         )}
+        {view === "kupon" && <p className="muted small">{scopeCount}</p>}
         {view === "kupon" && (
           coupons.length ? (
             <div className="coupons">{coupons.map((c) => <CouponCard key={c.id} c={c} legs={preds.filter((p) => p.coupon_id === c.id)} />)}</div>
-          ) : <Empty title={from || to ? "Bu tarih aralığında kupon yok" : "Henüz kupon yok"} icon="◆">Günün Kararı yalnızca 2,30–4,00 bandında değerli bir kombinasyon bulunursa kurulur.</Empty>
+          ) : <Empty title={from || to ? "Bu tarih aralığında kupon yok" : "Henüz kupon yok"} icon="◆" />
         )}
       </Gate>
       <Disclaimer />
