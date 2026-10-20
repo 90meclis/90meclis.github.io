@@ -376,8 +376,8 @@ def parse_odds_response(resp: list[dict]) -> dict[int, dict]:
     return out
 
 
-def _odds_by_date(self, d, max_pages: int = 20) -> dict[int, dict]:
-    """Bir günün bütün oranları (sayfa başına 10 maç; ücretsiz planda tarih dün–yarın)."""
+def _odds_by_date(self, d, max_pages: int = 3) -> dict[int, dict]:
+    """Bir günün oranları (sayfa başına 10 maç; ücretsiz planda tarih dün–yarın ve en çok 3 sayfa)."""
     out: dict[int, dict] = {}
     page, total = 1, 1
     while page <= min(total, max_pages):
@@ -389,3 +389,11 @@ def _odds_by_date(self, d, max_pages: int = 20) -> dict[int, dict]:
 
 
 ApiFootball.odds_by_date = _odds_by_date
+
+
+def _odds_by_fixture(self, fixture_id: int) -> dict:
+    """Tek fikstürün oranları (güncel sezonda da açık; ~10 şirket)."""
+    return parse_odds_response(self._get("/odds", {"fixture": int(fixture_id)})).get(int(fixture_id)) or {}
+
+
+ApiFootball.odds_by_fixture = _odds_by_fixture

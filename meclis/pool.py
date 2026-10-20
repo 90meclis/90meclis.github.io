@@ -785,6 +785,20 @@ class DataPool:
             lo = datetime(d.year, d.month, d.day, tzinfo=timezone.utc) - timedelta(hours=4)
             ms = self.store.select("matches", [("kickoff_at", "gte", to_iso(lo)),
                                                ("kickoff_at", "lt", to_iso(lo + timedelta(hours=32)))])
+            # tarih sorgusu ücretsiz planda 3 sayfayla (30 fikstür) sınırlı → kalan maçlarımız fikstür kimliğiyle
+            per_fx = 0
+            for m in sorted(ms, key=lambda m: len(m.get("odds") or {})):  # en az oranı olan önce
+                fid = (m.get("ext_ids") or {}).get("apif")
+                if not fid or int(fid) in by_fx or m.get("status") not in ("planlandi", None):
+                    continue
+                if self.apif.daily_budget - self.apif.calls_today() < 20:
+                    break
+                try:
+                    by_fx[int(fid)] = self.apif.odds_by_fixture(int(fid))
+                    per_fx += 1
+                except Exception as e:
+                    self.log.append(f"⚠️ api-football oranı (fikstür {fid}): {e}")
+                    break
             rows = []
             for m in ms:
                 fid = (m.get("ext_ids") or {}).get("apif")
@@ -807,7 +821,8 @@ class DataPool:
             mk = sorted({k.split("_")[0] if not k.startswith(("OU_", "HT_", "TEAM_", "CORNERS_", "CARDS_", "SOT_"))
                          else k.rsplit("_", 1)[0] for o in by_fx.values() for k in o})
             self.store.set_source_status(key, True, f"{len(by_fx)} fikstür oranı, {len(rows)} maçımıza yazıldı", add_calls=1)
-            self._note("api-football:oran", True, f"{d}: {len(by_fx)} fikstür, {len(rows)} maçımız; pazarlar: {', '.join(mk)}")
+            self._note("api-football:oran", True, f"{d}: {len(by_fx)} fikstür ({per_fx} tekil sorgu), {len(rows)} maçımız; "
+                                                   f"pazarlar: {', '.join(mk)}")
         return n
 
     def snapshot_odds(self, hours: float = 30) -> int:
