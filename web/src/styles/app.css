@@ -900,3 +900,5 @@ html, body { overflow-x: clip; }
 .topscn small { display: block; font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: var(--lime); }
 .topscn b { display: block; font-size: 16px; } .topscn em { display: block; font-style: normal; font-size: 12.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .topscn i { font-style: normal; font-size: 22px; color: var(--dim); }
+.share-btn { justify-self: start; margin-top: 8px; min-height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line-2); background: transparent; color: var(--text); font-weight: 700; font-size: 13px; cursor: pointer; }
+.share-btn:hover { border-color: var(--lime); color: var(--lime); }

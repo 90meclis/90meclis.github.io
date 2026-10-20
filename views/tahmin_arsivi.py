@@ -70,7 +70,7 @@ for c in coupons:
              f"{' (adil oran)' if c.get('odds_source') == 'model_adil' else ''} · {ui.status_badge(c['status'])}")
     with st.expander(title, expanded=c["status"] in ("bekliyor", "basladi")):
         st.dataframe(ui.predictions_table(legs).drop(columns=["Etiket"]), hide_index=True, width="stretch")
-        st.caption(f"Ortak olasılık %{100 * (c.get('joint_probability') or 0):.1f} · {c.get('note') or ''} · "
+        st.caption(f"Birlikte tutma olasılığı %{100 * (c.get('joint_probability') or 0):.1f} · {c.get('note') or ''} · "
                    f"kâr: {c.get('profit') if c.get('profit') is not None else '—'} birim · kayıt: {tr_str(c.get('created_at'))}")
 
 st.subheader("🗳️ Tekli kayıtlar")
