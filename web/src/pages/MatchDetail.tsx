@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { normalizeScenarios, type Scn } from "../lib/scenario";
+import { normalizeScenarios, scenarioMeta, type Scn } from "../lib/scenario";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import * as api from "../lib/data";
 import { useAsync } from "../lib/useAsync";
@@ -1099,21 +1099,21 @@ const SCN_HUES = [78, 165, 195, 280, 30, 340];
 
 function ScenarioCard({ s, i, m }: { s: Scn; i: number; m: Match }) {
   const [reveal, setReveal] = useState(false);
-  const [act, setAct] = useState<number | null>(null);
+  const [act, setAct] = useState<number | null>(0);
   const h = SCN_HUES[i % SCN_HUES.length];
-  const tl = s.acts.filter((x) => x.min != null);
+  const tl = s.acts.filter((x) => x.at != null);
   return (
     <article className="scn2" style={{ ["--h" as string]: h }}>
       <header className="scn2-poster">
-        <div><span className="scn2-no">Senaryo {i + 1}</span><h3>{s.title}</h3></div>
-        <Ring p={s.p} hue={h} />
+        <div><span className="scn2-no">{s.kind === "ortusen" ? "Yan hikâye" : `Senaryo ${i + 1}`}</span><h3>{s.title}</h3></div>
+        {s.p != null ? <Ring p={s.p} hue={h} /> : <span className="scn2-tag">Ayrı etken</span>}
       </header>
       {s.story && <p className="scn2-story">{s.story}</p>}
       {(tl.length > 0 || s.turn?.min != null) && (
         <div className="tl" aria-label="Maçın zaman çizelgesi">
           <div className="tl-track"><span className="tl-ht" /></div>
           {tl.map((x, j) => (
-            <button key={j} type="button" className={`tl-dot ${act === j ? "on" : ""}`} style={{ left: `${(x.min! / 95) * 100}%` }} onClick={() => setAct(act === j ? null : j)} aria-label={`${x.min}′ ${x.title}`}>{x.min}′</button>
+            <button key={j} type="button" className={`tl-dot ${act === j ? "on" : ""}`} style={{ left: `${(x.at! / 95) * 100}%` }} onClick={() => setAct(act === j ? null : j)} aria-label={`${x.label || `${x.min}′`} ${x.title}`}>{x.label && /devre/i.test(x.label) ? "İY" : `${x.min}′`}</button>
           ))}
           {s.turn?.min != null && <span className="tl-turn" style={{ left: `${(s.turn.min / 95) * 100}%` }} title="Kırılma anı">⚡</span>}
           <div className="tl-scale"><span>0′</span><span>45′</span><span>90′</span></div>
@@ -1124,7 +1124,7 @@ function ScenarioCard({ s, i, m }: { s: Scn; i: number; m: Match }) {
           {s.acts.map((x, j) => (
             <li key={j} className={act === j ? "on" : ""}>
               <button type="button" onClick={() => setAct(act === j ? null : j)} aria-expanded={act === j}>
-                <span className="a-min">{x.min != null ? `${x.min}′` : `${j + 1}. perde`}</span><b>{x.title || `${j + 1}. perde`}</b>
+                <span className="a-min">{x.label || (x.min != null ? `${x.min}′` : `${j + 1}. perde`)}</span><b>{x.title || `${j + 1}. perde`}</b>
               </button>
               {(act === j || s.acts.length <= 2) && x.text && <p>{x.text}</p>}
             </li>
@@ -1144,20 +1144,25 @@ function ScenarioCard({ s, i, m }: { s: Scn; i: number; m: Match }) {
       )}
       {s.markets.length > 0 && (
         <div className="scn-mk">
-          {s.markets.slice(0, 8).map((x, j) => <span key={j} className={x.win === true ? "w" : x.win === false ? "l" : ""}><b>{x.label}</b>{x.p != null && <small>%{Math.round(x.p * 100)}</small>}</span>)}
+          {s.markets.slice(0, 12).map((x, j) => <span key={j} className={x.win === true ? "w" : x.win === false ? "l" : x.value != null ? "x" : ""}><b>{x.label}</b>{x.p != null ? <small>%{Math.round(x.p * 100)}</small> : x.value != null ? <small>~{num(x.value)} beklenen</small> : null}</span>)}
         </div>
       )}
       {s.signals.length > 0 && (
-        <div className="signals"><span className="kicker">Canlıda izle</span><ul>{s.signals.slice(0, 4).map((x, j) => <li key={j}>{x}</li>)}</ul></div>
+        <div className="signals"><span className="kicker">Canlıda izle</span><ul>{s.signals.slice(0, 4).map((x, j) => (
+          <li key={j}>{x.cond && x.from != null && x.to != null
+            ? <><span>{x.cond}</span><b className={x.to > x.from ? "up" : "down"}>%{Math.round(x.from * 100)} → %{Math.round(x.to * 100)}</b></>
+            : x.text}</li>
+        ))}</ul><small className="muted tiny">Bu senaryonun olasılığı, olay gerçekleşirse böyle değişir.</small></div>
       )}
-      {s.pick && <p className={`scn-pick ${s.pick.win === true ? "w" : s.pick.win === false ? "l" : ""}`}><span>Meclis'in kararı bu senaryoda</span>{s.pick.text}</p>}
+      {s.pick && <p className={`scn-pick ${s.pick.win === true ? "w" : s.pick.win === false ? "l" : ""}`}><span>Meclis'in kararı bu senaryoda</span>{s.pick.text}{s.pick.p != null && <small> · tutma olasılığı %{Math.round(s.pick.p * 100)}</small>}</p>}
+      {s.basis.length > 0 && <details className="scn-basis"><summary>Dayanaklar</summary><ul>{s.basis.map((x, j) => <li key={j}>{x}</li>)}</ul></details>}
       <p className="sr-only">{m.home_name} – {m.away_name}</p>
     </article>
   );
 }
 
 function TopScenario({ m, d, go }: { m: Match; d: Dossier; go: (k: TabKey) => void }) {
-  const top = normalizeScenarios(d.a as unknown as Record<string, unknown>, m.home_name, m.away_name).filter((x) => x.p != null).sort((x, y) => y.p! - x.p!)[0];
+  const top = normalizeScenarios(d.a as unknown as Record<string, unknown>, m.home_name, m.away_name).filter((x) => x.p != null && x.kind === "ana").sort((x, y) => y.p! - x.p!)[0];
   if (!top) return null;
   return (
     <button type="button" className="topscn" onClick={() => go("senaryo")}>
@@ -1172,7 +1177,8 @@ function ScenarioTab({ m, d }: { m: Match; d: Dossier }) {
   const a = d.a;
   const published = d.picks.length > 0;
   const list = useMemo(() => normalizeScenarios(a as unknown as Record<string, unknown>, m.home_name, m.away_name)
-    .sort((x, y) => (y.p ?? -1) - (x.p ?? -1)), [a, m.home_name, m.away_name]);
+    .sort((x, y) => (x.kind === y.kind ? 0 : x.kind === "ana" ? -1 : 1) || (y.p ?? -1) - (x.p ?? -1)), [a, m.home_name, m.away_name]);
+  const meta = useMemo(() => scenarioMeta(a as unknown as Record<string, unknown>), [a]);
   if (!a) return null;
   return (
     <>
@@ -1180,9 +1186,12 @@ function ScenarioTab({ m, d }: { m: Match; d: Dossier }) {
         <section className="scn-wrap" aria-label="Senaryolar">
           <div className="scn-intro"><h2>Maçı kafanda oynat</h2><p className="muted small">Meclis modelinin olası akışları, en olasıdan başlayarak. Kaydır, perdelere dokun, finali aç.</p></div>
           <div className="scn-rail">{list.map((s, i) => <ScenarioCard key={i} s={s} i={i} m={m} />)}</div>
-          <p className="muted tiny">Olasılıklar birbirini dışlamaz (ör. "gollü akış" ile "ev sahibi oyunu kurar" aynı maçta birlikte olabilir); her biri kendi başına modelden okunur.</p>
+          <p className="muted tiny">{meta.mainSum != null
+            ? `Numaralı senaryolar birbirini dışlar ve maçın %${Math.round(meta.mainSum * 100)}'ini kapsar; yan hikâyeler (erken gol, son 20 dakika, hakem) bunların üstüne biner.${meta.sims ? ` ${meta.sims.toLocaleString("tr-TR")} maçlık benzetimden.` : ""}`
+            : `Olasılıklar birbirini dışlamaz (ör. "gollü akış" ile "ev sahibi oyunu kurar" aynı maçta birlikte olabilir); her biri kendi başına modelden okunur.`}</p>
         </section>
       )}
+      {meta.whatIf && <Card title="Eksikler oynasaydı"><p className="small">{meta.whatIf}</p></Card>}
       {a.narrative && <Card title="Meclis'in notu"><div className="an"><MiniMd text={a.narrative} skipFirst published={published} /></div></Card>}
       <Card title="Meclis'in yaklaşımı"><Approach a={a} m={m} /></Card>
     </>

@@ -910,3 +910,13 @@ html, body { overflow-x: clip; }
 .install-x { background: none; border: 0; color: var(--muted); font-size: 22px; padding: 0 4px; cursor: pointer; }
 @media (min-width: 1024px) { .install { left: auto; right: 24px; bottom: 24px; width: 360px; } }
 @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+/* senaryo v1 ekleri */
+.scn2-tag { flex: none; align-self: center; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 6px 10px; border-radius: 999px; border: 1px solid hsl(var(--h) 70% 55% / .5); color: hsl(var(--h) 85% 68%); }
+.scn-mk span.x { border-color: var(--line-2); }
+.signals li { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+.signals li b.up { color: var(--lime); white-space: nowrap; }
+.signals li b.down { color: #ff7a7a; white-space: nowrap; }
+.scn-pick small { color: var(--muted); font-weight: 500; }
+.scn-basis { margin-top: 10px; font-size: 13px; color: var(--muted); }
+.scn-basis summary { cursor: pointer; font-weight: 600; }
+.scn-basis ul { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 3px; }
