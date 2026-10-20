@@ -8,7 +8,7 @@ import { matchPath } from "../lib/match";
 import { usePageMeta, ROUTES } from "../lib/seo";
 import { CouponCard, CouponHero } from "../components/CouponCard";
 import { PickCard } from "../components/PickCard";
-import { Disclaimer, Empty, Gate, PageHead, StatusPill, TagPill } from "../components/ui";
+import { Empty, Gate, PageHead, StatusPill, TagPill } from "../components/ui";
 import type { PredStatus } from "../lib/types";
 
 const PAGE = 40;
@@ -148,7 +148,6 @@ export default function Archive() {
           ) : <Empty title={from || to ? "Bu tarih aralığında kupon yok" : "Henüz kupon yok"} icon="◆" />
         )}
       </Gate>
-      <Disclaimer />
     </>
   );
 }

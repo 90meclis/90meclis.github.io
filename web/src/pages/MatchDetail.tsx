@@ -8,7 +8,7 @@ import { league, pickLabel, sourceLabel, fmtLine } from "../lib/labels";
 import { hasScore, idFromSlug, matchPath, matchState, sameTeam } from "../lib/match";
 import { usePageMeta } from "../lib/seo";
 import type { AnalysisPayload, Injury, Lineup, Match, MatchStat, Prediction } from "../lib/types";
-import { Card, Disclaimer, Empty, Gate, Meter, Skeleton, Stat, StatusPill, TagPill } from "../components/ui";
+import { Card, Empty, Gate, Meter, Skeleton, Stat, StatusPill, TagPill } from "../components/ui";
 import { ProbBar } from "../components/charts";
 import { MiniMd } from "../components/MiniMd";
 import { PickCard } from "../components/PickCard";
@@ -144,7 +144,10 @@ function Detail({ m }: { m: Match }) {
     if (el && el.getBoundingClientRect().top < 0) el.scrollIntoView({ block: "start" });
   };
   const d = useAsync(`dos:${m.id}`, () => loadDossier(m), [m.id]);
-  const tab: TabKey = want === "senaryo" && d.data && !d.data.a ? "ozet" : want;
+  // Oynanmış maçta hiç kadro kaydı yoksa Kadrolar bölümü gösterilmez (boş kart yok)
+  const noXI = !!d.data && hasScore(m) && (["home", "away"] as const).every((s) => !xisFor(d.data!.lineups, s, d.data!.a).length);
+  const hiddenTab = (k: TabKey) => (k === "senaryo" && !!d.data && !d.data.a) || (k === "kadro" && noXI);
+  const tab: TabKey = hiddenTab(want) ? "ozet" : want;
   useEffect(() => {
     // Seçili bölüm düğmesi her zaman görünür kalsın (yatay kaydırma)
     document.querySelector<HTMLElement>("#mtabs button.on")?.scrollIntoView({ inline: "center", block: "nearest" });
@@ -199,7 +202,7 @@ function Detail({ m }: { m: Match }) {
 
       <nav id="mtabs" className={`mtabs ${stuck ? "stuck" : ""}`} role="tablist" aria-label="Maç dosyası bölümleri">
         {stuck && <span className="mt-mini" aria-hidden="true"><b>{abbr(m.home_name)}</b>{sc ? `${m.home_goals}–${m.away_goals}` : time(m.kickoff_at)}<b>{abbr(m.away_name)}</b></span>}
-        {TABS.filter(([k]) => k !== "senaryo" || !d.data || d.data.a).map(([k, label]) => (
+        {TABS.filter(([k]) => !hiddenTab(k)).map(([k, label]) => (
           <button key={k} role="tab" type="button" aria-selected={tab === k} className={tab === k ? "on" : ""} onClick={() => go(k)}>
             {label}{counts[k] ? <small>{counts[k]}</small> : null}
           </button>
@@ -219,7 +222,6 @@ function Detail({ m }: { m: Match }) {
           </div>
         )}
       </Gate>
-      <Disclaimer />
     </div>
   );
 }

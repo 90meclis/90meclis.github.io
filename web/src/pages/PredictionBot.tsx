@@ -11,7 +11,7 @@ import { usePageMeta, ROUTES } from "../lib/seo";
 import { scanMatch, EDGE_MIN, type ScanRow } from "../lib/scan";
 import { huntFinds, type Find } from "../lib/hunt";
 import { ScanTable } from "../components/ScanTable";
-import { Card, Chips, Disclaimer, Empty, Gate } from "../components/ui";
+import { Card, Chips, Empty, Gate } from "../components/ui";
 import type { Match, Prediction } from "../lib/types";
 import type { BotAnalysis, BotBultenRow } from "../lib/data";
 
@@ -254,7 +254,6 @@ export default function PredictionBot() {
           </>
         )}
       </Gate>
-      <Disclaimer />
     </div>
   );
 }
