@@ -1,3 +1,4 @@
+import { SealNavLink } from "./SealBadge";
 import { InstallPrompt } from "./InstallPrompt";
 import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
@@ -55,6 +56,7 @@ export function Layout() {
           <nav className="footer-nav" aria-label="Alt menü">
             {NAV.map((n) => <Link key={n.to} to={n.to}>{n.label}</Link>)}
             <Link to="/hakkinda">Yöntem ve Sorumlu Oyun</Link>
+            <SealNavLink />
           </nav>
           <Disclaimer />
           <p className="muted tiny">Saatler Türkiye saatiyle (TSİ) gösterilir. Veriler açık kaynaklardan derlenir; haberlerin hakları yayıncılarına aittir. © {new Date().getFullYear()} 90 Meclis</p>

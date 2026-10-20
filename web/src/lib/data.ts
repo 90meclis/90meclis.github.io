@@ -418,3 +418,12 @@ export function simConsistent(sim: SimRow[], table: StandRow[]): boolean {
   }
   return tot.size === 1;
 }
+
+/** Kanıt Mührü (v_kanit_muhru). Görünüm yoksa ya da boşsa []. */
+export interface SealRow { seq: number; ref_table: "predictions" | "coupons"; ref_id: string; icerik_sha256: string; sha256: string; onceki_sha256: string; kanonik: string; muhurlendi_at: string }
+export const sealsLite = () =>
+  all<Pick<SealRow, "seq" | "ref_table" | "ref_id" | "sha256" | "muhurlendi_at">>(() => db().from("v_kanit_muhru").select("seq,ref_table,ref_id,sha256,muhurlendi_at").order("seq")).catch(() => []);
+export const sealsFull = () =>
+  all<SealRow>(() => db().from("v_kanit_muhru").select("*").order("seq")).catch(() => [] as SealRow[]);
+/** Mühür doğrulaması için süzgeçsiz tahmin listesi (yayım süzgeci uygulanmaz; mühür her kaydı kapsar). */
+export const allPredictionsRaw = () => all<Prediction>(() => db().from("predictions").select("*").order("kickoff_at", { ascending: false }));

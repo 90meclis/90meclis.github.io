@@ -6,6 +6,7 @@ import { matchPath } from "../lib/match";
 import { StatusPill, TagPill } from "./ui";
 import { PickCard } from "./PickCard";
 import { ShareButton } from "./ShareButton";
+import { SealBadge } from "./SealBadge";
 import { cardForCoupon } from "../lib/share";
 
 export function CouponCard({ c, legs }: { c: Coupon; legs: Prediction[] }) {
@@ -21,6 +22,7 @@ export function CouponCard({ c, legs }: { c: Coupon; legs: Prediction[] }) {
         <div><small>Kâr/Zarar</small><b className={c.profit === null ? "" : c.profit >= 0 ? "pos" : "neg"}>{c.profit === null ? "—" : signed(c.profit)}</b></div>
       </div>
       <div className="coupon-legs">{legs.map((p) => <PickCard key={p.id} p={p} compact />)}</div>
+      <SealBadge id={c.id} />
       {legs.length > 0 && <ShareButton make={() => cardForCoupon(c, legs)} name={`90meclis-${c.tag}-${c.coupon_date}.png`} text={`90 Meclis · ${c.coupon_date}`} />}
     </article>
   );
@@ -49,6 +51,7 @@ export function CouponHero({ c, legs }: { c: Coupon; legs: Prediction[] }) {
         <span>Durum <StatusPill status={c.status} /></span>
         {c.profit !== null && <span>K/Z <b className={c.profit >= 0 ? "pos" : "neg"}>{signed(c.profit)}</b></span>}
         <span className="muted tiny">🔒 Maçlardan önce kilitlendi · 18+ · garanti yoktur</span>
+        <SealBadge id={c.id} />
         <ShareButton make={() => cardForCoupon(c, legs)} name={`90meclis-gunun-karari-${c.coupon_date}.png`} text={`90 Meclis · Günün Kararı ${c.coupon_date}`} />
       </footer>
     </article>

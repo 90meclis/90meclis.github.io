@@ -5,6 +5,7 @@ import { dateTime, hoursBefore, num, pct, signed, time, dateShort } from "../lib
 import { matchPath } from "../lib/match";
 import { StatusPill, TagPill } from "./ui";
 import { ShareButton } from "./ShareButton";
+import { SealBadge } from "./SealBadge";
 import { cardForPick } from "../lib/share";
 
 export function PickCard({ p, compact = false }: { p: Prediction; compact?: boolean }) {
@@ -36,6 +37,7 @@ export function PickCard({ p, compact = false }: { p: Prediction; compact?: bool
       <p className="pick-lock" title={`Kayıt: ${dateTime(p.recorded_at)} TSİ`}>
         <span aria-hidden="true">🔒</span> Maçtan {hoursBefore(p.recorded_at, p.kickoff_at)} kilitlendi
       </p>
+      <SealBadge id={p.id} />
       {!compact && <ShareButton make={() => cardForPick(p)} name={`90meclis-${p.match_id.replace(/:/g, "-")}.png`} text={`90 Meclis · ${home} – ${away}`} />}
     </article>
   );

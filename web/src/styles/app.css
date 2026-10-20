@@ -966,3 +966,18 @@ html, body { overflow-x: clip; }
 .mrow-pb.own .mrow-pb-bar i:first-child { background: var(--lime); } .mrow-pb.own .mrow-pb-bar i:last-child { background: #48d5ff; }
 .mrow-pb small { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mrow-pb .vk { justify-self: start; }
+/* Kanıt Mührü */
+.seal-b { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; color: #9fe8ff; background: rgba(72,213,255,.08); border: 1px solid rgba(72,213,255,.3); white-space: nowrap; }
+.seal-sum { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 14px; }
+.seal-sum > div { display: grid; gap: 2px; padding: 14px 16px; border-radius: 16px; background: var(--bg-2); border: 1px solid var(--line); }
+.seal-sum small { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+.seal-sum b { font-family: "Barlow Condensed", sans-serif; font-size: 28px; text-transform: uppercase; }
+.seal-sum span { color: var(--muted); font-size: 13px; }
+.seal-sum .ok { border-color: rgba(198,255,61,.35); } .seal-sum .ok b { color: var(--lime); }
+.seal-sum .bad { border-color: rgba(255,107,107,.4); } .seal-sum .bad b { color: #ff7a7a; }
+.seal-find { display: flex; gap: 8px; } .seal-find input { flex: 1; min-width: 0; padding: 10px 14px; border-radius: 999px; border: 1px solid var(--line-2); background: var(--bg-2); color: var(--text); }
+.seal-one dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; font-size: 13px; } .seal-one dt { color: var(--muted); } .seal-one code { word-break: break-all; font-size: 12px; }
+.seal-one pre { white-space: pre-wrap; word-break: break-all; font-size: 12px; background: var(--bg-2); padding: 10px; border-radius: 10px; }
+.seal-verdict { font-weight: 700; padding: 10px 12px; border-radius: 12px; } .seal-verdict.ok { color: var(--lime); background: rgba(198,255,61,.08); } .seal-verdict.bad { color: #ff7a7a; background: rgba(255,107,107,.08); }
+.seal-list { list-style: none; margin: 0; padding: 0; display: grid; } .seal-list li button { width: 100%; display: grid; grid-template-columns: 18px 44px 1fr auto; gap: 8px; align-items: center; text-align: left; padding: 9px 2px; background: none; border: 0; border-top: 1px solid var(--line); color: var(--text); cursor: pointer; font-size: 13px; }
+.seal-list .ok { color: var(--lime); } .seal-list .bad { color: #ff7a7a; } .seal-list .sl-l { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .seal-list code { color: var(--muted); font-size: 11px; }

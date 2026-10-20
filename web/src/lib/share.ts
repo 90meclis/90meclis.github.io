@@ -1,4 +1,5 @@
 // Paylaşılabilir karar/kupon kartı (1080×1350 PNG, tarayıcıda canvas). Kazanan da kaybeden de aynı şablonla.
+import { sealOf } from "./seal";
 import type { Coupon, Prediction } from "./types";
 import { pickLabel, league, TAG_LABELS } from "./labels";
 import { dateTime, num, pct } from "./format";
@@ -73,5 +74,5 @@ export async function shareBlob(blob: Blob, name: string, text: string) {
   const u = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = u; a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(u), 2000);
 }
 
-export const cardForPick = (p: Prediction) => renderCard({ kind: TAG_LABELS[p.tag] ?? "Meclis Görüşü", legs: [p], status: p.status, lockedAt: p.recorded_at, prob: p.probability, seal: (p as Prediction & { seal?: string | null }).seal ?? null });
-export const cardForCoupon = (c: Coupon, legs: Prediction[]) => renderCard({ kind: TAG_LABELS[c.tag] ?? "Günün Kararı", legs, total: c.total_odds, status: c.status, lockedAt: c.created_at, prob: c.joint_probability, seal: (c as Coupon & { seal?: string | null }).seal ?? null });
+export const cardForPick = (p: Prediction) => renderCard({ kind: TAG_LABELS[p.tag] ?? "Meclis Görüşü", legs: [p], status: p.status, lockedAt: p.recorded_at, prob: p.probability, seal: sealOf(p.id)?.sha256 ?? null });
+export const cardForCoupon = (c: Coupon, legs: Prediction[]) => renderCard({ kind: TAG_LABELS[c.tag] ?? "Günün Kararı", legs, total: c.total_odds, status: c.status, lockedAt: c.created_at, prob: c.joint_probability, seal: sealOf(c.id)?.sha256 ?? null });

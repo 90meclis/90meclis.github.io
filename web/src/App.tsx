@@ -13,6 +13,7 @@ const News = lazy(() => import("./pages/News"));
 const Lab = lazy(() => import("./pages/Lab"));
 const About = lazy(() => import("./pages/About"));
 const Season = lazy(() => import("./pages/Season"));
+const Seal = lazy(() => import("./pages/Seal"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 /** Eski adres: /tahmin-botu → /ortak (sorgu korunur). */
@@ -41,6 +42,7 @@ export default function App() {
             <Route path="veri-laboratuvari" element={<Lab />} />
             <Route path="hakkinda" element={<About />} />
             <Route path="sezon-simulasyonu" element={<Season />} />
+            <Route path="kanit-muhru" element={<Seal />} />
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>
