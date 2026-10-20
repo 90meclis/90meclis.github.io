@@ -22,3 +22,19 @@ def test_film_scenarios_partition_and_fields():
     assert s["final_skor"] and s["skorlar"] and s["meclis_secimi"]["durum"] in ("kazanır", "kaybeder", "belirsiz")
     assert any("iç sahada 4 maçta" in d for d in s["dayanaklar"])
     assert f["eksik_etkisi"] and f["eksik_etkisi"]["eksikler_oynasaydi"]["1X2"]["1"] > f["eksik_etkisi"]["eksiklerle"]["1X2"]["1"]
+
+
+def test_seal_chain_is_deterministic_and_verifiable(tmp_path):
+    from meclis.muhur import COUPON_FIELDS, canonical, seal_all, sha, write_manifest
+    from meclis.store import SQLiteStore
+
+    st = SQLiteStore(":memory:")
+    st.insert("coupons", [{"id": "c1", "created_at": "2026-10-20T06:00:00+00:00", "coupon_date": "2026-10-20",
+                           "tag": "gunun_karari", "total_odds": 2.5, "legs_count": 2,
+                           "first_kickoff_at": "2026-10-20T16:45:00+00:00", "stake": 1, "status": "bekliyor"}])
+    r = seal_all(st)
+    assert r["yeni"] == 1 and seal_all(st)["yeni"] == 0
+    row = st.select("kanit_muhru")[0]
+    c = canonical(st.select("coupons")[0], COUPON_FIELDS)
+    assert row["sha256"] == sha("0" * 64 + sha(c))
+    assert write_manifest(st, str(tmp_path))["kok"] == row["sha256"]

@@ -25,7 +25,7 @@ from .store import get_store
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="python -m meclis", description="90 Meclis komut satırı")
     ap.add_argument("komut", choices=["yenile", "gundem", "bot", "sonuclandir", "sabah", "durum", "kadro",
-                                        "gecmis", "analiz", "sezon", "yedek", "gunici", "yerel", "geritest"])
+                                        "gecmis", "analiz", "sezon", "yedek", "gunici", "yerel", "geritest", "muhur", "simulasyon"])
     ap.add_argument("--zorla", action="store_true", help="kadro: 7 günlük önbelleği yok say")
     ap.add_argument("--saat", type=float, default=168, help="kadro: kaç saat sonrasına kadarki maçlar (varsayılan 168 = 7 gün)")
     ap.add_argument("--gecmis", action="store_true", help="geçmiş sezon verisini de çek")
@@ -49,7 +49,7 @@ def main(argv=None) -> int:
     pool = DataPool(store, s)
     out_logs: list[str] = []
     STEPS = {"sabah": {"yenile_s", "gundem", "kadro", "yerel", "bot", "sezon", "sonuclandir"},
-             "gunici": {"yenile", "kadro", "yerel", "bot", "sonuclandir"}, "gecmis": {"gecmis", "yerel", "sezon", "geritest"},
+             "gunici": {"yenile", "kadro", "yerel", "bot", "sonuclandir"}, "gecmis": {"gecmis", "yerel", "sezon", "geritest", "simulasyon", "muhur"},
              "analiz": {"yerel"}}
     steps = set(STEPS.get(a.komut, {a.komut}))
     if a.komut == "yenile" and a.gecmis:
@@ -141,6 +141,41 @@ def main(argv=None) -> int:
         except Exception as e:
             out_logs.append(f"⚠️ ek istatistik: {e}")
         _done(store, "sezon")
+    if "simulasyon" in steps and not s.demo_mode:  # sezon simülasyonu (10.000 koşu) → sezon_simulasyonu
+        from .bot import Bot as _B
+        from .config import LEAGUES
+        from .simulasyon import simulate_league
+
+        b = _B(store, s, pool)
+        n_sim = 0
+        for lg in s.leagues:
+            if LEAGUES.get(lg) and LEAGUES[lg].cup:
+                continue
+            try:
+                rows = simulate_league(b.context(lg))
+                if rows:
+                    store.upsert("sezon_simulasyonu", rows)
+                    n_sim += 1
+            except Exception as e:
+                out_logs.append(f"⚠️ simülasyon {lg}: {e}")
+        out_logs.append(f"ℹ️ sezon simülasyonu: {n_sim} lig × 10.000 koşu")
+    if "muhur" in steps or "bot" in steps:  # Kanıt Mührü + paylaşım taslakları (yalnızca taslak; paylaşılmaz)
+        from .muhur import seal_all, write_manifest
+
+        try:
+            r = seal_all(store)
+            out_logs.append(f"ℹ️ Kanıt Mührü: {r['yeni']} yeni mühür, toplam {r['toplam']}, kök {str(r['kok'])[:16]}…")
+            if a.komut in ("muhur", "gecmis"):
+                out_logs.append(f"ℹ️ mühür manifestosu: {write_manifest(store, a.cikti or 'muhur')['kayit']} kayıt")
+            from datetime import timedelta as _td
+
+            from .paylasim import build_drafts
+            from .timeutil import now_utc as _now
+
+            lo = _now() - _td(hours=6)
+            out_logs.append(f"ℹ️ paylaşım taslağı: {build_drafts(store, lo.isoformat(), (lo + _td(hours=48)).isoformat())}")
+        except Exception as e:
+            out_logs.append(f"⚠️ Kanıt Mührü: {e}")
     if "yedek" in steps:
         if a.komut == "gunici":  # telafi: yedeği iş akışının 'backups' adımı yazar (bayrak dosyası)
             open("/tmp/meclis_yedek_gerekli", "w").write("1")

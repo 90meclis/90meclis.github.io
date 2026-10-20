@@ -33,6 +33,7 @@ JSON_COLS: dict[str, set[str]] = {
     "model_backtest": {"calib", "leagues"},
     "predictions": {"calibration"},
     "bot_picks": {"calibration"},
+    "sezon_simulasyonu": {"sira_dagilimi"},
 }
 BOOL_COLS: dict[str, set[str]] = {"injuries": {"is_key"}, "source_status": {"ok"},
                                   "sources": {"requires_key", "is_active"}, "leagues": {"cup"}, "player_matches": {"started"}}
@@ -59,6 +60,9 @@ PRIMARY_KEYS: dict[str, list[str]] = {
     "coupons": ["id"],
     "predictions": ["id"],
     "model_backtest": ["market", "segment"],
+    "kanit_muhru": ["ref_table", "ref_id"],
+    "sezon_simulasyonu": ["league", "team_id"],
+    "paylasim_taslaklari": ["id"],
 }
 
 
@@ -175,6 +179,14 @@ create table if not exists odds_snapshots (match_id text not null, taken_at text
   odds text not null, primary key (match_id, taken_at));
 create table if not exists fetch_jobs (id text primary key, source text not null, attempts int default 0,
   status text default 'tekrar', next_try_at text, last_error text, fallback text, updated_at text);
+create table if not exists kanit_muhru (ref_table text not null, ref_id text not null, seq int not null,
+  icerik_sha256 text not null, sha256 text not null, onceki_sha256 text not null, kanonik text not null,
+  muhurlendi_at text, primary key (ref_table, ref_id));
+create table if not exists sezon_simulasyonu (league text not null, team_id text not null, team_name text, kosu int,
+  sampiyon real, ilk4 real, kume real, ort_puan real, ort_sira real, mevcut_puan int, kalan_mac int, sira_dagilimi text,
+  computed_at text, yontem text, primary key (league, team_id));
+create table if not exists paylasim_taslaklari (id text primary key, platform text not null, tur text, ref_id text,
+  metin text not null, durum text not null default 'taslak', olusturuldu text);
 create table if not exists model_backtest (market text not null, segment text not null, n int, brier_model real,
   brier_market real, brier_blend real, ll_model real, ll_market real, ll_blend real, w_opt real, n_value int,
   hit_value real, roi_value real, calib text, computed_at text, label text, model_version text, leagues text,

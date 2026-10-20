@@ -83,6 +83,16 @@ jobs:
           # gunici: yenile + kadro + bot + sonuclandir; kaçırılan sabah/gece adımlarını (gündem, sezon, gece doldurma,
           # yedek) son başarılı çalışma zamanına bakarak kendisi telafi eder (meclis/__main__.py _overdue)
           python -m meclis "$KOMUT"
+      - name: Kanıt Mührü manifestosu → main (herkese açık kanıt + 60 gün hareketsizlik koruması)
+        if: ${{ !cancelled() && steps.k.outputs.komut == 'gecmis' }}
+        run: |
+          python -m meclis muhur --cikti muhur
+          git config user.name "90-meclis-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add muhur/manifest.json
+          if git diff --cached --quiet; then echo "Mühür değişmedi."; exit 0; fi
+          git commit -qm "Kanıt Mührü $(date -u +%F)"
+          for i in 1 2 3; do git pull -q --rebase origin main && git push -q origin HEAD:main && break; sleep 5; done
       - name: Gece yedeği → backups dalı (defterin ikinci kopyası + 60 gün hareketsizlik koruması)
         if: ${{ !cancelled() }}
         env:
