@@ -303,3 +303,89 @@ def parse_player(it: dict, apif_league: int | None = None, team_apif: int | None
             "appearances": games.get("appearences") or 0, "lineups": games.get("lineups") or 0,
             "goals": goals.get("total") or 0, "assists": goals.get("assists") or 0,
             "team_apif": team.get("id"), "team_name": team.get("name")}
+
+
+# ---------------------------------------------------------------- oranlar (/odds?date=, ücretsiz planda açık)
+# API-Football bahis kimliği → (iç pazar, değer ayrıştırıcı). Asya handikapta "Home L" / "Away L" çifti EV SAHİBİ
+# çizgisine göre verilir (canlı doğrulandı: Home -0.5 = MS1 oranı, Away -0.5 = X2 tarafı).
+_OU_BETS = {5: "OU_GOALS", 6: "HT_OU_GOALS", 16: "TEAM_GOALS_HOME", 17: "TEAM_GOALS_AWAY", 45: "CORNERS_OU",
+            80: "CARDS_OU", 87: "SOT_OU"}
+_PREFERRED_BOOKS = 3  # medyan için en az bu kadar şirket varsa medyan, yoksa var olanların medyanı
+
+
+def _median(xs):
+    xs = sorted(xs)
+    n = len(xs)
+    return xs[n // 2] if n % 2 else (xs[n // 2 - 1] + xs[n // 2]) / 2
+
+
+def parse_odds_response(resp: list[dict]) -> dict[int, dict]:
+    """/odds yanıtı → {fixture_id: iç oran sözlüğü}. Her fiyat şirketlerin MEDYANIDIR (en iyi fiyat değil:
+    değer hesabını şişirmemek için); kaynak 'api-football:medyan(n)'."""
+    out: dict[int, dict] = {}
+    for x in resp or []:
+        fid = (x.get("fixture") or {}).get("id")
+        if not fid:
+            continue
+        acc: dict = {}
+        for bm in x.get("bookmakers") or []:
+            for b in bm.get("bets") or []:
+                bid = b.get("id")
+                for v in b.get("values") or []:
+                    try:
+                        odd = float(v.get("odd"))
+                    except (TypeError, ValueError):
+                        continue
+                    val = str(v.get("value") or "")
+                    key = sel = None
+                    if bid == 1:
+                        key, sel = "1X2", {"Home": "1", "Draw": "X", "Away": "2"}.get(val)
+                    elif bid == 12:
+                        key, sel = "DC", {"Home/Draw": "1X", "Draw/Away": "X2", "Home/Away": "12"}.get(val)
+                    elif bid == 8:
+                        key, sel = "BTTS", {"Yes": "VAR", "No": "YOK"}.get(val)
+                    elif bid == 4:
+                        parts = val.split()
+                        if len(parts) == 2 and parts[0] in ("Home", "Away"):
+                            try:
+                                ln = float(parts[1])
+                            except ValueError:
+                                continue
+                            if abs(ln * 2 % 2 - 1) < 1e-9:  # yalnızca yarım çizgiler (±0.5, ±1.5 …; iade yok)
+                                key, sel = f"AH_{ln:g}", "1" if parts[0] == "Home" else "2"
+                    elif bid in _OU_BETS:
+                        parts = val.split()
+                        if len(parts) == 2 and parts[0] in ("Over", "Under"):
+                            try:
+                                ln = float(parts[1])
+                            except ValueError:
+                                continue
+                            if abs(ln * 2 % 2 - 1) < 1e-9:
+                                key, sel = f"{_OU_BETS[bid]}_{ln:g}", "ÜST" if parts[0] == "Over" else "ALT"
+                    if key and sel and odd > 1.0:
+                        acc.setdefault(key, {}).setdefault(sel, []).append(odd)
+        odds = {}
+        for key, sels in acc.items():
+            if len(sels) < (3 if key in ("1X2",) or key.startswith("DC") else 2):
+                continue  # pazarın bütün tarafları yoksa yazılmaz
+            n = min(len(v) for v in sels.values())
+            odds[key] = {s: round(_median(v), 3) for s, v in sels.items()}
+            odds[key]["src"] = f"{SOURCE}:medyan({n})"
+        if odds:
+            out[int(fid)] = odds
+    return out
+
+
+def _odds_by_date(self, d, max_pages: int = 20) -> dict[int, dict]:
+    """Bir günün bütün oranları (sayfa başına 10 maç; ücretsiz planda tarih dün–yarın)."""
+    out: dict[int, dict] = {}
+    page, total = 1, 1
+    while page <= min(total, max_pages):
+        resp = self._get("/odds", {"date": d.isoformat(), "page": page})
+        out.update(parse_odds_response(resp))
+        total = int((self._paging or {}).get("total") or 1)
+        page += 1
+    return out
+
+
+ApiFootball.odds_by_date = _odds_by_date

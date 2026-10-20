@@ -317,8 +317,9 @@ def _market_implied(markets: list[dict]) -> dict:
     for _, ms in groups.items():
         inv = sum(1 / x["odds"] for x in ms)
         if len(ms) >= 2 and inv > 0:
+            k = 2.0 if ms[0]["market"] == "DC" else 1.0  # çifte şans tarafları toplamı 2'dir
             for x in ms:
-                out[(x["market"], x["selection"], x.get("line"))] = (1 / x["odds"]) / inv
+                out[(x["market"], x["selection"], x.get("line"))] = k * (1 / x["odds"]) / inv
     return out
 
 

@@ -330,3 +330,26 @@ def test_bot_bulletin_vs_archive_no_overlap():
     assert st.get("bot_picks", id=locked["id"])["market"] == "1X2"
     # ham bülten: arşive girmeyenler dahil hepsi
     assert len(st.select("bot_picks", [])) == 7
+
+
+def test_api_football_odds_parser_and_attach():
+    from meclis.markets import attach_odds
+    from meclis.sources.api_football import parse_odds_response
+
+    def bm(i, vals):
+        return {"id": i, "name": f"b{i}", "bets": vals}
+    bets = lambda k: [{"id": 1, "values": [{"value": "Home", "odd": str(2.0 + k)}, {"value": "Draw", "odd": "3.4"},
+                                            {"value": "Away", "odd": "3.9"}]},
+                      {"id": 4, "values": [{"value": "Home -0.5", "odd": "2.1"}, {"value": "Away -0.5", "odd": "1.75"},
+                                           {"value": "Home -0.25", "odd": "1.9"}, {"value": "Away -0.25", "odd": "1.95"}]},
+                      {"id": 45, "values": [{"value": "Over 9.5", "odd": "1.9"}, {"value": "Under 9.5", "odd": "1.9"}]},
+                      {"id": 12, "values": [{"value": "Home/Draw", "odd": "1.3"}, {"value": "Draw/Away", "odd": "1.8"},
+                                            {"value": "Home/Away", "odd": "1.3"}]}]
+    resp = [{"fixture": {"id": 7}, "bookmakers": [bm(1, bets(0)), bm(2, bets(0.1)), bm(3, bets(0.2))]}]
+    o = parse_odds_response(resp)[7]
+    assert o["1X2"]["1"] == 2.1 and "medyan(3)" in o["1X2"]["src"]
+    assert "AH_-0.5" in o and "AH_-0.25" not in o and o["CORNERS_OU_9.5"]["ÜST"] == 1.9 and o["DC"]["X2"] == 1.8
+    away = attach_odds({"market": "AH", "selection": "2", "line": 0.5, "probability": 0.6}, o)
+    assert away["odds"] == 1.75
+    cor = attach_odds({"market": "CORNERS_OU", "selection": "ALT", "line": 9.5, "probability": 0.6}, o)
+    assert cor["odds"] == 1.9 and abs(cor["edge"] - 0.14) < 1e-6

@@ -43,18 +43,17 @@ def attach_odds(pick: dict, odds: dict) -> dict:
     p = pick["probability"]
     pick["fair_odds"] = round(1 / p, 3) if p > 0 else None
     pick["odds"], pick["odds_source"], pick["edge"] = None, "model_adil", None
-    o = None
-    if pick["market"] == "1X2" and "1X2" in odds:
-        o, src = odds["1X2"].get(pick["selection"]), odds["1X2"].get("src")
-    elif pick["market"] == "OU_GOALS" and pick["line"] is not None:
-        key = f"OU_GOALS_{pick['line']:g}"
-        if key in odds:
-            o, src = odds[key].get(pick["selection"]), odds[key].get("src")
-    elif pick["market"] == "BTTS" and "BTTS" in odds:
-        o, src = odds["BTTS"].get(pick["selection"]), odds["BTTS"].get("src")
-    elif pick["market"] == "DC" and "1X2" in odds:
-        # Çifte şans piyasa oranı ayrı yoksa 1X2'den TÜRETİLMEZ (marj belirsiz) — adil oranla kalır.
-        o = None
+    o, src = None, None
+    mk, line, sel = pick["market"], pick.get("line"), pick["selection"]
+    if mk == "AH" and line is not None:
+        key = f"AH_{(line if sel == '1' else -line):g}"  # oran sözlüğü ev sahibi çizgisine göre tutulur
+    elif line is not None:
+        key = f"{mk}_{float(line):g}"
+    else:
+        key = mk  # 1X2, DC (yalnızca gerçek çifte şans oranı; 1X2'den türetilmez), BTTS
+    entry = odds.get(key)
+    if isinstance(entry, dict):
+        o, src = entry.get(sel), entry.get("src")
     if o and o > 1.0:
         pick["odds"], pick["odds_source"] = float(o), src or "piyasa"
         pick["edge"] = round(p * float(o) - 1, 4)

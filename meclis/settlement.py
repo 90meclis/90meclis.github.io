@@ -26,10 +26,12 @@ def result_dict(match: dict, stats: list[dict]) -> dict:
 
 def odds_key(market: str, line) -> str | None:
     """Tahmin pazarı → matches.odds anahtarı (oranını tuttuğumuz bütün pazarlar)."""
-    if market in ("1X2", "BTTS"):
+    if market in ("1X2", "BTTS", "DC"):
         return market
-    if market == "OU_GOALS" and line is not None:
-        return f"OU_GOALS_{float(line):g}"
+    if market == "AH":
+        return None  # AH anahtarı seçime bağlı (ev sahibi çizgisi); kapanış için closing_odds içinde çözülür
+    if line is not None:
+        return f"{market}_{float(line):g}"
     return None
 
 

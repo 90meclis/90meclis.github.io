@@ -20,7 +20,7 @@ PRIORITY = ["api-football", "sportmonks", "football-data.org", "footystats", "sp
 NAME_PRIORITY = ["thesportsdb", "api-football", "football-data.org", "sportmonks", "football-data.co.uk",
                  "footystats", "sportdevs", "openligadb", "the-odds-api", "oddspapi", "openfootball", "bsd"]
 # Oran önceliği: çok şirketli ortalama > Pinnacle > CSV ortalaması > tekil kaynaklar
-ODDS_PRIORITY = ["the-odds-api", "oddspapi", "bsd", "football-data.co.uk", "footystats", "api-football", "sportmonks"]
+ODDS_PRIORITY = ["the-odds-api", "api-football", "oddspapi", "bsd", "football-data.co.uk", "footystats", "sportmonks"]
 SCALARS = ["kickoff_at", "season", "home_goals", "away_goals", "ht_home_goals", "ht_away_goals",
            "venue", "referee", "city"]
 STAT_FIELDS = ["shots", "shots_on_target", "corners", "fouls", "yellow", "red", "goal_kicks", "xg", "possession"]
@@ -520,11 +520,37 @@ class DataPool:
         if self.oddsapi.available and self.backoff("the-odds-api"):
             self.log.append("⏸️ the-odds-api: geri çekilmede (son hatalardan sonra); alanlar sıradaki kaynaktan doluyor")
         elif self.oddsapi.available:
-            for lg in leagues:
+            # Ücretsiz plan 500 kredi/ay; lig çağrısı 2 kredi (h2h+totals, tek bölge). Günlük çağrı bütçesi
+            # ODDS_API_DAILY_CALLS (varsayılan 8 → ~480 kredi/ay); önce 36 saat içinde maçı olan, oranı eksik ligler.
+            import os
+
+            from .sources.odds_api import SPORT_KEYS
+
+            budget = int(float(os.environ.get("ODDS_API_DAILY_CALLS", "8")))
+            try:
+                st = self.store.get("source_status", source="the-odds-api:kota") or {}
+                used = int(st.get("calls_today") or 0) if st.get("calls_date") == now_utc().date().isoformat() else 0
+            except Exception:
+                used = 0
+            soon = self.store.select("matches", [("kickoff_at", "gte", to_iso(now_utc())),
+                                                 ("kickoff_at", "lt", to_iso(now_utc() + timedelta(hours=36)))])
+            need: dict = {}
+            for m in soon:
+                if m["league"] in SPORT_KEYS and m["league"] in leagues:
+                    need[m["league"]] = need.get(m["league"], 0) + (2 if not (m.get("odds") or {}).get("1X2") else 1)
+            order = sorted(need, key=lambda lg: -need[lg])
+            done_today = set((st.get("message") or "").split(",")) if used else set()
+            order = [lg for lg in order if lg not in done_today][:max(0, budget - used)]
+            if not order:
+                self.log.append(f"ℹ️ the-odds-api: günlük bütçe ({budget} çağrı) kullanıldı ya da 36 saatte desteklenen maç yok")
+            for lg in order:
                 try:
                     rows, info = self.oddsapi.odds(lg)
                     recs += rows
+                    done_today.add(lg)
                     self._note("the-odds-api", True, f"{lg}: {len(rows)} maç oranı ({info})")
+                    self.store.set_source_status("the-odds-api:kota", True, ",".join(sorted(x for x in done_today if x)),
+                                                 add_calls=1)
                 except Exception as e:
                     self._note("the-odds-api", False, f"{lg}: {e}")
                     break
@@ -747,6 +773,10 @@ class DataPool:
             self._note("wikidata", False, str(e))
         self.fill_venues()
         try:
+            self.apif_odds()
+        except Exception as e:
+            self._note("api-football:oran", False, str(e))
+        try:
             n_snap = self.snapshot_odds()
             if n_snap:
                 self.log.append(f"ℹ️ oran anlık görüntüsü: {n_snap} maç (kapanış oranı / CLV için)")
@@ -754,6 +784,56 @@ class DataPool:
             self.log.append(f"⚠️ oran anlık görüntüsü yazılamadı: {e}")
         return {"records": len(recs), "matches": len(merged), "log": list(self.log),
                 "unmatched": list(getattr(reg, "unmatched", []))}
+
+    def apif_odds(self) -> int:
+        """API-Football /odds?date= (bugün + yarın, tarih başına günde bir kez, ~15 sayfa): 9 şirketin medyanı;
+        1X2, çifte şans, Asya handikap, gol A/Ü, İY gol, takım golü, KG, korner, kart, isabetli şut. Fikstür kimliği
+        (ext_ids.apif) olan maçlara yazılır; daha öncelikli kaynağın aynı pazar oranı korunur."""
+        if not self.apif.available or self.backoff("api-football"):
+            return 0
+        from .sources.api_football import SOURCE as APIF
+
+        today = now_utc().date()
+        n = 0
+        for d in (today, today + timedelta(days=1)):
+            key = f"api-football:oran:{d.isoformat()}"
+            st = self.store.get("source_status", source=key) or {}
+            fresh = st.get("ok") and st.get("calls_date") == today.isoformat()
+            if fresh and d == today:
+                continue  # bugünün oranı bu gün zaten alındı
+            if fresh and d > today and int(st.get("calls_today") or 0) >= 2:
+                continue  # yarın için günde en çok iki tur (gece + sabah)
+            if self.apif.daily_budget - self.apif.calls_today() < 25:
+                self.log.append("ℹ️ api-football oranları: günlük bütçe azaldı, atlandı")
+                break
+            by_fx = self.apif.odds_by_date(d)
+            lo = datetime(d.year, d.month, d.day, tzinfo=timezone.utc) - timedelta(hours=4)
+            ms = self.store.select("matches", [("kickoff_at", "gte", to_iso(lo)),
+                                               ("kickoff_at", "lt", to_iso(lo + timedelta(hours=32)))])
+            rows = []
+            for m in ms:
+                fid = (m.get("ext_ids") or {}).get("apif")
+                o = by_fx.get(int(fid)) if fid else None
+                if not o or m.get("status") not in ("planlandi", None):
+                    continue
+                cur = dict(m.get("odds") or {})
+                srcs = dict(m.get("sources") or {})
+                so = dict(srcs.get("odds") or {})
+                changed = False
+                for k, v in o.items():
+                    if k not in cur or _prio(APIF, ODDS_PRIORITY) <= _prio(so.get(k) or "", ODDS_PRIORITY):
+                        cur[k], so[k], changed = v, APIF, True
+                if changed:
+                    srcs["odds"] = so
+                    rows.append({"id": m["id"], "odds": cur, "sources": srcs})
+            for r in rows:
+                self.store.update("matches", {"odds": r["odds"], "sources": r["sources"]}, [("id", "eq", r["id"])])
+            n += len(rows)
+            mk = sorted({k.split("_")[0] if not k.startswith(("OU_", "HT_", "TEAM_", "CORNERS_", "CARDS_", "SOT_"))
+                         else k.rsplit("_", 1)[0] for o in by_fx.values() for k in o})
+            self.store.set_source_status(key, True, f"{len(by_fx)} fikstür oranı, {len(rows)} maçımıza yazıldı", add_calls=1)
+            self._note("api-football:oran", True, f"{d}: {len(by_fx)} fikstür, {len(rows)} maçımız; pazarlar: {', '.join(mk)}")
+        return n
 
     def snapshot_odds(self, hours: float = 30) -> int:
         """Başlamasına ≤ hours kalan maçların oranlarını odds_snapshots'a yazar (değişmediyse yazmaz).
