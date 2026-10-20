@@ -1,7 +1,20 @@
 import type { Match } from "./types";
 import { DURUM_LABELS } from "./labels";
 
-export const matchPath = (id: string) => `/mac/?id=${encodeURIComponent(id)}`;
+/** Maç kimliği "LG:YYYY-AA-GG:ev:dep" → arama motoru dostu yol "/mac/lg-ev-dep-YYYY-AA-GG/" (slug'lar yalnızca a-z0-9). */
+export function matchSlug(id: string): string | null {
+  const p = id.split(":");
+  if (p.length !== 4 || !/^[A-Za-z0-9]+$/.test(p[0]) || !/^\d{4}-\d{2}-\d{2}$/.test(p[1]) || !/^[a-z0-9]+$/.test(p[2]) || !/^[a-z0-9]+$/.test(p[3])) return null;
+  return `${p[0].toLowerCase()}-${p[2]}-${p[3]}-${p[1]}`;
+}
+export function idFromSlug(s: string): string | null {
+  const m = s.match(/^([a-z0-9]+)-([a-z0-9]+)-([a-z0-9]+)-(\d{4}-\d{2}-\d{2})$/);
+  return m ? `${m[1].toUpperCase()}:${m[4]}:${m[2]}:${m[3]}` : null;
+}
+export const matchPath = (id: string, bolum?: string) => {
+  const s = matchSlug(id);
+  return s ? `/mac/${s}/${bolum ? `?bolum=${bolum}` : ""}` : `/mac/?id=${encodeURIComponent(id)}${bolum ? `&bolum=${bolum}` : ""}`;
+};
 
 export function hasScore(m: Pick<Match, "home_goals" | "away_goals"> & { status?: string | null }) {
   if (m.status === "planlandi" || m.status === "ertelendi" || m.status === "iptal") return false;

@@ -7,6 +7,8 @@ on:
       - "web/**"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
+  schedule:
+    - cron: "45 5 * * *"   # 08:45 TSİ: sabah bültenden sonra maç SEO sayfaları yeniden üretilir
 
 permissions:
   contents: read

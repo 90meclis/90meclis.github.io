@@ -190,7 +190,7 @@ export default function PredictionBot() {
               <Card title="Piyasa nabzı" aside={<span className="muted small">açılıştan bu yana en çok düşen oranlar</span>}>
                 <ul className="moves">
                   {moves.map((x) => (
-                    <li key={x.m.id}><Link to={`${matchPath(x.m.id)}?bolum=oran`}>{x.m.home_name} – {x.m.away_name}</Link>
+                    <li key={x.m.id}><Link to={matchPath(x.m.id, "oran")}>{x.m.home_name} – {x.m.away_name}</Link>
                       <span>MS {x.big.s}: {num(x.big.a)} → <b>{num(x.big.b)}</b> <em className="neg">{signed(x.big.d * 100, 1)}%</em></span>
                       {x.agree !== null && <small className={x.agree ? "pos" : "muted"}>{x.agree ? "Ortak da bu tarafta" : "Ortak bu tarafta değil"}</small>}</li>
                   ))}
@@ -203,7 +203,7 @@ export default function PredictionBot() {
                 <ul className="finds">
                   {finds.slice(0, 10).map((f, i) => (
                     <li key={i}>
-                      <Link to={`${matchPath(f.m.id)}?bolum=form`}><small>{time(f.m.kickoff_at)} · {f.m.home_name} – {f.m.away_name}</small><b>{f.team} {f.text}</b></Link>
+                      <Link to={matchPath(f.m.id, "form")}><small>{time(f.m.kickoff_at)} · {f.m.home_name} – {f.m.away_name}</small><b>{f.team} {f.text}</b></Link>
                       <span className="fk">{f.k}/{f.n}</span>
                       <span className={`fv ${f.row?.value ? "pos" : ""}`}>{f.row?.value ? `seri var, değer de var: ${num(f.row.odds)} (${signed((f.row.edge ?? 0) * 100, 1)}%)`
                         : f.row?.odds ? `seri var, değer yok: oran ${num(f.row.odds)}${f.row.pModel != null ? `, Ortak %${Math.round(f.row.pModel * 100)}` : ""}` : "seri var, piyasada oran yok"}</span>

@@ -5,7 +5,7 @@ import * as api from "../lib/data";
 import { useAsync } from "../lib/useAsync";
 import { dateLong, dateShort, dateTime, hoursBefore, num, pct, relTime, signed, time } from "../lib/format";
 import { league, pickLabel, sourceLabel, fmtLine } from "../lib/labels";
-import { hasScore, matchPath, matchState, sameTeam } from "../lib/match";
+import { hasScore, idFromSlug, matchPath, matchState, sameTeam } from "../lib/match";
 import { usePageMeta } from "../lib/seo";
 import type { AnalysisPayload, Injury, Lineup, Match, MatchStat, Prediction } from "../lib/types";
 import { Card, Disclaimer, Empty, Gate, Meter, Skeleton, Stat, StatusPill, TagPill } from "../components/ui";
@@ -23,7 +23,7 @@ import { story } from "../lib/story";
 export default function MatchDetail() {
   const { id } = useParams();
   const [sp] = useSearchParams();
-  const mid = sp.get("id") ?? (id ? decodeURIComponent(id) : "");
+  const mid = sp.get("id") ?? (id ? idFromSlug(id) ?? decodeURIComponent(id) : "");
   const mq = useAsync(`match:${mid}`, () => api.match(mid), [mid]);
   const m = mq.data;
   usePageMeta(m ? `${m.home_name} – ${m.away_name}` : "Maç", m ? `${m.home_name} – ${m.away_name} maç dosyası: kadrolar, eksikler, maç maç form ve istatistik, karşılaşmalar, oranlar, olasılıklar ve senaryolar.` : undefined);
