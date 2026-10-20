@@ -10,12 +10,9 @@ import { valuePicks, type BotPick } from "../lib/bot";
 import { Card, Chips, Disclaimer, Empty, Gate, PageHead, Stat, TagPill } from "../components/ui";
 import type { Match, Prediction } from "../lib/types";
 
-function reason(p: BotPick, top?: string): string {
-  const bits: string[] = [];
-  if (p.odds) bits.push(`Piyasa ${pct(1 / p.odds)} görüyor, Meclis ${pct(p.probability)}`);
-  else bits.push("Piyasa oranı yok; yalnızca adil oran, arşive girmez");
-  if (top) bits.push(`beklenen akış: ${top.toLocaleLowerCase("tr-TR")}`);
-  return bits.join(" · ");
+function reason(p: BotPick): string {
+  if (p.odds) return `Piyasa ${pct(1 / p.odds)} görüyor, Meclis ${pct(p.probability)}: fiyat yüksek.`;
+  return "Piyasa oranı yok: modelin adil oranı, arşive girmez.";
 }
 
 export default function PredictionBot() {
@@ -122,6 +119,7 @@ function BotMatch({ m, picks, pub, top }: Row) {
         <strong>{m.home_name} – {m.away_name}</strong>
         <span className="muted small">{picks.length + extra.length} seçim →</span>
       </Link>
+      {top && <p className="bot-flow muted small">Beklenen akış: <b>{top}</b></p>}
       <table className="tbl tight bot-picks">
         <thead><tr><th>Pazar</th><th>Oran</th><th>Model</th><th>Değer</th><th>Kısa gerekçe</th></tr></thead>
         <tbody>
@@ -130,12 +128,12 @@ function BotMatch({ m, picks, pub, top }: Row) {
             const st = p.status === "gunun_karari" || p.status === "meclis_gorusu" ? p.status : undefined;
             const tag = pub.find((x) => `${x.market}|${x.selection}|${x.line ?? ""}` === k)?.tag ?? st;
             return (
-              <tr key={i} className={pubKey.has(k) ? "on" : ""}>
+              <tr key={i} className={`${pubKey.has(k) || tag ? "on" : ""} ${p.odds ? "" : "fair"}`}>
                 <td data-label="Pazar"><b>{pickLabel(p.market, p.selection, p.line, m.home_name, m.away_name)}</b>{tag && <> <TagPill tag={tag} /></>}</td>
                 <td data-label="Oran">{p.odds ? <>{num(p.odds)} <small className="muted">{sourceLabel(p.odds_source ?? "")}</small></> : <>{num(p.fair_odds)}<sup>a</sup></>}</td>
                 <td data-label="Model">{pct(p.probability)}</td>
                 <td data-label="Değer" className={p.edge && p.edge > 0 ? "pos" : ""}>{p.edge != null ? `${signed(p.edge * 100, 1)}%` : "—"}</td>
-                <td data-label="Gerekçe" className="muted small">{reason(p, top)}</td>
+                <td data-label="Gerekçe" className="muted small">{reason(p)}</td>
               </tr>
             );
           })}

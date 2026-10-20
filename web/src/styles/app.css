@@ -575,3 +575,6 @@ html, body { overflow-x: clip; }
   .verdict .v-odds { min-width: 70px; padding: 6px 10px; }
   .verdict .v-odds b { font-size: 26px; }
 }
+.bot-flow { margin: -2px 0 6px; }
+.bot-flow b { color: var(--text); font-weight: 600; }
+.bot-picks tr.fair td { opacity: .72; }
