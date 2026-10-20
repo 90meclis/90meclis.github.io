@@ -5,6 +5,7 @@
 import { supabase } from "./supabase";
 import { NoDataError, corruptRow, leagueSlugs, nameKey, similarKey, seasonStartIso, type TeamStatRow } from "./data";
 import { addDays, dayBoundsUtc, trDay } from "./format";
+import { league } from "./labels";
 
 export type StatKey = "gol" | "iy" | "kg" | "korner" | "kart" | "sut" | "isabet" | "kale";
 export type Yon = "lehte" | "aleyhte" | "toplam";
@@ -141,12 +142,14 @@ export async function leagueRows(lg: string): Promise<LabRow[]> {
 
 /** Bugün ve yarın oynanacak maçlar + iki takımın bu sezonki bütün satırları (Seri Avcısı · bülten kapsamı). */
 export interface Fixture { id: string; league: string; kickoff_at: string; home_team_id: string; away_team_id: string; home_name: string; away_name: string }
-export async function bulletinRows(): Promise<{ fixtures: Fixture[]; rows: LabRow[] }> {
+/** maxFixtures: yalnızca öncelikli liglerden en çok bu kadar maç (ana sayfa için hafif sorgu). */
+export async function bulletinRows(maxFixtures?: number): Promise<{ fixtures: Fixture[]; rows: LabRow[] }> {
   const today = trDay();
   const [lo] = dayBoundsUtc(today), [, hi] = dayBoundsUtc(addDays(today, 1));
   const now = new Date().toISOString();
-  const fx = await paged<Fixture>(() => db().from("matches").select("id,league,kickoff_at,home_team_id,away_team_id,home_name,away_name")
+  const all = await paged<Fixture>(() => db().from("matches").select("id,league,kickoff_at,home_team_id,away_team_id,home_name,away_name")
     .gte("kickoff_at", lo > now ? lo : now).lt("kickoff_at", hi).order("kickoff_at"));
+  const fx = maxFixtures ? [...all].sort((a, b) => league(a.league).order - league(b.league).order || a.kickoff_at.localeCompare(b.kickoff_at)).slice(0, maxFixtures) : all;
   const slugOf = (id: string) => id.slice(id.indexOf(":") + 1);
   const slugs = [...new Set(fx.flatMap((f) => [slugOf(f.home_team_id), slugOf(f.away_team_id)]))];
   const rows: LabRow[] = [];

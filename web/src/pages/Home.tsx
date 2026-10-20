@@ -119,8 +119,9 @@ export default function Home() {
     const scan: ScanRow[] = await scanFor(matches.map((m) => m.id)).catch(() => []);
     return { day, matches: top, an, scan };
   });
-  const hq = useAsync(`lab:bulletin:${today}`, async () => {
-    const b = await bulletinRows();
+  // Seri Avcısı ağır sorgu: üst bölümler yüklendikten sonra ve yalnızca öncelikli liglerin 30 maçı için
+  const hq = useAsync(next.data !== undefined || next.error ? `home:hunt:${today}` : null, async () => {
+    const b = await bulletinRows(30);
     return { ...b, scan: await scanFor(b.fixtures.map((f) => f.id)) };
   });
   const newsQ = useAsync("news:home", () => api.news(60));
