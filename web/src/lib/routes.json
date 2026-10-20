@@ -2,7 +2,7 @@
  {
   "path": "/",
   "title": "90 Meclis · Futbol tahmin ve analiz masası",
-  "description": "Maç Merkezi, Tahmin Botu, değiştirilemez Tahmin Arşivi ve şeffaf kâr/zarar kaydıyla 90 Meclis: her şey tek masada."
+  "description": "Maç Merkezi, Ortak, değiştirilemez Tahmin Arşivi ve şeffaf kâr/zarar kaydıyla 90 Meclis: her şey tek masada."
  },
  {
   "path": "/mac-merkezi",
@@ -10,9 +10,9 @@
   "description": "Günün bülteni: form, istatistik, eksik oyuncular, ilk 11, hava durumu, oranlar ve Meclis senaryoları tek ekranda."
  },
  {
-  "path": "/tahmin-botu",
-  "title": "Tahmin Botu",
-  "description": "Botun günlük bülten çıktısı: bültendeki her maç taranır, değer kuralını geçen bütün seçimler pazar, oran, değer ve kısa gerekçeyle maç maç listelenir."
+  "path": "/ortak",
+  "title": "Ortak · Meclis'in yapay zekâ analisti",
+  "description": "Ortak, 90 Meclis'in yapay zekâ analisti: günün bütün maçlarını ve pazarlarını kendi modeliyle fiyatlar, piyasayla karşılaştırır; değer radarı, en büyük farklar, seri avı ve maç maç karar."
  },
  {
   "path": "/tahmin-arsivi",

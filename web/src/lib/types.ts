@@ -123,7 +123,7 @@ export interface Injury {
   fetched_at: string;
 }
 
-export interface LineupPlayer { name: string; pos?: string; number?: number; ai_score?: number }
+export interface LineupPlayer { name: string; pos?: string; number?: number; ai_score?: number; grid?: string; captain?: boolean }
 export interface Lineup {
   match_id: string;
   side: "home" | "away";

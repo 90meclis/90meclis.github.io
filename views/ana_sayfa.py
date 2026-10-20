@@ -72,7 +72,7 @@ st.markdown("#### Bölümler")
 cols = st.columns(3)
 for i, (path, label, desc) in enumerate([
     ("views/mac_merkezi.py", "🏟️ Maç Merkezi", "Kadro, ağırlıklı eksikler, form, istatistik, hava ve senaryolar."),
-    ("views/tahmin_botu.py", "🤖 Tahmin Botu", "Botun bülten çıktısı: değer kuralını geçen bütün seçimler."),
+    ("views/tahmin_botu.py", "🤖 Ortak", "Meclis'in yapay zekâ analisti: bütün maçlar, bütün pazarlar, model ↔ piyasa."),
     ("views/tahmin_arsivi.py", "🗂️ Tahmin Arşivi", "Günün Kararı, Meclis Görüşleri, Karar Birliği ve kilitli defter."),
     ("views/guven_panosu.py", "🛡️ Güven Panosu", "Haftalık kayıt, isabet, ROI ve pazar bazında sonuçlar."),
     ("views/gundem_masasi.py", "📰 Gündem Masası", "Transfer, sakatlık, teknik direktör gündemi."),

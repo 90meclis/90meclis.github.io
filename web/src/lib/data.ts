@@ -232,7 +232,7 @@ export async function botBulten(day: string): Promise<BotBultenRow[] | null> {
 // Maç dosyası. Takım kimliği "lig:slug"; aynı kulübün lig, Avrupa ve kupa maçları slug ile birleşir
 // (v_takim_mac_istatistik ile aynı kural). Yalnızca BU SEZON (1 Temmuz'dan itibaren), yalnızca bitmiş maçlar.
 // ---------------------------------------------------------------------------------------------
-const slugOf = (id: string) => id.slice(id.indexOf(":") + 1);
+export const slugOf = (id: string) => id.slice(id.indexOf(":") + 1);
 
 export async function teamSeason(teamId: string, beforeIso: string): Promise<Match[]> {
   const same = await run<{ id: string }>(db().from("teams").select("id").like("id", `%:${slugOf(teamId)}`));
@@ -367,4 +367,26 @@ export const oddsSnapshots = (matchId: string) =>
 /** Lig kodu → ad/ülke (leagues tablosu). */
 export async function leagueNames(): Promise<{ code: string; name: string | null; country: string | null; cup: boolean | null }[]> {
   return all(() => db().from("leagues").select("code,name,country,cup").order("country"));
+}
+
+/** Birden çok takımın bu sezonki maç maç satırları (Seri Avcısı). Görünüm yoksa null. */
+export async function statRowsForSlugs(slugs: string[], sinceIso: string, beforeIso: string): Promise<TeamStatRow[] | null> {
+  try {
+    const out: TeamStatRow[] = [];
+    for (let i = 0; i < slugs.length; i += 50) {
+      const part = slugs.slice(i, i + 50);
+      out.push(...(await all<TeamStatRow>(() => db().from("v_takim_mac_istatistik").select("match_id,kickoff_at,league,competition,side,team_slug,team_name,goals_for,goals_against,corners_for,corners_against,cards_for,cards_against,sot_for,sot_against,xg_for,xg_against")
+        .in("team_slug", part).gte("kickoff_at", sinceIso).lt("kickoff_at", beforeIso).order("kickoff_at", { ascending: false }))));
+    }
+    return out;
+  } catch { return null; }
+}
+
+/** Bülten genelinde oran hareketi (Piyasa Nabzı). Görünüm yoksa ya da boşsa []. */
+export async function oddsMovesFor(ids: string[]): Promise<OddsMove[]> {
+  try {
+    const out: OddsMove[] = [];
+    for (let i = 0; i < ids.length; i += 40) out.push(...(await run<OddsMove>(db().from("v_oran_hareketi").select("*").in("match_id", ids.slice(i, i + 40)))));
+    return out;
+  } catch { return []; }
 }

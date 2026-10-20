@@ -219,7 +219,9 @@ class ApiFootball:
                 "team_apif": (it.get("team") or {}).get("id"), "team_name": (it.get("team") or {}).get("name"),
                 "formation": it.get("formation"), "coach": (it.get("coach") or {}).get("name"),
                 "start_xi": [{"name": x["player"]["name"], "number": x["player"].get("number"),
-                              "pos": x["player"].get("pos")} for x in it.get("startXI", [])],
+                              "pos": x["player"].get("pos"),
+                              **({"grid": x["player"]["grid"]} if x["player"].get("grid") else {})}
+                             for x in it.get("startXI", [])],
                 "subs": [{"name": x["player"]["name"], "number": x["player"].get("number"),
                           "pos": x["player"].get("pos")} for x in it.get("substitutes", [])],
             })

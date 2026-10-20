@@ -440,7 +440,8 @@ type XiPlayer = { name: string; position?: string | null; score?: number; note?:
 const POS_TR: Record<string, string> = { Goalkeeper: "K", Defender: "D", Midfielder: "O", Attacker: "F", Forward: "F", G: "K", GK: "K", D: "D", DF: "D", M: "O", MF: "O", F: "F", FW: "F", K: "K", O: "O" };
 const posOf = (p?: string | null) => POS_TR[p ?? ""] ?? POS_TR[(p ?? "").slice(0, 1).toUpperCase()] ?? "";
 
-interface XI { label: string; kind: "off" | "pred"; formation: string | null; players: { name: string; pos: string; number?: number | null; note?: string | null }[]; subs: string[]; coach: string | null; basis?: string[] }
+interface XIP { name: string; pos: string; number?: number | null; note?: string | null; grid?: string; captain?: boolean }
+interface XI { label: string; kind: "off" | "pred"; formation: string | null; players: XIP[]; subs: string[]; coach: string | null; basis?: string[] }
 
 /** Yapısal doğrulama: 11 oyuncu, mevkiler biliniyorsa tam bir kaleci, tekrar eden isim yok. Tutmayan kadro gösterilmez. */
 function plausible(x: XI): boolean {
@@ -459,7 +460,7 @@ function xisRaw(rows: Lineup[], side: "home" | "away", a?: AnalysisPayload): XI[
   const out: XI[] = [];
   const conv = (lu: Lineup, label: string, kind: XI["kind"]): XI => ({
     label, kind, formation: lu.formation, coach: lu.coach, subs: (lu.subs ?? []).map((p) => p.name),
-    players: lu.start_xi.map((p) => ({ name: p.name, pos: posOf(p.pos), number: p.number })),
+    players: lu.start_xi.map((p) => ({ name: p.name, pos: posOf(p.pos), number: p.number, grid: p.grid, captain: p.captain })),
   });
   const off = mine.find(isOfficial);
   if (off) out.push(conv(off, "Resmî ilk 11", "off"));
@@ -484,54 +485,119 @@ function formationOf(x: XI): string | null {
   return c.D + c.O + c.F === 10 ? `${c.D}-${c.O}-${c.F}` : null;
 }
 
-function Pitch({ x }: { x: XI }) {
-  const known = x.players.filter((p) => p.pos).length >= 10;
-  if (!known) return <ol className="lu-list">{x.players.map((p, i) => <li key={i}><span className="lu-no">{p.number ?? ""}</span>{p.name}</li>)}</ol>;
-  const lines = ["F", "O", "D", "K"].map((k) => x.players.filter((p) => p.pos === k)).filter((l) => l.length);
+/**
+ * Dizilişe göre hatlar (kaleci önce): 1) API-Football "satır:sütun" ızgarası; 2) diziliş sırası (4-2-3-1 → 4,2,3,1;
+ * kaynak sırası hat hat gelir); 3) mevki harfi. Hiçbiri tutmazsa null (liste gösterilir).
+ */
+function linesOf(x: XI): XIP[][] | null {
+  const ps = x.players;
+  if (ps.length !== 11) return null;
+  if (ps.every((p) => p.grid && /^\d+:\d+$/.test(p.grid))) {
+    const rows = new Map<number, XIP[]>();
+    for (const p of ps) { const r = Number(p.grid!.split(":")[0]); rows.set(r, [...(rows.get(r) ?? []), p]); }
+    return [...rows.entries()].sort((a, b) => a[0] - b[0]).map(([, l]) => l.sort((a, b) => Number(a.grid!.split(":")[1]) - Number(b.grid!.split(":")[1])));
+  }
+  const f = (x.formation ?? "").split("-").map(Number).filter((n) => n > 0);
+  if (f.length >= 2 && f.reduce((a, b) => a + b, 0) === 10) {
+    const gi = Math.max(0, ps.findIndex((p) => p.pos === "K"));
+    const rest = ps.filter((_, i) => i !== gi);
+    const out: XIP[][] = [[ps[gi]]];
+    let k = 0;
+    for (const n of f) { out.push(rest.slice(k, k + n)); k += n; }
+    return out;
+  }
+  if (ps.filter((p) => p.pos).length >= 10) {
+    const out = ["K", "D", "O", "F"].map((c) => ps.filter((p) => p.pos === c)).filter((l) => l.length);
+    return out.length >= 3 ? out : null;
+  }
+  return null;
+}
+
+type Flag = (name: string) => "suphe" | "yok" | null;
+function Chip({ p, side, flag }: { p: XIP; side: "home" | "away"; flag: Flag }) {
+  const f = flag(p.name);
   return (
-    <div className="pitch" role="img" aria-label={`Diziliş ${formationOf(x) ?? ""}: ${x.players.map((p) => p.name).join(", ")}`}>
-      {lines.map((l, i) => (
-        <div key={i} className="pitch-line">
-          {l.map((p, j) => (
-            <span key={j} className="pl"><i>{p.number ?? p.pos}</i><b>{shortName(p.name)}</b>{p.note && <small>{p.note}</small>}</span>
-          ))}
+    <span className={`pp ${side}`}>
+      <i>{p.number ?? p.name.split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase()}{p.captain && <em className="cap" title="Kaptan">C</em>}{f && <em className={`doubt ${f}`} title={f === "suphe" ? "Şüpheli" : "Eksik listesinde"}>!</em>}</i>
+      <b>{shortName(p.name)}</b>
+    </span>
+  );
+}
+
+/** Tek saha: ev sahibi alt yarıda (kaleci en altta), deplasman üst yarıda (kaleci en üstte); hatlar dizilişe göre. */
+function FullPitch({ home, away, flag }: { home: XI | null; away: XI | null; flag: Flag }) {
+  const half = (x: XI | null, side: "home" | "away") => {
+    const ls = x ? linesOf(x) : null;
+    if (!ls) return null;
+    const n = ls.length;
+    return ls.map((l, i) => {
+      // kaleci kaleye yakın; hatlar orta sahaya doğru eşit aralıkla
+      const d = 5 + (i / Math.max(1, n - 1)) * 38;
+      const top = side === "home" ? 100 - d : d;
+      const row = side === "home" ? [...l].reverse() : l;
+      return (
+        <div key={`${side}${i}`} className="pf-line" style={{ top: `${top}%` }}>
+          {row.map((p, j) => <Chip key={j} p={p} side={side} flag={flag} />)}
         </div>
-      ))}
+      );
+    });
+  };
+  const H = half(home, "home"), A = half(away, "away");
+  if (!H && !A) return null;
+  return (
+    <div className="pf" role="img" aria-label={`Sahada: ${[home, away].filter(Boolean).map((x) => `${x!.formation ?? ""} ${x!.players.map((p) => p.name).join(", ")}`).join(" | ")}`}>
+      <div className="pf-marks" aria-hidden="true"><span className="pf-mid" /><span className="pf-circle" /><span className="pf-box t" /><span className="pf-box b" /><span className="pf-six t" /><span className="pf-six b" /></div>
+      {A}{H}
     </div>
   );
 }
-const shortName = (n: string) => { const s = n.trim().split(/\s+/); return s.length > 1 && n.length > 14 ? `${s[0][0]}. ${s.slice(1).join(" ")}` : n; };
+const shortName = (n: string) => { const s = n.trim().split(/\s+/); return s.length > 1 ? (n.length > 12 ? s[s.length - 1] : n) : n; };
 
 function Squads({ m, d }: { m: Match; d: Dossier }) {
   const sides = (["home", "away"] as const).map((side) => ({ side, name: side === "home" ? m.home_name : m.away_name, xis: xisFor(d.lineups, side, d.a), dropped: xisRaw(d.lineups, side, d.a).length - xisFor(d.lineups, side, d.a).length }));
+  const [pick, setPick] = useState<"off" | "pred" | null>(null);
   if (sides.every((s) => !s.xis.length)) {
     return (
       <Card title="Kadrolar">
         <p className="muted small">Resmî ilk 11 maçtan yaklaşık bir saat önce açıklanır ve burada sahaya dizilir.</p>
-        <p className="muted tiny">Doğrulanamayan kadro gösterilmez.</p>
       </Card>
     );
   }
+  const kinds = [...new Set(sides.flatMap((s) => s.xis.map((x) => x.kind)))];
+  const kind = pick && kinds.includes(pick) ? pick : kinds.includes("off") ? "off" : "pred";
+  const sel = sides.map((s) => s.xis.find((x) => x.kind === kind) ?? null);
+  const inj = new Map(d.inj.map((x) => [x.player_name.toLocaleLowerCase("tr-TR"), x.injury_status]));
+  const flag: Flag = (n) => { const st = inj.get(n.toLocaleLowerCase("tr-TR")); return st === undefined ? null : st === "şüpheli" ? "suphe" : "yok"; };
   return (
-    <div className="two-cards">
-      {sides.map((s) => (
-        <Card key={s.side} title={s.name}>
-          {!s.xis.length && <p className="muted small">Resmî ilk 11 maçtan yaklaşık bir saat önce burada dizilir.</p>}
-          {s.xis.map((x, i) => (
-            <details key={i} className="lineup" open={i === 0}>
-              <summary className="lu-head">
-                <span className={`lu-badge ${x.kind}`}>{x.label}</span>
-                {formationOf(x) && <b>{formationOf(x)}</b>}
-                {x.coach && <span className="muted small">TD: {x.coach}</span>}
-              </summary>
-              <Pitch x={x} />
+    <>
+      <Card title="Sahada" aside={kinds.length > 1 ? (
+        <div className="seg" role="group" aria-label="Kadro türü">
+          {kinds.map((k) => <button key={k} type="button" className={k === kind ? "on" : ""} onClick={() => setPick(k)}>{k === "off" ? "Resmî" : "Tahmini"}</button>)}
+        </div>) : <span className={`lu-badge ${kind}`}>{kind === "off" ? "Resmî ilk 11" : "Tahmini ilk 11"}</span>}>
+        <div className="pf-head">
+          <span><b>{m.away_name}</b>{sel[1] && <small>{sel[1].formation ?? formationOf(sel[1]) ?? ""}</small>}</span>
+        </div>
+        <FullPitch home={sel[0]} away={sel[1]} flag={flag} />
+        <div className="pf-head">
+          <span><b>{m.home_name}</b>{sel[0] && <small>{sel[0].formation ?? formationOf(sel[0]) ?? ""}</small>}</span>
+        </div>
+        <p className="muted tiny pf-legend"><em className="cap">C</em> kaptan · <em className="doubt suphe">!</em> şüpheli · <em className="doubt yok">!</em> eksik listesinde{kind === "pred" ? " · tahmini kadro, resmî 11 maçtan yaklaşık bir saat önce gelir" : ""}</p>
+      </Card>
+      <div className="two-cards">
+        {sides.map((s, i) => {
+          const x = sel[i];
+          if (!x) return null;
+          return (
+            <Card key={s.side} title={s.name} aside={<span className="muted small">{x.formation ?? formationOf(x) ?? ""}</span>}>
+              <ol className="lu-list">{x.players.map((p, j) => <li key={j}><span className="lu-no">{p.number ?? ""}</span>{p.name}{p.captain && <em className="cap">C</em>}{flag(p.name) && <em className={`doubt ${flag(p.name)}`}>!</em>}<small>{p.pos}</small></li>)}</ol>
               {x.subs.length > 0 && <p className="muted tiny"><b>Yedekler:</b> {x.subs.join(", ")}</p>}
+              {x.coach && <p className="muted tiny"><b>Teknik direktör:</b> {x.coach}</p>}
               {x.basis?.length ? <p className="muted tiny">Dayanak: {x.basis.join(", ")}</p> : null}
-            </details>
-          ))}
-        </Card>
-      ))}
-    </div>
+            </Card>
+          );
+        })}
+      </div>
+    </>
   );
 }
 

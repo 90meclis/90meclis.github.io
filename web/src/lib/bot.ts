@@ -41,6 +41,7 @@ export function valuePicks(a: BotAnalysis | undefined): BotPick[] {
       const pc = pm != null ? CAL_W * m.probability + (1 - CAL_W) * pm : m.probability;
       const edge = pc * o - 1;
       if (o < MIN_ODDS || o > MAX_ODDS || pc < 0.3 || edge < VALUE_EDGE_MIN) continue;
+      if ((pm != null && Math.abs(m.probability - pm) > 0.2) || edge > 0.25) continue; // aşırı ayrışma: veri/model hatası şüphesi
       value.push({ ...m, probability: pc, edge, kind: "değer", score: edge });
     } else if (modelBased && m.market !== "DC" && m.probability >= 0.55 && 1 / m.probability >= MIN_ODDS) {
       fair.push({ ...m, kind: "adil oran", score: m.probability * 0.25 });

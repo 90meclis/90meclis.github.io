@@ -5,7 +5,8 @@ from meclis import ui
 from meclis.store import StoreError
 from meclis.timeutil import tr_str
 
-st.title("🤖 Tahmin Botu")
+st.title("🤖 Ortak")
+st.caption("Meclis'in yapay zekâ analisti")
 st.caption("Bülteni tarar, maçları süzer, her pazarı inceler, senaryo kurar ve tahmini maçtan ÖNCE deftere yazar.")
 ui.banner()
 s, store, pool = ui.resources()
@@ -76,7 +77,7 @@ if st.session_state.get("is_admin"):
         st.code("\n".join(run_log), language=None)
 
 st.subheader("📋 Bülten çıktısı: değer kuralını geçen bütün seçimler")
-st.caption("Botun ham çıktısı. Masanın seçtiği kararlar (Günün Kararı, Meclis Görüşleri, Karar Birliği) **Tahmin Arşivi**'nde.")
+st.caption("Ortak'ın ham çıktısı. Masanın seçtiği kararlar (Günün Kararı, Meclis Görüşleri, Karar Birliği) **Tahmin Arşivi**'nde.")
 from datetime import timedelta as _td  # noqa: E402
 
 from meclis.markets import TAG_LABELS, pick_label  # noqa: E402

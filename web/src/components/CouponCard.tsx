@@ -28,7 +28,7 @@ export function CouponHero({ c, legs }: { c: Coupon; legs: Prediction[] }) {
   return (
     <article className={`coupon-hero st-border-${c.status}`}>
       <header>
-        <div><span className="kicker">Günün Kararı</span><h2>{legs.length} maçlık masa kuponu</h2><span className="muted small">{dateMed(c.coupon_date + "T12:00:00+03:00")}</span></div>
+        <div><span className="kicker">{dateMed(c.coupon_date + "T12:00:00+03:00")}</span><h2>Günün Kararı</h2><span className="muted small">{legs.length} maç · toplam oran {num(c.total_odds)}</span></div>
         <div className="ch-odds"><small>Toplam oran</small><b>{num(c.total_odds)}</b>{c.odds_source === "model_adil" && <em>adil oran</em>}</div>
       </header>
       <ol className="ch-legs">

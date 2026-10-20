@@ -305,6 +305,8 @@ def select_single(payload: dict, settings) -> dict | None:
 SINGLE_MIN_ODDS = 1.50
 SINGLE_MAX_ODDS = 5.00
 CAL_W = 0.65
+CAL_W_DEFAULT = 0.5  # geri testi olmayan pazarlar (korner, kart, şut…): model ile piyasa yarı yarıya
+EDGE_MAX = 0.25
 
 
 def _market_implied(markets: list[dict]) -> dict:
@@ -337,6 +339,11 @@ def slate_bias(payloads: list[dict], min_n: int = 20) -> dict:
     return {k: round(sum(v) / len(v), 4) for k, v in acc.items() if len(v) >= min_n}
 
 
+# Model ↔ piyasa ayrışma sınırı: bundan büyük fark "değer" sayılmaz (veri/model hatası şüphesi).
+MAX_MODEL_GAP = 0.20
+MAX_EDGE = 0.25
+
+
 def rank_picks(payload: dict, settings, model_based: bool | None = None, q: float | None = None,
                annotate: bool = False) -> list[dict]:
     """Maçın bütün pazarlarındaki adaylar, değere göre sıralı (en iyisi başta).
@@ -361,9 +368,17 @@ def rank_picks(payload: dict, settings, model_based: bool | None = None, q: floa
             # bülten genelinde modelin piyasadan sistematik sapması (ör. hep "alt"a kayma) düzeltilir
             p = min(0.99, max(0.01, p - bias.get(f"{m['market']}|{m['selection']}|{m.get('line')}", 0.0)))
             pm = implied.get((m["market"], m["selection"], m.get("line")))
-            w = payload.get("cal_w", CAL_W)
+            cal = payload.get("cal_params") or {}
+            ck = f"{m['market']}_{float(m['line']):g}" if m["market"] == "OU_GOALS" and m.get("line") is not None \
+                else m["market"]
+            bt = cal.get(ck)
+            w = (bt or {}).get("w", CAL_W_DEFAULT) if isinstance(bt, dict) else CAL_W_DEFAULT
+            w *= payload.get("cal_w_factor", 1.0)  # kupa: ligler arası güç belirsiz → piyasaya daha yakın
             pc = w * p + (1 - w) * pm if pm else p
             edge = pc * o - 1
+            cal_used = {"w": round(w, 3), "kaynak": "geri test" if isinstance(bt, dict) else "varsayılan",
+                        "p_model": round(p, 4), "p_piyasa": round(pm, 4) if pm else None,
+                        "sapma_duz": bias.get(f"{m['market']}|{m['selection']}|{m.get('line')}", 0.0)}
             if annotate:
                 m.update(p_kal=round(pc, 4), edge_kal=round(edge, 4), p_piyasa=round(pm, 4) if pm else None)
             why = None
@@ -373,17 +388,31 @@ def rank_picks(payload: dict, settings, model_based: bool | None = None, q: floa
                 why = f"oran {o:.2f} > {SINGLE_MAX_ODDS:.2f}"
             elif pc < 0.30:
                 why = f"olasılık %{pc * 100:.0f} çok düşük"
+            elif (pm and abs(p - pm) > MAX_MODEL_GAP) or edge > MAX_EDGE:
+                # Model piyasadan aşırı ayrışıyorsa (ör. ligler arası güç farkı yanlış ölçülmüş) bu bir değer değil,
+                # büyük olasılıkla veri/model hatasıdır: seçim yapılmaz, satır "ayrışma" diye işaretlenir.
+                why = (f"model piyasadan aşırı ayrışıyor (model %{p * 100:.0f}, piyasa %{(pm or 0) * 100:.0f}); "
+                       "doğrulanmadan seçim yok")
             elif edge < edge_min:
                 why = f"değer {edge * 100:+.1f}% < %{edge_min * 100:.0f}"
+            elif edge > EDGE_MAX:
+                why = (f"değer {edge * 100:+.1f}% > %{EDGE_MAX * 100:.0f} — model ile piyasa arasındaki fark akla "
+                       "yatkın değil (model/veri hatası şüphesi), yayımlanmaz")
+            elif not pm:
+                why = "piyasanın karşı tarafı yok — marjsız olasılık hesaplanamıyor (kalibrasyon yapılamaz)"
             if why:
                 if annotate:
                     m.update(deger=False, neden=why)
                 continue
             score = edge * q
+            if isinstance(bt, dict) and bt.get("roi") is not None:  # geri testte değer kuralı bu pazarda kârlı mı?
+                score *= 1.15 if bt["roi"] > 0 else 0.85
+            unc = payload.get("xi_uncertainty") or 0.0  # kilit oyuncu oynayacak mı belirsizliği (0–1)
+            score *= 1 - 0.3 * min(1.0, unc)
             if annotate:
                 m.update(deger=True, neden=f"değerli: {edge * 100:+.1f}%")
             value.append(dict(m, kind="değer", probability_model=round(p, 4), probability=round(pc, 4),
-                              edge=round(edge, 4), confidence=round(score, 4)))
+                              edge=round(edge, 4), confidence=round(score, 4), calibration=cal_used))
         else:
             fo = 1 / p if p > 0 else 99
             ok = model_based and m["market"] != "DC" and p >= 0.55 and fo >= SINGLE_MIN_ODDS

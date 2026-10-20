@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { Layout } from "./components/Layout";
 import { Skeleton } from "./components/ui";
 import Home from "./pages/Home";
@@ -14,6 +14,12 @@ const Lab = lazy(() => import("./pages/Lab"));
 const About = lazy(() => import("./pages/About"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
+/** Eski adres: /tahmin-botu → /ortak (sorgu korunur). */
+function OldBot() {
+  const l = useLocation();
+  return <Navigate to={`/ortak${l.search}`} replace />;
+}
+
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 export default function App() {
@@ -26,7 +32,8 @@ export default function App() {
             <Route path="mac-merkezi" element={<MatchCenter />} />
             <Route path="mac" element={<MatchDetail />} />
             <Route path="mac/:id" element={<MatchDetail />} />
-            <Route path="tahmin-botu" element={<PredictionBot />} />
+            <Route path="ortak" element={<PredictionBot />} />
+            <Route path="tahmin-botu" element={<OldBot />} />
             <Route path="tahmin-arsivi" element={<Archive />} />
             <Route path="guven-panosu" element={<Trust />} />
             <Route path="gundem-masasi" element={<News />} />

@@ -105,7 +105,8 @@ def parse_stats(data: dict) -> dict:
 
 def _side_players(side: dict | None, key: str) -> list[dict]:
     return [{"name": p.get("name"), "number": p.get("jersey_number"), "pos": p.get("position"),
-             **({"ai_score": p["ai_score"]} if p.get("ai_score") is not None else {})}
+             **({"ai_score": p["ai_score"]} if p.get("ai_score") is not None else {}),
+             **({"captain": True} if p.get("captain") or p.get("is_captain") else {})}
             for p in ((side or {}).get(key) or []) if p.get("name")]
 
 

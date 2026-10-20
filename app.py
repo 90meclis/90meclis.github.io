@@ -10,7 +10,7 @@ st.set_page_config(page_title="90 Meclis", page_icon="⚽", layout="wide")
 pages = [
     st.Page("views/ana_sayfa.py", title="Ana Sayfa", icon="⚽", default=True),
     st.Page("views/mac_merkezi.py", title="Maç Merkezi", icon="🏟️"),
-    st.Page("views/tahmin_botu.py", title="Tahmin Botu", icon="🤖"),
+    st.Page("views/tahmin_botu.py", title="Ortak", icon="🤖"),
     st.Page("views/tahmin_arsivi.py", title="Tahmin Arşivi", icon="🗂️"),
     st.Page("views/veri_laboratuvari.py", title="Veri Laboratuvarı", icon="🧪"),
     st.Page("views/gundem_masasi.py", title="Gündem Masası", icon="📰"),

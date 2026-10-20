@@ -5,11 +5,13 @@ import type { Match, MarketRow } from "./types";
 import { MARKET_GROUPS } from "./labels";
 
 export const CAL_W = 0.65, EDGE_MIN = 0.03, MIN_ODDS = 1.5, MAX_ODDS = 5;
+/** Model ↔ piyasa ayrışma sınırı (meclis/analysis.py MAX_MODEL_GAP / MAX_EDGE ile aynı). */
+export const MAX_GAP = 0.2, MAX_EDGE = 0.25;
 
 export interface ScanRow {
   market: string; selection: string; line: number | null; group: string;
   pModel: number | null; odds: number | null; pMarket: number | null; src: string | null;
-  pCal: number | null; edge: number | null; value: boolean;
+  pCal: number | null; edge: number | null; value: boolean; wild: boolean;
 }
 
 const GROUP_OF: Record<string, string> = Object.fromEntries(Object.entries(MARKET_GROUPS).flatMap(([g, ms]) => ms.map((m) => [m, g])));
@@ -51,8 +53,9 @@ export function scanMatch(m: Pick<Match, "odds">, markets: MarketRow[] | null | 
     const pMarket = fair?.[sel] ?? null;
     const pCal = pModel != null ? (pMarket != null ? CAL_W * pModel + (1 - CAL_W) * pMarket : pModel) : null;
     const edge = pCal != null && o ? pCal * o - 1 : null;
-    const value = modelBased && edge != null && o != null && o >= MIN_ODDS && o <= MAX_ODDS && pCal! >= 0.3 && edge >= EDGE_MIN;
-    return { market, selection, line, group: GROUP_OF[market], pModel, odds: o, pMarket, src: g ? String(g.src ?? "") || null : null, pCal, edge, value };
+    const wild = pModel != null && ((pMarket != null && Math.abs(pModel - pMarket) > MAX_GAP) || (edge != null && edge > MAX_EDGE));
+    const value = modelBased && !wild && edge != null && o != null && o >= MIN_ODDS && o <= MAX_ODDS && pCal! >= 0.3 && edge >= EDGE_MIN;
+    return { market, selection, line, group: GROUP_OF[market], pModel, odds: o, pMarket, src: g ? String(g.src ?? "") || null : null, pCal, edge, value, wild };
   };
   for (const x of markets ?? []) {
     if (x.market === "CS") continue;
