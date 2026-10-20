@@ -91,7 +91,7 @@ function Glance({ T, S, clv, cal, bt, settled }: { T: Summary; S: Summary; clv: 
         <div className="gl">
           <Ring value={g ? 1 - g.gap * 2 : null} size={58} tone={g && g.n >= 30 ? (g.gap < 0.06 ? "lime" : "gold") : "gold"} label={g ? `±${Math.round(g.gap * 100)}` : "—"} />
           <div><small>Kalibrasyon</small><b>{g ? `${g.n} tekli` : "Ölçüm bekliyor"}</b>
-            <p>{!g ? `Söylediğimiz olasılıklar ile gerçekleşenler en az 10 sonuçla karşılaştırılır${g0 ? ` (şu an ${g0.n})` : ""}. Bu arada modelin geniş örneklemli testi yandaki backtest'te.` : g.n < 30 ? `Söylenen ile gerçekleşen arasında ortalama ${Math.round(g.gap * 100)} puan fark var; ${g.n} sonuçla bu henüz gürültü.` : `Söylediğimiz olasılıklar gerçekleşenden ortalama ${Math.round(g.gap * 100)} puan sapıyor${g.gap < 0.06 ? ": iyi kalibre." : "."}`}</p></div>
+            <p>{!g ? `Söylediğimiz olasılıklar ile gerçekleşenler en az 10 sonuçla karşılaştırılır${g0 ? ` (şu an ${g0.n})` : ""}.${bt?.length ? " Bu arada modelin geniş örneklemli testi backtest kutusunda." : ""}` : g.n < 30 ? `Söylenen ile gerçekleşen arasında ortalama ${Math.round(g.gap * 100)} puan fark var; ${g.n} sonuçla bu henüz gürültü.` : `Söylediğimiz olasılıklar gerçekleşenden ortalama ${Math.round(g.gap * 100)} puan sapıyor${g.gap < 0.06 ? ": iyi kalibre." : "."}`}</p></div>
         </div>
         {bt && bt.length > 0 && (() => {
           const top = [...bt].sort((x, y) => y.n - x.n)[0];
