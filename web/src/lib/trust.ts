@@ -104,7 +104,7 @@ export function curves(bets: Bet[]): Curves {
 export function calibration(rows: Bet[]) {
   const bins = [0, 0.4, 0.5, 0.6, 0.7, 0.8, 1.0001];
   const s = rows.filter((r) => (r.status === "kazandi" || r.status === "kaybetti") && r.probability !== null);
-  const out: { range: string; n: number; avg: number; real: number }[] = [];
+  const out: { range: string; n: number; avg: number; real: number; lo: number; hi: number }[] = [];
   for (let i = 0; i < bins.length - 1; i++) {
     const g = s.filter((r) => r.probability! >= bins[i] && r.probability! < bins[i + 1]);
     if (!g.length) continue;
@@ -112,7 +112,47 @@ export function calibration(rows: Bet[]) {
       range: `%${Math.round(bins[i] * 100)}–${Math.min(100, Math.round(bins[i + 1] * 100))}`,
       n: g.length, avg: g.reduce((a, r) => a + r.probability!, 0) / g.length,
       real: g.filter((r) => r.status === "kazandi").length / g.length,
+      ...(() => { const w = wilson(g.filter((r) => r.status === "kazandi").length, g.length)!; return { lo: w[0], hi: w[1] }; })(),
     });
   }
   return out;
+}
+
+/** Wilson %95 aralığı (isabet oranı için). */
+export function wilson(k: number, n: number, z = 1.96): [number, number] | null {
+  if (!n) return null;
+  const p = k / n, d = 1 + (z * z) / n;
+  const c = (p + (z * z) / (2 * n)) / d;
+  const h = (z * Math.sqrt((p * (1 - p)) / n + (z * z) / (4 * n * n))) / d;
+  return [Math.max(0, c - h), Math.min(1, c + h)];
+}
+
+export interface ClvStat { n: number; mean: number; lo: number; hi: number; beat: number }
+/** CLV ortalaması ve %95 güven aralığı (normal yaklaşım; n<2 için aralık yok). beat = kapanışı yenen pay. */
+export function clvStat(rows: Bet[]): ClvStat | null {
+  const v = rows.filter((r) => SETTLED.has(r.status) || r.clv !== null).map((r) => r.clv).filter((x): x is number => x !== null && x !== undefined);
+  if (!v.length) return null;
+  const n = v.length, mean = v.reduce((a, b) => a + b, 0) / n;
+  const sd = n > 1 ? Math.sqrt(v.reduce((a, b) => a + (b - mean) ** 2, 0) / (n - 1)) : 0;
+  const h = n > 1 ? (1.96 * sd) / Math.sqrt(n) : 0;
+  return { n, mean, lo: mean - h, hi: mean + h, beat: v.filter((x) => x > 0).length / n };
+}
+
+/** Örneklem eşiği: n<30 anlamlı değil, n<100 erken, sonrası okunabilir. */
+export function sampleLevel(n: number): "yok" | "erken" | "gelisen" | "okunur" {
+  return n === 0 ? "yok" : n < 30 ? "erken" : n < 100 ? "gelisen" : "okunur";
+}
+
+/** "Piyasayı yeniyor muyuz?" tek cümlelik dürüst özet. */
+export function verdictLine(c: ClvStat | null, settled: number): string {
+  if (!c || c.n < 30) {
+    const n = c?.n ?? 0;
+    return n
+      ? `Henüz hüküm yok: kapanış oranıyla ölçülmüş ${n} karar var, anlamlı bir okuma için en az 30 gerekir.`
+      : `Henüz hüküm yok: ${settled} sonuçlanmış karar var ama kapanış oranıyla ölçülmüş karar henüz yok; Meclis'i piyasaya karşı ölçen tek dürüst ölçüt CLV'dir.`;
+  }
+  const pp = (x: number) => `${x >= 0 ? "+" : "−"}%${Math.abs(x * 100).toFixed(1).replace(".", ",")}`;
+  if (c.lo > 0) return `Evet: ${c.n} kararda kapanış oranını ortalama ${pp(c.mean)} yeniyoruz ve %95 aralığın tamamı sıfırın üstünde (${pp(c.lo)} – ${pp(c.hi)}).`;
+  if (c.hi < 0) return `Hayır: ${c.n} kararda kapanışın ortalama ${pp(c.mean)} gerisindeyiz; %95 aralık tamamen sıfırın altında (${pp(c.lo)} – ${pp(c.hi)}).`;
+  return `Henüz belli değil: ${c.n} kararda ortalama CLV ${pp(c.mean)}, ama %95 aralık (${pp(c.lo)} – ${pp(c.hi)}) sıfırı kapsıyor.`;
 }

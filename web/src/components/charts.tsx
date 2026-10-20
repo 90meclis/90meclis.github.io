@@ -102,3 +102,35 @@ export function ProbBar({ p1, px, p2, home, away }: { p1: number; px: number; p2
     </div>
   );
 }
+
+/** Kalibrasyon (güvenilirlik) grafiği: x = söylenen olasılık, y = gerçekleşen; dikey çizgi = %95 Wilson aralığı, köşegen = mükemmel kalibrasyon. */
+export function CalibrationChart({ bins }: { bins: { range: string; n: number; avg: number; real: number; lo: number; hi: number }[] }) {
+  const W = 320, H = 260, P = { l: 34, r: 10, t: 10, b: 30 };
+  const x = (v: number) => P.l + v * (W - P.l - P.r);
+  const y = (v: number) => P.t + (1 - v) * (H - P.t - P.b);
+  const maxN = Math.max(...bins.map((b) => b.n), 1);
+  return (
+    <figure className="chart calib-chart">
+      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Kalibrasyon: ${bins.map((b) => `${b.range} söylenen ${pct(b.avg)}, gerçekleşen ${pct(b.real)} (${b.n})`).join("; ")}`}>
+        {[0, 0.25, 0.5, 0.75, 1].map((t) => (
+          <g key={t}>
+            <line x1={x(0)} x2={x(1)} y1={y(t)} y2={y(t)} className="grid" />
+            <text x={P.l - 5} y={y(t) + 4} textAnchor="end" className="axis">%{Math.round(t * 100)}</text>
+            <text x={x(t)} y={H - 12} textAnchor="middle" className="axis">%{Math.round(t * 100)}</text>
+          </g>
+        ))}
+        <line x1={x(0)} y1={y(0)} x2={x(1)} y2={y(1)} className="zero" strokeDasharray="4 4" />
+        {bins.map((b) => (
+          <g key={b.range}>
+            <line x1={x(b.avg)} x2={x(b.avg)} y1={y(b.lo)} y2={y(b.hi)} className="ci" />
+            <line x1={x(b.avg) - 4} x2={x(b.avg) + 4} y1={y(b.lo)} y2={y(b.lo)} className="ci" />
+            <line x1={x(b.avg) - 4} x2={x(b.avg) + 4} y1={y(b.hi)} y2={y(b.hi)} className="ci" />
+            <circle cx={x(b.avg)} cy={y(b.real)} r={3 + 5 * Math.sqrt(b.n / maxN)} className="dot" />
+          </g>
+        ))}
+        <text x={(x(0) + x(1)) / 2} y={H - 1} textAnchor="middle" className="axis">söylenen olasılık</text>
+      </svg>
+      <figcaption className="muted tiny">Nokta: gerçekleşen oran (büyüklük = karar sayısı) · dikey çizgi: %95 güven aralığı · kesikli çizgi: mükemmel kalibrasyon.</figcaption>
+    </figure>
+  );
+}

@@ -709,3 +709,15 @@ html, body { overflow-x: clip; }
 .kulvar { margin-bottom: 6px; }
 .odds-move td.pos { color: var(--win); } .odds-move td.neg { color: var(--loss); }
 .odds-move svg { color: var(--cyan); vertical-align: middle; }
+/* Güven Panosu 2.0 */
+.calib-chart svg { width: 100%; max-width: 420px; height: auto; display: block; margin: 0 auto; }
+.calib-chart .ci { stroke: var(--cyan); stroke-width: 1.5; }
+.calib-chart .dot { fill: #d7ff3f; fill-opacity: .85; stroke: #0b0f14; stroke-width: 1; }
+.verdict-line { font-size: 15px; line-height: 1.5; margin: 0; }
+.verdict-line b { color: var(--text, #fff); }
+.ci-txt { font-size: 11px; color: var(--dim); display: block; }
+.badge-grey { opacity: .55; filter: grayscale(1); }
+.lvl { display: inline-block; font-size: 10px; font-weight: 800; letter-spacing: .04em; padding: 2px 6px; border-radius: 4px; margin-left: 6px; vertical-align: middle; text-transform: uppercase; }
+.lvl.erken { background: rgba(255, 92, 92, .14); color: #ff8a8a; }
+.lvl.gelisen { background: rgba(255, 196, 61, .14); color: #ffc43d; }
+.lvl.okunur { background: rgba(80, 220, 140, .14); color: #5fe39a; }

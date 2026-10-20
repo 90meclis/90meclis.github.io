@@ -3,8 +3,8 @@ import { useAsync } from "../lib/useAsync";
 import { num, pct, signed } from "../lib/format";
 import { MARKET_LABELS, TAG_LABELS, league } from "../lib/labels";
 import { usePageMeta, ROUTES } from "../lib/seo";
-import { calibration, curves, groupBy, isoWeek, summarize, toBets, type Bet, type Summary } from "../lib/trust";
-import { EquityChart } from "../components/charts";
+import { calibration, clvStat, curves, groupBy, isoWeek, sampleLevel, summarize, toBets, verdictLine, wilson, type Bet, type Summary } from "../lib/trust";
+import { CalibrationChart, EquityChart } from "../components/charts";
 import { PickCard } from "../components/PickCard";
 import { Card, Disclaimer, Empty, Gate, PageHead, Stat } from "../components/ui";
 import type { Tag } from "../lib/types";
@@ -15,9 +15,9 @@ function Row({ k, s, cls }: { k: string; s: Summary; cls?: string }) {
   return (
     <tr className={cls}>
       <td>{k}</td><td>{s.total}{s.pending ? <small className="muted"> ({s.pending} bekliyor)</small> : null}</td>
-      <td>{s.won} / {s.lost} / {s.voids}</td><td>{pct(s.hit, 1)}</td>
+      <td>{s.won} / {s.lost} / {s.voids}</td><td>{pct(s.hit, 1)}{(() => { const w = wilson(s.won, s.won + s.lost); return w && s.won + s.lost >= 5 ? <span className="ci-txt">%95: {pct(w[0])}–{pct(w[1])}</span> : null; })()}</td>
       <td className={(s.profit ?? 0) > 0 ? "pos" : (s.profit ?? 0) < 0 ? "neg" : ""}>{s.profit !== null ? signed(s.profit) : "—"}</td>
-      <td>{roiTxt(s)}</td><td>{s.priced}</td>
+      <td className={s.priced < 100 ? "badge-grey" : ""} title={s.priced < 100 ? "100 piyasa oranlı bahisten önce ROI gürültüdür" : undefined}>{roiTxt(s)}</td><td>{s.priced}</td>
     </tr>
   );
 }
@@ -27,15 +27,40 @@ function Head({ k }: { k: string }) {
 }
 
 function Breakdown({ title, groups, keyLabel, note }: { title: string; groups: [string, Bet[]][]; keyLabel: string; note?: string }) {
+  if (!groups.length) return null;
   return (
     <Card title={title} aside={note ? <span className="muted small">{note}</span> : undefined}>
-      {groups.length ? (
-        <div className="table-wrap">
-          <table className="tbl"><Head k={keyLabel} />
-            <tbody>{groups.map(([k, rows]) => <Row key={k} k={k} s={summarize(rows)} />)}</tbody>
-          </table>
-        </div>
-      ) : <p className="muted small">Henüz kayıt yok.</p>}
+      <div className="table-wrap">
+        <table className="tbl"><Head k={keyLabel} />
+          <tbody>{groups.map(([k, rows]) => <Row key={k} k={k} s={summarize(rows)} />)}</tbody>
+        </table>
+      </div>
+    </Card>
+  );
+}
+
+const LVL: Record<string, string> = { erken: "anlamlı değil", gelisen: "erken", okunur: "okunur" };
+function Lvl({ n }: { n: number }) {
+  const l = sampleLevel(n);
+  return l === "yok" ? null : <span className={`lvl ${l}`} title={`${n} örnek`}>{LVL[l]}</span>;
+}
+
+/** Pazar/lig bazında CLV ve %95 aralık; kapanış oranı olmayan grup gösterilmez. */
+function ClvBreakdown({ title, groups }: { title: string; groups: [string, Bet[]][] }) {
+  const rows = groups.map(([k, v]) => [k, clvStat(v)] as const).filter((r) => r[1] !== null);
+  if (!rows.length) return null;
+  return (
+    <Card title={title} aside={<span className="muted small">Kapanış oranına göre</span>}>
+      <div className="table-wrap">
+        <table className="tbl">
+          <thead><tr><th>Grup</th><th>n</th><th>Ort. CLV</th><th>%95 aralık</th><th>Kapanışı yenen</th></tr></thead>
+          <tbody>{rows.map(([k, c]) => (
+            <tr key={k}><td>{k}<Lvl n={c!.n} /></td><td>{c!.n}</td>
+              <td className={c!.mean > 0 ? "pos" : c!.mean < 0 ? "neg" : ""}>{signed(c!.mean * 100, 1)}%</td>
+              <td>{c!.n > 1 ? `${signed(c!.lo * 100, 1)}% – ${signed(c!.hi * 100, 1)}%` : "—"}</td><td>{pct(c!.beat)}</td></tr>
+          ))}</tbody>
+        </table>
+      </div>
     </Card>
   );
 }
@@ -61,6 +86,7 @@ export default function Trust() {
   const S = summarize(singles), C = summarize(cps), T = summarize(bets);
   const cv = curves(bets);
   const cal = calibration(singles);
+  const clvAll = clvStat(singles);
   const lost = preds.filter((p) => p.status === "kaybetti").slice(0, 6);
 
   return (
@@ -81,6 +107,11 @@ export default function Trust() {
             </div>
             <p className="note">{sampleNote(S.won + S.lost)}</p>
 
+            <Card title="Piyasayı yeniyor muyuz?" aside={<Lvl n={clvAll?.n ?? 0} />}>
+              <p className="verdict-line">{verdictLine(clvAll, S.won + S.lost + C.won + C.lost)}</p>
+              {clvAll && <p className="muted tiny">CLV: kayıt anındaki oranın kapanış oranına göre farkı. Uzun vadede kazancı en iyi öngören ölçüt; isabet ve ROI'den çok daha az şansa bağlıdır.</p>}
+            </Card>
+
             <Card title="Özet">
               <div className="table-wrap">
                 <table className="tbl sum-table"><Head k="Grup" />
@@ -91,7 +122,7 @@ export default function Trust() {
                   </tbody>
                 </table>
               </div>
-              {S.clv !== null && <p className="muted small">Ortalama CLV (kapanış oranına göre): {signed(S.clv * 100, 2)}% · {S.clvN} tekli</p>}
+              {clvAll && <p className="muted small">Ortalama CLV (kapanış oranına göre): {signed(clvAll.mean * 100, 2)}%{clvAll.n > 1 ? ` · %95 aralık ${signed(clvAll.lo * 100, 1)}% – ${signed(clvAll.hi * 100, 1)}%` : ""} · {clvAll.n} tekli</p>}
             </Card>
 
             <Card title="Kasa eğrisi" aside={<span className="muted small">Yalnızca piyasa oranlı sonuçlanmış bahisler, 1 birim</span>}>
@@ -115,20 +146,24 @@ export default function Trust() {
               <Breakdown title="Pazar bazında" keyLabel="Pazar" note="Tekliler" groups={groupBy(singles, (b) => MARKET_LABELS[b.market] ?? b.market)} />
             </div>
 
-            <Card title="Kalibrasyon" aside={<span className="muted small">Tekliler · söylenen olasılık ↔ gerçekleşen</span>}>
-              {cal.length ? (
-                <div className="calib">
-                  {cal.map((c) => (
-                    <div key={c.range} className="cal-row">
-                      <span className="cal-k">{c.range}</span>
-                      <div className="cal-bars"><span className="cal-exp" style={{ width: `${c.avg * 100}%` }} /><span className="cal-real" style={{ width: `${c.real * 100}%` }} /></div>
-                      <span className="cal-v">{pct(c.real)} <small className="muted">/ {pct(c.avg)} · {c.n}</small></span>
-                    </div>
-                  ))}
-                  <p className="muted tiny"><span className="lg exp" /> beklenen <span className="lg real" /> gerçekleşen</p>
-                </div>
-              ) : <p className="muted small">Yeterli sonuç yok.</p>}
-            </Card>
+            <div className="grid-2">
+              <ClvBreakdown title="CLV · pazar bazında" groups={groupBy(singles, (b) => MARKET_LABELS[b.market] ?? b.market)} />
+              <ClvBreakdown title="CLV · lig bazında" groups={groupBy(singles, (b) => league(b.league).name)} />
+            </div>
+
+            {cal.length > 0 && <Card title="Kalibrasyon" aside={<span className="muted small">Tekliler · söylenen olasılık ↔ gerçekleşen</span>}>
+              <CalibrationChart bins={cal} />
+              <div className="calib">
+                {cal.map((c) => (
+                  <div key={c.range} className="cal-row">
+                    <span className="cal-k">{c.range}</span>
+                    <div className="cal-bars"><span className="cal-exp" style={{ width: `${c.avg * 100}%` }} /><span className="cal-real" style={{ width: `${c.real * 100}%` }} /></div>
+                    <span className="cal-v">{pct(c.real)} <small className="muted">/ {pct(c.avg)} · {c.n}</small><Lvl n={c.n} /></span>
+                  </div>
+                ))}
+                <p className="muted tiny"><span className="lg exp" /> söylenen <span className="lg real" /> gerçekleşen</p>
+              </div>
+            </Card>}
 
             <Card title="Son kayıplar" aside={<span className="muted small">Gizlenmez</span>}>
               {lost.length ? <div className="picks grid">{lost.map((p) => <PickCard key={p.id} p={p} compact />)}</div> : <p className="muted small">Henüz kaybeden kayıt yok.</p>}
