@@ -139,6 +139,19 @@ def scan_news(store, settings, matches: list[dict] | None = None) -> dict:
         r["leagues"] = sorted(lgs)
     if n_dup:
         log.append(f"ℹ️ {n_dup} tekrar eden haber (başlık benzerliği) tek kayıtta birleştirildi")
+    # uzun çalışmada maç listesi eskiyebilir (yanlış eşlenmiş/hayalet maç silinmiş olabilir): yazmadan önce
+    # bağlanan maçların hâlâ var olduğunu doğrula, olmayanı bağdan düş (agenda.match_id yabancı anahtarı)
+    ref = sorted({mid for r in rows for mid in (r.get("match_ids") or [])})
+    if ref:
+        alive = set()
+        for i in range(0, len(ref), 150):
+            alive |= {m["id"] for m in store.select("matches", [("id", "in", ref[i:i + 150])])}
+        stale = set(ref) - alive
+        if stale:
+            for r in rows:
+                r["match_ids"] = [m for m in (r.get("match_ids") or []) if m in alive]
+                r["match_id"] = r["match_ids"][0] if r["match_ids"] else None
+            log.append(f"ℹ️ {len(stale)} silinmiş maça bağlı haber bağı düşürüldü")
     store.upsert("agenda", rows)
     linked = sum(1 for r in rows if r["match_ids"])
     log.append(f"{len(rows)} haber kaydedildi, {linked} tanesi maçlara bağlandı")

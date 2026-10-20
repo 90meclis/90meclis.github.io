@@ -79,8 +79,11 @@ def main(argv=None) -> int:
         out_logs += r["log"] + [f"Havuz: {r['records']} kaynak kaydı → {r['matches']} birleşik maç"]
         pool.log.clear()
     if "gundem" in steps and not s.demo_mode:
-        out_logs += scan_news(store, s)["log"]
-        _done(store, "gundem")
+        try:  # haber taraması düşerse kadro / bot / sonuçlandırma adımları yine çalışsın
+            out_logs += scan_news(store, s)["log"]
+            _done(store, "gundem")
+        except Exception as e:
+            out_logs.append(f"⚠️ gündem taraması başarısız: {e}")
     if "kadro" in steps and not s.demo_mode:
         sq = pool.news.refresh_squads(force=a.zorla)
         out_logs.append(f"Kadro: {sq['due']}/{sq['teams']} takım yenilendi (Wikipedia {sq['wikipedia']}, BSD {sq['bsd']}), "
