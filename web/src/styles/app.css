@@ -518,7 +518,7 @@ html, body { overflow-x: clip; }
 .approach h3 { font-size: 14px; margin: 0 0 6px; }
 .approach ul { margin: 0; padding-left: 18px; font-size: 14px; color: var(--muted); }
 .approach li { margin: 3px 0; }
-/* Tahmin Botu bülteni */
+/* Ortak bülteni */
 .bot-kpis { margin: 12px 0 16px; }
 .bot-league { margin-bottom: 18px; }
 .bot-list { display: grid; gap: 10px; }
@@ -590,7 +590,7 @@ html, body { overflow-x: clip; }
 .scan-tbl tr.val td { background: rgba(215,255,63,.07); }
 .scan-tbl tr.val td:first-child { box-shadow: inset 2px 0 0 var(--lime); }
 .scan-tbl tr.pick td:first-child { font-weight: 800; color: var(--lime); }
-/* Tahmin Botu çalışma masası */
+/* Ortak çalışma masası */
 .term { display: flex; flex-wrap: wrap; gap: 6px 16px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; background: #070a0f; border: 1px solid var(--line); border-radius: var(--r-sm); padding: 10px 12px; margin: 10px 0 12px; color: var(--muted); }
 .term b { color: var(--text); }
 .term .pos b { color: var(--lime); }
@@ -923,3 +923,35 @@ html, body { overflow-x: clip; }
 .vk { display: inline-block; font-size: 10.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; padding: 2px 7px; border-radius: 999px; color: #ffc65c; background: rgba(255,198,92,.1); border: 1px solid rgba(255,198,92,.35); white-space: nowrap; }
 .oc-m { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.25; }
 .oc header .vk { grid-row: 2; grid-column: 2 / -1; justify-self: start; }
+/* Sezon simülasyonu */
+.chips-scroll { display: flex; gap: 8px; overflow-x: auto; padding: 2px 0 12px; scrollbar-width: none; }
+.chips-scroll .chip { flex: none; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line-2); background: var(--bg-2); color: var(--text); font-weight: 600; font-size: 13px; cursor: pointer; white-space: nowrap; }
+.chips-scroll .chip.on { background: var(--lime); color: #071006; border-color: var(--lime); }
+.sim-heads { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-bottom: 14px; }
+.sim-h { display: grid; gap: 2px; padding: 14px 16px; border-radius: 16px; background: var(--bg-2); border: 1px solid var(--line); }
+.sim-h small { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+.sim-h b { font-family: "Barlow Condensed", sans-serif; font-size: 26px; text-transform: uppercase; line-height: 1.05; }
+.sim-h span { color: var(--muted); font-size: 13px; }
+.sim-h.lead { border-color: rgba(198,255,61,.4); background: linear-gradient(135deg, rgba(198,255,61,.12), transparent 60%), var(--bg-2); }
+.sim-h.lead span:first-letter { color: var(--lime); }
+.sim-h.bad { border-color: rgba(255,107,107,.35); }
+.sim-h.up { border-color: rgba(72,213,255,.35); }
+.sim-tbl td small { color: var(--muted); font-size: 11px; margin-left: 3px; }
+.sim-tbl td small.pos { color: var(--lime); } .sim-tbl td small.neg { color: #ff7a7a; }
+.sim-tbl .sim-team { display: grid; } .sim-tbl .sim-team small { margin: 0; }
+.sim-tbl td.hot { color: var(--lime); font-weight: 700; } .sim-tbl td.cold { color: #ff7a7a; font-weight: 700; }
+.sim-dist { display: flex; gap: 1px; min-width: 120px; }
+.sim-dist i { flex: 1; height: 14px; border-radius: 2px; background: var(--lime); }
+@media (max-width: 560px) { .sim-dcol { display: none; } }
+.sim-mini td:first-child { font-weight: 700; white-space: nowrap; }
+.sim2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.sim2-t { display: grid; gap: 4px; padding: 12px; border-radius: 14px; background: var(--bg-3, rgba(255,255,255,.03)); border: 1px solid var(--line); min-width: 0; }
+.sim2-t > b { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sim2-rank { font-family: "Barlow Condensed", sans-serif; font-size: 34px; font-weight: 800; line-height: 1; color: var(--lime); }
+.sim2-rank small { font-size: 14px; color: var(--muted); font-weight: 600; }
+.sim2-bar { display: grid; grid-template-columns: 58px 1fr 40px; align-items: center; gap: 6px; font-size: 12px; }
+.sim2-bar em { font-style: normal; color: var(--muted); }
+.sim2-bar i { height: 6px; border-radius: 3px; background: rgba(255,255,255,.07); overflow: hidden; }
+.sim2-bar u { display: block; height: 100%; border-radius: 3px; background: var(--lime); }
+.sim2-bar u.r { background: #ff6b6b; }
+.sim2-bar strong { text-align: right; font-variant-numeric: tabular-nums; }

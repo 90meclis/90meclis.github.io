@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { normalizeScenarios, scenarioMeta, type Scn } from "../lib/scenario";
+import { leagueTables, seasonSim, simConsistent } from "../lib/data";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import * as api from "../lib/data";
 import { useAsync } from "../lib/useAsync";
@@ -388,6 +389,7 @@ function Ozet({ m, d, go }: { m: Match; d: Dossier; go: (k: TabKey) => void }) {
             <button type="button" className="btn ghost" onClick={() => go("oran")}>Bütün pazarlar →</button>
           </div>
         </Card>
+        <SeasonStakes m={m} />
         {d.picks.length > 1 && (
           <Card title="Bu maçtaki tüm kararlar"><div className="picks">{d.picks.map((p) => <PickCard key={p.id} p={p} />)}</div></Card>
         )}
@@ -1270,3 +1272,33 @@ function Approach({ a, m }: { a: AnalysisPayload; m: Match }) {
   );
 }
 
+
+/** Sezon simülasyonundan iki takımın sezon sonu tablosu (yalnızca bugünkü puan durumuyla tutan hesap). */
+function SeasonStakes({ m }: { m: Match }) {
+  const q = useAsync(`simmd:${m.league}`, async () => {
+    const [sim, tb] = await Promise.all([seasonSim(m.league), leagueTables([m.league])]);
+    return sim && tb && simConsistent(sim, tb) ? sim : null;
+  }, [m.league]);
+  const rows = (q.data ?? []).filter((r) => sameTeam(r.team_id, m.home_team_id) || sameTeam(r.team_id, m.away_team_id));
+  if (rows.length !== 2) return null;
+  const [h, a] = sameTeam(rows[0].team_id, m.home_team_id) ? rows : [rows[1], rows[0]];
+  const cell = (p: number) => (p <= 0 ? "%0" : p < 0.005 ? "<%1" : `%${Math.round(p * 100)}`);
+  const hasK = h.kume > 0 || a.kume > 0;
+  return (
+    <Card title="Sezon sonu ne diyor?" aside={<Link to={`/sezon-simulasyonu?lig=${m.league}`} className="more">Bütün tablo →</Link>}>
+      <div className="sim2">
+        {[h, a].map((r) => (
+          <div key={r.team_id} className="sim2-t">
+            <b>{r.team_name}</b>
+            <span className="sim2-rank">{r.tahmini_sira}.<small> bitirir</small></span>
+            <span className="muted small">{r.mevcut_puan} puan → ~{Math.round(r.ort_puan)}</span>
+            {([["Şampiyon", r.sampiyon, "g"], ["İlk 4", r.ilk4, "g"], ...(hasK ? [["Düşme", r.kume, "r"]] : [])] as [string, number, string][]).map(([l, p, c]) => (
+              <span key={l} className="sim2-bar"><em>{l}</em><i><u className={c} style={{ width: `${Math.max(p > 0 ? 2 : 0, p * 100)}%` }} /></i><strong>{cell(p)}</strong></span>
+            ))}
+          </div>
+        ))}
+      </div>
+      <p className="muted tiny">Kalan fikstür {h.kosu.toLocaleString("tr-TR")} kez oynatıldı.</p>
+    </Card>
+  );
+}

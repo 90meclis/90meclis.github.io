@@ -38,5 +38,10 @@
   "path": "/hakkinda",
   "title": "Yöntem ve Sorumlu Oyun",
   "description": "90 Meclis tahminleri nasıl üretir, kayıtları nasıl kilitler ve neden garanti vermez."
+ },
+ {
+  "path": "/sezon-simulasyonu",
+  "title": "Sezon Simülasyonu",
+  "description": "Kalan bütün maçlar Meclis modeliyle 10.000 kez oynatıldı: Süper Lig, Premier Lig ve 17 ligde şampiyonluk, ilk dört ve küme düşme olasılıkları."
  }
 ]

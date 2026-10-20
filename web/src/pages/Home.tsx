@@ -17,15 +17,16 @@ import type { Coupon, Match, Prediction } from "../lib/types";
 import "../styles/elite.css";
 
 const UEFA = new Set(["CL", "EL", "ECL"]);
-const ortak = () => NAV.find((n) => /ortak|tahmin-botu/.test(n.to)) ?? { to: "/tahmin-botu", label: "Ortak", icon: "◆", short: "Ortak" };
+const ortak = () => NAV.find((n) => n.to === "/ortak") ?? { to: "/ortak", label: "Ortak", icon: "◆", short: "Ortak" };
 
 const SECTION_TXT: [RegExp, string][] = [
   [/mac-merkezi/, "Maça dokun: kadro, ağırlıklı eksikler, yaptığı/verdiği istatistik, Avrupa izi, senaryolar."],
-  [/ortak|tahmin-botu/, "Ortak bütün bülteni tarar: her maç, her pazar, model olasılığı ve piyasa değeri."],
+  [/ortak/, "Ortak bütün bülteni tarar: her maç, her pazar, model olasılığı ve piyasa değeri."],
   [/tahmin-arsivi/, "Günün Kararı, Meclis Görüşleri ve Karar Birliği. Kilitli defter."],
   [/guven-panosu/, "Tahminler iyi mi? İsabet, ROI, kapanış oranı ve kalibrasyon, kayıplar dahil."],
   [/gundem-masasi/, "Sakatlık, transfer ve teknik direktör gündemi, maçlara bağlı."],
   [/veri-laboratuvari/, "Kendi analizini yap: takım seç, maç maç seri, liderler, Seri Avcısı."],
+  [/sezon-simulasyonu/, "Kalan fikstür 10.000 kez oynandı: şampiyonluk, ilk dört ve düşme olasılıkları."],
 ];
 
 function Countdown({ iso }: { iso: string }) {
@@ -204,7 +205,7 @@ export default function Home() {
         </section>
 
         <section className="hg-side">
-          <div className="sec-head"><h2>{O.label === "Tahmin Botu" ? "Ortak" : O.label} ne görüyor?</h2><Link to={O.to} className="more">Bütün tarama →</Link></div>
+          <div className="sec-head"><h2>{O.label} ne görüyor?</h2><Link to={O.to} className="more">Bütün tarama →</Link></div>
           <Gate loading={next.loading} error={next.error} rows={3}>
             {pickRows.length ? (<>
               <p className="muted tiny op-cap">{picksAreChoices ? "Ortak'ın bu bültende seçtikleri: model olasılığı piyasa oranının ima ettiğinden yüksek." : "Değer eşiğini (%3) geçen seçimler."}</p>
@@ -292,7 +293,7 @@ export default function Home() {
       <section className="sections" aria-label="Bölümler">
         {NAV.map((n) => {
           const txt = SECTION_TXT.find(([re]) => re.test(n.to))?.[1] ?? "";
-          const lab = /ortak|tahmin-botu/.test(n.to) ? (n.label === "Tahmin Botu" ? "Ortak" : n.label) : n.label;
+          const lab = n.label;
           return (
             <Link key={n.to} to={n.to} className="sect">
               <span className="sect-i" aria-hidden="true">{n.icon}</span>

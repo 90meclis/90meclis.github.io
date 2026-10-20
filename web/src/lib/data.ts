@@ -180,7 +180,7 @@ export async function predictionsForMatches(ids: string[]): Promise<Prediction[]
 }
 
 
-/** Tahmin Botu bülteni: günün maçları ve her maçın son analizi (yalnızca botun seçim için gereken alanları). */
+/** Ortak bülteni: günün maçları ve her maçın son analizi (yalnızca botun seçim için gereken alanları). */
 export interface BotAnalysis {
   match_id: string; created_at: string; ready: boolean | null; basis: string | null;
   markets: import("./types").MarketRow[] | null; scenarios: { ad: string; anlatım: string; olasılık: number | null }[] | null;
@@ -389,4 +389,32 @@ export async function oddsMovesFor(ids: string[]): Promise<OddsMove[]> {
     for (let i = 0; i < ids.length; i += 40) out.push(...(await run<OddsMove>(db().from("v_oran_hareketi").select("*").in("match_id", ids.slice(i, i + 40)))));
     return out;
   } catch { return []; }
+}
+
+/** Sezon simülasyonu (v_sezon_simulasyonu): kalan fikstürün 10.000 kez oynatılması. Tablo yoksa null. */
+export interface SimRow {
+  league: string; team_id: string; team_name: string; kosu: number; sampiyon: number; ilk4: number; kume: number;
+  ort_puan: number; ort_sira: number; mevcut_puan: number; kalan_mac: number; sira_dagilimi: number[] | null;
+  computed_at: string; yontem: string | null; tahmini_sira: number;
+}
+export const seasonSim = (lg?: string) =>
+  viewOrNull<SimRow>(() => { const q = db().from("v_sezon_simulasyonu").select("*"); return (lg ? q.eq("league", lg) : q).order("league").order("ort_sira"); });
+export const seasonSimForTeams = (ids: string[]) =>
+  viewOrNull<SimRow>(() => db().from("v_sezon_simulasyonu").select("*").in("team_id", ids));
+export const leagueTables = (lgs: string[]) =>
+  viewOrNull<StandRow>(() => db().from("v_puan_durumu").select("*").in("league", lgs));
+/**
+ * Simülasyon bugünkü puan durumuyla birebir tutuyor mu? Takım listesi ve her takımın puanı aynı olmalı;
+ * oynanan + kalan maç bütün takımlarda eşit olmalı. Tutmayan lig gösterilmez (eski/bozuk hesap yayımlanmaz).
+ */
+export function simConsistent(sim: SimRow[], table: StandRow[]): boolean {
+  if (!sim.length || sim.length !== table.length) return false;
+  const t = new Map(table.map((r) => [r.team_id, r]));
+  const tot = new Set<number>();
+  for (const s of sim) {
+    const r = t.get(s.team_id);
+    if (!r || r.puan !== s.mevcut_puan) return false;
+    tot.add(r.o + s.kalan_mac);
+  }
+  return tot.size === 1;
 }
