@@ -810,3 +810,93 @@ html, body { overflow-x: clip; }
 .oc-val span { font-size: 13.5px; margin-right: 12px; } .oc-val em { font-style: normal; font-weight: 800; }
 .oc-say { margin: 0; font-size: 13.5px; color: var(--muted); line-height: 1.5; }
 .oc-more { justify-self: start; background: none; border: 1px solid var(--line-2); color: var(--text); border-radius: 999px; padding: 6px 12px; font-size: 12.5px; font-weight: 700; cursor: pointer; }
+/* Maç sayfası — elit skor tabelası */
+.scoreboard.elite { position: relative; overflow: hidden; background:
+  radial-gradient(120% 80% at 0% 0%, rgba(215,255,63,.10), transparent 55%), radial-gradient(120% 80% at 100% 0%, rgba(69,208,255,.10), transparent 55%), var(--card); }
+.scoreboard.elite .sb-main { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: start; margin: 14px 0 12px; }
+.sb-side { display: grid; justify-items: center; gap: 6px; min-width: 0; }
+.sb-side .sb-team { font-size: clamp(16px, 4.6vw, 30px); line-height: 1.05; text-align: center !important; overflow-wrap: anywhere; }
+.crest { width: 54px; height: 62px; filter: drop-shadow(0 6px 14px rgba(0,0,0,.45)); animation: crin .5s ease both; }
+@keyframes crin { from { opacity: 0; transform: scale(.85); } }
+.fpills { display: inline-flex; gap: 3px; }
+.fp { font-style: normal; width: 18px; height: 18px; border-radius: 5px; display: grid; place-items: center; font-size: 10px; font-weight: 900; color: #0a0e14; }
+.fp.G { background: #5fe39a; } .fp.B { background: #9aa8b8; } .fp.M { background: #ff6b6b; color: #fff; }
+.sb-score { padding-top: 10px; }
+.cd { font-size: 11.5px; color: var(--muted); font-weight: 700; }
+.hprob { margin: 4px 0 12px; }
+.hp-bar { display: flex; height: 28px; border-radius: 10px; overflow: hidden; gap: 2px; }
+.hp-bar span { display: grid; place-items: center; min-width: 34px; font-size: 12px; color: #0a0e14; transition: width .6s cubic-bezier(.2,.8,.2,1); }
+.hp-bar .h0 { background: #d7ff3f; } .hp-bar .h1 { background: #9aa8b8; } .hp-bar .h2 { background: #45d0ff; }
+.hp-k { display: flex; justify-content: space-between; font-size: 11px; color: var(--dim); margin-top: 4px; gap: 8px; }
+.hp-k span:nth-child(2) { text-transform: uppercase; letter-spacing: .06em; font-weight: 800; }
+.cstrip { text-align: left; border-top: 1px solid var(--line); padding-top: 10px; margin-bottom: 8px; display: grid; gap: 5px; }
+.cs-h { display: grid; grid-template-columns: 1fr auto 1fr; font-size: 11px; font-weight: 800; color: var(--dim); }
+.cs-h span:last-child { text-align: right; } .cs-h small { font-weight: 600; text-transform: uppercase; letter-spacing: .05em; font-size: 9.5px; }
+.cs-row { display: grid; grid-template-columns: 58px 1fr 82px 1fr 58px; gap: 6px; align-items: center; font-size: 12.5px; }
+.cs-v { display: flex; gap: 4px; align-items: baseline; font-family: ui-monospace, Menlo, monospace; }
+.cs-v.r { justify-content: flex-end; }
+.cs-v b { font-size: 13.5px; } .cs-v small { color: var(--dim); font-size: 10.5px; }
+.cs-k { text-align: center; color: var(--muted); font-size: 11.5px; font-weight: 700; }
+.cs-bar { height: 6px; background: rgba(255,255,255,.06); border-radius: 99px; display: flex; overflow: hidden; }
+.cs-bar.l { justify-content: flex-end; }
+.cs-bar i { display: block; height: 100%; background: rgba(255,255,255,.28); border-radius: 99px; transition: width .6s ease; }
+.cs-bar.l i.win { background: #d7ff3f; } .cs-bar.r i.win { background: #45d0ff; }
+.lucks { display: grid; gap: 3px; margin-top: 4px; }
+.luck { font-size: 11.5px; color: var(--muted); } .luck b { color: var(--text); }
+.luck.up b::after { content: " ▲"; color: #5fe39a; } .luck.down b::after { content: " ▼"; color: #ff6b6b; }
+.mtabs.stuck { background: rgba(10,14,20,.92); backdrop-filter: blur(10px); box-shadow: 0 8px 24px rgba(0,0,0,.35); }
+.mt-mini { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; padding: 0 10px; min-height: 44px; border-radius: 12px; background: var(--card-2); font-family: ui-monospace, Menlo, monospace; font-size: 13px; color: var(--lime); animation: crin .25s ease both; }
+.mt-mini b { color: var(--text); font-family: "Barlow Condensed", var(--font); font-size: 15px; }
+.mtab-body { animation: tabin .22s ease both; }
+@keyframes tabin { from { opacity: 0; transform: translateY(6px); } }
+@media (prefers-reduced-motion: reduce) { .mtab-body, .crest, .pf-line, .mt-mini, .od-avatar { animation: none; } }
+@media (max-width: 400px) { .cs-row { grid-template-columns: 50px 1fr 70px 1fr 50px; } .crest { width: 44px; height: 50px; } }
+/* Senaryolar — film afişi kartları */
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.scn-intro h2 { font-family: "Barlow Condensed", var(--font); font-size: 30px; text-transform: uppercase; margin: 4px 0 2px; }
+.scn-rail { display: grid; grid-auto-flow: column; grid-auto-columns: 86%; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 10px 2px 14px; margin: 0 -16px; padding-left: 16px; padding-right: 16px; scrollbar-width: none; }
+.scn-rail::-webkit-scrollbar { display: none; }
+@media (min-width: 900px) { .scn-rail { grid-auto-flow: row; grid-template-columns: repeat(2, 1fr); grid-auto-columns: auto; overflow: visible; margin: 0; padding: 10px 0; } }
+.scn2 { scroll-snap-align: center; border-radius: 18px; border: 1px solid hsl(var(--h) 60% 50% / .35); background: linear-gradient(180deg, hsl(var(--h) 60% 20% / .55), var(--card) 42%); padding: 14px; display: grid; gap: 10px; align-content: start; }
+.scn2-poster { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; }
+.scn2-no { font-size: 10.5px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: hsl(var(--h) 85% 65%); }
+.scn2-poster h3 { font-family: "Barlow Condensed", var(--font); font-size: 28px; line-height: .95; text-transform: uppercase; margin: 4px 0 0; }
+.ring { width: 64px; height: 64px; }
+.ring-bg { fill: rgba(0,0,0,.25); stroke: rgba(255,255,255,.08); stroke-width: 6; }
+.ring-fg { fill: none; stroke-width: 6; stroke-linecap: round; transition: stroke-dasharray .9s cubic-bezier(.2,.8,.2,1); }
+.ring text { fill: #fff; font-family: "Barlow Condensed", var(--font); font-weight: 800; font-size: 17px; }
+.scn2-story { margin: 0; font-size: 14.5px; line-height: 1.55; }
+.tl { position: relative; height: 54px; margin: 2px 6px; }
+.tl-track { position: absolute; left: 0; right: 0; top: 22px; height: 4px; border-radius: 99px; background: rgba(255,255,255,.1); }
+.tl-ht { position: absolute; left: 47.4%; top: -5px; width: 2px; height: 14px; background: rgba(255,255,255,.3); }
+.tl-dot { position: absolute; top: 10px; transform: translateX(-50%); min-width: 30px; height: 28px; border-radius: 99px; border: 2px solid hsl(var(--h) 80% 60%); background: var(--bg); color: var(--text); font-size: 10.5px; font-weight: 800; cursor: pointer; padding: 0 5px; }
+.tl-dot.on { background: hsl(var(--h) 80% 60%); color: #0a0e14; }
+.tl-turn { position: absolute; top: -4px; transform: translateX(-50%); font-size: 16px; filter: drop-shadow(0 0 6px rgba(255,196,61,.8)); }
+.tl-scale { position: absolute; left: 0; right: 0; bottom: 0; display: flex; justify-content: space-between; font-size: 10px; color: var(--dim); }
+.acts { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; border-left: 2px solid hsl(var(--h) 60% 50% / .4); }
+.acts li button { display: flex; gap: 8px; align-items: baseline; width: 100%; background: none; border: 0; color: var(--text); text-align: left; padding: 4px 10px; cursor: pointer; font-size: 14px; }
+.acts .a-min { font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; color: hsl(var(--h) 85% 65%); min-width: 34px; }
+.acts li p { margin: 0 10px 6px 52px; font-size: 13.5px; color: var(--muted); line-height: 1.5; animation: tabin .2s ease both; }
+.acts li.on { background: rgba(255,255,255,.03); }
+.turn { margin: 0; padding: 10px 12px; border-radius: 12px; background: rgba(255,196,61,.08); border: 1px solid rgba(255,196,61,.3); font-size: 13.5px; }
+.turn span { display: block; font-size: 10.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: #ffc43d; margin-bottom: 2px; }
+.final-btn { width: 100%; min-height: 44px; border-radius: 12px; border: 1px dashed rgba(255,255,255,.25); background: rgba(0,0,0,.2); color: var(--text); font-weight: 750; cursor: pointer; }
+.final-show { display: grid; justify-items: center; gap: 6px; padding: 8px; animation: crin .4s ease both; }
+.final-score { font-family: "Barlow Condensed", var(--font); font-size: 44px; line-height: 1; color: hsl(var(--h) 85% 65%); }
+.score-chips { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.score-chips i { font-style: normal; font-family: ui-monospace, Menlo, monospace; font-size: 13px; padding: 3px 8px; border-radius: 8px; background: rgba(255,255,255,.07); }
+.score-chips small { color: var(--dim); }
+.scn-mk { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; }
+.scn-mk span { display: flex; justify-content: space-between; gap: 6px; padding: 6px 8px; border-radius: 8px; font-size: 12px; background: rgba(255,255,255,.05); }
+.scn-mk span.w { background: rgba(95,227,154,.14); color: #8ff0bb; } .scn-mk span.l { background: rgba(255,107,107,.12); color: #ff9c9c; }
+.scn-mk b { font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.signals ul { margin: 4px 0 0; padding-left: 18px; font-size: 13px; color: var(--muted); }
+.signals li::marker { content: "◉  "; color: #ff6b6b; }
+.scn-pick { margin: 0; padding: 10px 12px; border-radius: 12px; background: rgba(215,255,63,.07); border: 1px solid rgba(215,255,63,.3); font-size: 14px; font-weight: 700; }
+.scn-pick span { display: block; font-size: 10.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--lime); }
+.scn-pick.l { background: rgba(255,107,107,.08); border-color: rgba(255,107,107,.35); } .scn-pick.l span { color: #ff9c9c; }
+.topscn { display: grid; grid-template-columns: 56px 1fr auto; gap: 12px; align-items: center; width: 100%; text-align: left; padding: 10px 12px; margin-bottom: 14px; border-radius: 16px; border: 1px solid rgba(215,255,63,.25); background: linear-gradient(90deg, rgba(215,255,63,.08), transparent); color: var(--text); cursor: pointer; }
+.topscn .ring { width: 56px; height: 56px; }
+.topscn small { display: block; font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: var(--lime); }
+.topscn b { display: block; font-size: 16px; } .topscn em { display: block; font-style: normal; font-size: 12.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.topscn i { font-style: normal; font-size: 22px; color: var(--dim); }

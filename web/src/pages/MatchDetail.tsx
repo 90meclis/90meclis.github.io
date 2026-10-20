@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { normalizeScenarios, type Scn } from "../lib/scenario";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import * as api from "../lib/data";
 import { useAsync } from "../lib/useAsync";
@@ -151,6 +152,14 @@ function Detail({ m }: { m: Match }) {
   const st = matchState(m);
   const sc = hasScore(m);
   const l = league(m.league);
+  const [stuck, setStuck] = useState(false);
+  useEffect(() => {
+    const el = document.querySelector(".scoreboard");
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(([e]) => setStuck(!e.isIntersecting), { rootMargin: "-60px 0px 0px 0px" });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
   const counts: Partial<Record<TabKey, number>> = d.data ? {
     eksik: injuryCount(d.data, m),
     h2h: d.data.h2h.length,
@@ -160,24 +169,36 @@ function Detail({ m }: { m: Match }) {
   return (
     <div className="detail">
       <nav className="crumbs" aria-label="Konum"><Link to="/mac-merkezi">Maç Merkezi</Link> <span aria-hidden="true">/</span> <Link to={`/mac-merkezi?gun=${m.kickoff_at.slice(0, 10)}&lig=${m.league}`}>{l.name}</Link></nav>
-      <section className="scoreboard">
+      <section className="scoreboard elite">
         <div className="sb-meta"><span>{l.flag} {l.name}</span><span>{dateLong(m.kickoff_at)} · {time(m.kickoff_at)} TSİ</span></div>
         <div className="sb-main">
-          <h1 className="sb-team home">{m.home_name}</h1>
+          <div className="sb-side home">
+            <Crest name={m.home_name} />
+            <h1 className="sb-team">{m.home_name}</h1>
+            {d.data && <FormPills rows={d.data.hRows} />}
+          </div>
           <div className="sb-score">
             {sc ? <span className="sb-goals">{m.home_goals}<i>–</i>{m.away_goals}</span> : <span className="sb-time">{time(m.kickoff_at)}</span>}
             {st.label && <span className={`mstate ${st.key}`}>{st.label}</span>}
+            {!sc && <Countdown iso={m.kickoff_at} />}
             {m.ht_home_goals !== null && sc && <small className="muted">İY {m.ht_home_goals}-{m.ht_away_goals}</small>}
           </div>
-          <h1 className="sb-team away">{m.away_name}</h1>
+          <div className="sb-side away">
+            <Crest name={m.away_name} />
+            <h1 className="sb-team">{m.away_name}</h1>
+            {d.data && <FormPills rows={d.data.aRows} />}
+          </div>
         </div>
+        {d.data && <HeroProb m={m} d={d.data} />}
+        {d.data && <CompareStrip m={m} d={d.data} />}
         <div className="sb-foot">
           {m.venue && <span>🏟 {m.venue}{m.city ? `, ${m.city}` : ""}</span>}
           {m.referee && <span>Hakem: {m.referee}</span>}
         </div>
       </section>
 
-      <nav id="mtabs" className="mtabs" role="tablist" aria-label="Maç dosyası bölümleri">
+      <nav id="mtabs" className={`mtabs ${stuck ? "stuck" : ""}`} role="tablist" aria-label="Maç dosyası bölümleri">
+        {stuck && <span className="mt-mini" aria-hidden="true"><b>{abbr(m.home_name)}</b>{sc ? `${m.home_goals}–${m.away_goals}` : time(m.kickoff_at)}<b>{abbr(m.away_name)}</b></span>}
         {TABS.filter(([k]) => k !== "senaryo" || !d.data || d.data.a).map(([k, label]) => (
           <button key={k} role="tab" type="button" aria-selected={tab === k} className={tab === k ? "on" : ""} onClick={() => go(k)}>
             {label}{counts[k] ? <small>{counts[k]}</small> : null}
@@ -187,7 +208,7 @@ function Detail({ m }: { m: Match }) {
 
       <Gate loading={d.loading} error={d.error} rows={5}>
         {d.data && (
-          <div className="mtab-body" role="tabpanel">
+          <div className="mtab-body" role="tabpanel" key={tab}>
             {tab === "ozet" && <Ozet m={m} d={d.data} go={go} />}
             {tab === "kadro" && <Squads m={m} d={d.data} />}
             {tab === "eksik" && <Absences m={m} d={d.data} />}
@@ -199,6 +220,97 @@ function Detail({ m }: { m: Match }) {
         )}
       </Gate>
       <Disclaimer />
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------------------------
+// Skor tabelası parçaları: monogram arma (telifsiz), form hapları, geri sayım, kazanma olasılığı, istatistik şeridi
+// ---------------------------------------------------------------------------------------------
+const STOP = new Set(["fc", "cf", "sc", "sk", "fk", "afc", "ac", "as", "ss", "us", "cd", "ud", "rc", "rcd", "sv", "vfb", "vfl", "tsg", "1.", "de", "of", "the"]);
+function abbr(n: string): string {
+  const w = n.replace(/[^\p{L}\p{N} ]/gu, " ").split(/\s+/).filter((x) => x && !STOP.has(x.toLocaleLowerCase("tr-TR")));
+  if (!w.length) return n.slice(0, 3).toLocaleUpperCase("tr-TR");
+  return (w.length === 1 ? w[0].slice(0, 3) : w.slice(0, 3).map((x) => x[0]).join("")).toLocaleUpperCase("tr-TR");
+}
+function hue(n: string): number { let h = 0; for (const c of n) h = (h * 31 + c.charCodeAt(0)) % 360; return h; }
+function Crest({ name }: { name: string }) {
+  const h = hue(name), t = abbr(name);
+  return (
+    <svg className="crest" viewBox="0 0 48 56" aria-hidden="true">
+      <defs><linearGradient id={`cr${h}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor={`hsl(${h} 70% 52%)`} /><stop offset="1" stopColor={`hsl(${(h + 30) % 360} 65% 30%)`} /></linearGradient></defs>
+      <path d="M24 2 L44 9 V27 C44 41 35 50 24 54 C13 50 4 41 4 27 V9 Z" fill={`url(#cr${h})`} stroke="rgba(255,255,255,.35)" strokeWidth="1.5" />
+      <path d="M24 2 L44 9 V20 H4 V9 Z" fill="rgba(255,255,255,.10)" />
+      <text x="24" y="35" textAnchor="middle" fontSize={t.length > 2 ? 13 : 16} fontWeight="800" fill="#fff" fontFamily="Barlow Condensed, sans-serif">{t}</text>
+    </svg>
+  );
+}
+function FormPills({ rows }: { rows: GameRow[] }) {
+  const r = [...rows].sort((a, b) => b.m.kickoff_at.localeCompare(a.m.kickoff_at)).slice(0, 5).reverse();
+  if (r.length < 3) return null;
+  return <span className="fpills" aria-label={`Son ${r.length} maç: ${r.map((x) => x.res).join(" ")}`}>{r.map((x, i) => <i key={i} className={`fp ${x.res}`} title={`${x.home ? "İç" : "Dış"} · ${x.opp} ${x.gf}-${x.ga}`}>{x.res}</i>)}</span>;
+}
+function Countdown({ iso }: { iso: string }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => { const t = setInterval(() => setNow(Date.now()), 30000); return () => clearInterval(t); }, []);
+  const ms = new Date(iso).getTime() - now;
+  if (ms <= 0 || ms > 7 * 864e5) return null;
+  const d = Math.floor(ms / 864e5), h = Math.floor((ms % 864e5) / 36e5), mi = Math.floor((ms % 36e5) / 6e4);
+  return <small className="cd">{d ? `${d} gün ${h} sa` : h ? `${h} sa ${mi} dk` : `${mi} dk`} sonra</small>;
+}
+function HeroProb({ m, d }: { m: Match; d: Dossier }) {
+  const p1 = Object.fromEntries((d.a?.markets ?? []).filter((x) => x.market === "1X2").map((x) => [x.selection, x.probability]));
+  const own = modelOwn(d.a) && p1["1"] !== undefined;
+  const imp = implied1x2(m);
+  const v = own ? [p1["1"], p1["X"], p1["2"]] : imp;
+  if (!v) return null;
+  return (
+    <div className="hprob">
+      <div className="hp-bar">{v.map((x, i) => <span key={i} className={`h${i}`} style={{ width: `${x * 100}%` }}><b>{pct(x)}</b></span>)}</div>
+      <div className="hp-k"><span>{m.home_name}</span><span>{own ? "Meclis olasılığı" : "Piyasa (marjsız)"}</span><span>{m.away_name}</span></div>
+    </div>
+  );
+}
+function CompareStrip({ m, d }: { m: Match; d: Dossier }) {
+  const avg = (rows: GameRow[], f: (r: GameRow) => [number | null, number | null] | undefined): [number, number, number] | null => {
+    const v = rows.map(f).filter((x): x is [number, number] => !!x && x[0] != null && x[1] != null);
+    return v.length >= 3 ? [v.reduce((a, x) => a + x[0], 0) / v.length, v.reduce((a, x) => a + x[1], 0) / v.length, v.length] : null;
+  };
+  const H = d.hRows, A = d.aRows;
+  const defs: [string, (r: GameRow) => [number | null, number | null] | undefined, number][] = [
+    ["Gol", (r) => r.vals.gol, 1], ["xG", (r) => r.xg, 2], ["Şut", (r) => r.vals.sut, 1], ["İsabetli şut", (r) => r.vals.isabet, 1], ["Korner", (r) => r.vals.korner, 1], ["Kart", (r) => r.vals.kart, 1],
+  ];
+  const rows = defs.map(([k, f, dg]) => ({ k, dg, h: avg(H, f), a: avg(A, f) })).filter((x) => x.h && x.a);
+  if (!rows.length) return null;
+  // xG şansı: gol − xG (lehte) ve yenilen − xG (aleyhte); ≥5 maç
+  const luck = (rows: GameRow[]) => {
+    const v = rows.filter((r) => r.xg && r.xg[0] != null && r.xg[1] != null);
+    if (v.length < 5) return null;
+    const f = v.reduce((a, r) => a + r.gf - r.xg![0]!, 0), g = v.reduce((a, r) => a + r.ga - r.xg![1]!, 0);
+    return { f, g, n: v.length };
+  };
+  const lt = (x: ReturnType<typeof luck>, name: string) => {
+    if (!x) return null;
+    const net = x.f - x.g;
+    const tag = net >= 2.5 ? "şanslı gidiyor" : net <= -2.5 ? "şanssız gidiyor" : "xG'ye uygun";
+    return <span className={`luck ${net >= 2.5 ? "up" : net <= -2.5 ? "down" : ""}`}><b>{name}</b> {tag}: {x.n} maçta xG'den {signed(x.f, 1)} gol attı, {signed(x.g, 1)} gol yedi</span>;
+  };
+  return (
+    <div className="cstrip" aria-label="Bu sezon maç başı, lehte–aleyhte">
+      <div className="cs-h"><span>{abbr(m.home_name)}</span><small>bu sezon maç başı · lehte–aleyhte</small><span>{abbr(m.away_name)}</span></div>
+      {rows.map((x) => {
+        const hv = x.h![0], av = x.a![0], mx = Math.max(hv, av) || 1;
+        return (
+          <div key={x.k} className="cs-row">
+            <span className="cs-v"><b>{num(hv, x.dg)}</b><small>{num(x.h![1], x.dg)}</small></span>
+            <span className="cs-bar l"><i style={{ width: `${(hv / mx) * 100}%` }} className={hv >= av && x.k !== "Kart" ? "win" : ""} /></span>
+            <span className="cs-k">{x.k}</span>
+            <span className="cs-bar r"><i style={{ width: `${(av / mx) * 100}%` }} className={av >= hv && x.k !== "Kart" ? "win" : ""} /></span>
+            <span className="cs-v r"><b>{num(av, x.dg)}</b><small>{num(x.a![1], x.dg)}</small></span>
+          </div>
+        );
+      })}
+      <div className="lucks">{lt(luck(H), m.home_name)}{lt(luck(A), m.away_name)}</div>
     </div>
   );
 }
@@ -245,6 +357,7 @@ function Ozet({ m, d, go }: { m: Match; d: Dossier; go: (k: TabKey) => void }) {
     <div className="detail-grid">
       <div className="col-main">
         {published && <Verdict picks={d.picks} a={a} m={m} />}
+        <TopScenario m={m} d={d} go={go} />
         <Card title="Maç konuşuyor" className="analysis">
           {lines.length > 0 && <div className="story">{lines.map((x, i) => <p key={i}>{x}</p>)}</div>}
           {p1["1"] !== undefined && modelOwn(a) ? (
@@ -971,24 +1084,104 @@ function ScoreGrid({ m, a }: { m: Match; a: AnalysisPayload }) {
 // ---------------------------------------------------------------------------------------------
 // SENARYOLAR
 // ---------------------------------------------------------------------------------------------
+function Ring({ p, hue }: { p: number | null; hue: number }) {
+  const r = 26, c = 2 * Math.PI * r;
+  return (
+    <svg className="ring" viewBox="0 0 64 64" aria-hidden="true">
+      <circle cx="32" cy="32" r={r} className="ring-bg" />
+      {p != null && <circle cx="32" cy="32" r={r} className="ring-fg" stroke={`hsl(${hue} 85% 60%)`} strokeDasharray={`${c * p} ${c}`} transform="rotate(-90 32 32)" />}
+      <text x="32" y="37" textAnchor="middle">{p != null ? `%${Math.round(p * 100)}` : "—"}</text>
+    </svg>
+  );
+}
+
+const SCN_HUES = [78, 165, 195, 280, 30, 340];
+
+function ScenarioCard({ s, i, m }: { s: Scn; i: number; m: Match }) {
+  const [reveal, setReveal] = useState(false);
+  const [act, setAct] = useState<number | null>(null);
+  const h = SCN_HUES[i % SCN_HUES.length];
+  const tl = s.acts.filter((x) => x.min != null);
+  return (
+    <article className="scn2" style={{ ["--h" as string]: h }}>
+      <header className="scn2-poster">
+        <div><span className="scn2-no">Senaryo {i + 1}</span><h3>{s.title}</h3></div>
+        <Ring p={s.p} hue={h} />
+      </header>
+      {s.story && <p className="scn2-story">{s.story}</p>}
+      {(tl.length > 0 || s.turn?.min != null) && (
+        <div className="tl" aria-label="Maçın zaman çizelgesi">
+          <div className="tl-track"><span className="tl-ht" /></div>
+          {tl.map((x, j) => (
+            <button key={j} type="button" className={`tl-dot ${act === j ? "on" : ""}`} style={{ left: `${(x.min! / 95) * 100}%` }} onClick={() => setAct(act === j ? null : j)} aria-label={`${x.min}′ ${x.title}`}>{x.min}′</button>
+          ))}
+          {s.turn?.min != null && <span className="tl-turn" style={{ left: `${(s.turn.min / 95) * 100}%` }} title="Kırılma anı">⚡</span>}
+          <div className="tl-scale"><span>0′</span><span>45′</span><span>90′</span></div>
+        </div>
+      )}
+      {s.acts.length > 0 && (
+        <ol className="acts">
+          {s.acts.map((x, j) => (
+            <li key={j} className={act === j ? "on" : ""}>
+              <button type="button" onClick={() => setAct(act === j ? null : j)} aria-expanded={act === j}>
+                <span className="a-min">{x.min != null ? `${x.min}′` : `${j + 1}. perde`}</span><b>{x.title || `${j + 1}. perde`}</b>
+              </button>
+              {(act === j || s.acts.length <= 2) && x.text && <p>{x.text}</p>}
+            </li>
+          ))}
+        </ol>
+      )}
+      {s.turn && <p className="turn"><span>⚡ Kırılma anı{s.turn.min != null ? ` · ${s.turn.min}′` : ""}</span>{s.turn.text}</p>}
+      {(s.final || s.scores.length > 0) && (
+        <div className="final">
+          {!reveal ? <button type="button" className="final-btn" onClick={() => setReveal(true)}>Final düdüğü: skoru göster</button> : (
+            <div className="final-show">
+              {s.final && <b className="final-score">{s.final.replace("-", " – ")}</b>}
+              {s.scores.length > 0 && <span className="score-chips">{s.scores.slice(0, 4).map((x, j) => <i key={j}>{x.s}{x.p != null && <small> %{Math.round(x.p * 100)}</small>}</i>)}</span>}
+            </div>
+          )}
+        </div>
+      )}
+      {s.markets.length > 0 && (
+        <div className="scn-mk">
+          {s.markets.slice(0, 8).map((x, j) => <span key={j} className={x.win === true ? "w" : x.win === false ? "l" : ""}><b>{x.label}</b>{x.p != null && <small>%{Math.round(x.p * 100)}</small>}</span>)}
+        </div>
+      )}
+      {s.signals.length > 0 && (
+        <div className="signals"><span className="kicker">Canlıda izle</span><ul>{s.signals.slice(0, 4).map((x, j) => <li key={j}>{x}</li>)}</ul></div>
+      )}
+      {s.pick && <p className={`scn-pick ${s.pick.win === true ? "w" : s.pick.win === false ? "l" : ""}`}><span>Meclis'in kararı bu senaryoda</span>{s.pick.text}</p>}
+      <p className="sr-only">{m.home_name} – {m.away_name}</p>
+    </article>
+  );
+}
+
+function TopScenario({ m, d, go }: { m: Match; d: Dossier; go: (k: TabKey) => void }) {
+  const top = normalizeScenarios(d.a as unknown as Record<string, unknown>, m.home_name, m.away_name).filter((x) => x.p != null).sort((x, y) => y.p! - x.p!)[0];
+  if (!top) return null;
+  return (
+    <button type="button" className="topscn" onClick={() => go("senaryo")}>
+      <Ring p={top.p} hue={SCN_HUES[0]} />
+      <span><small>En olası senaryo</small><b>{top.title}</b>{top.story && <em>{top.story}</em>}</span>
+      <i aria-hidden="true">›</i>
+    </button>
+  );
+}
+
 function ScenarioTab({ m, d }: { m: Match; d: Dossier }) {
   const a = d.a;
   const published = d.picks.length > 0;
+  const list = useMemo(() => normalizeScenarios(a as unknown as Record<string, unknown>, m.home_name, m.away_name)
+    .sort((x, y) => (y.p ?? -1) - (x.p ?? -1)), [a, m.home_name, m.away_name]);
   if (!a) return null;
   return (
     <>
-      {!!a.scenarios?.length && (
-        <Card title="Maçın olası akışları">
-          <div className="scenarios">
-            {a.scenarios.map((s) => (
-              <div key={s.ad} className="scn">
-                <div className="scn-head"><b>{s.ad}</b><span>{s.olasılık !== null ? pct(s.olasılık) : ""}</span></div>
-                <div className="scn-bar"><span style={{ width: `${(s.olasılık ?? 0) * 100}%` }} /></div>
-                <p className="muted small">{s.anlatım}</p>
-              </div>
-            ))}
-          </div>
-        </Card>
+      {list.length > 0 && (
+        <section className="scn-wrap" aria-label="Senaryolar">
+          <div className="scn-intro"><h2>Maçı kafanda oynat</h2><p className="muted small">Meclis modelinin olası akışları, en olasıdan başlayarak. Kaydır, perdelere dokun, finali aç.</p></div>
+          <div className="scn-rail">{list.map((s, i) => <ScenarioCard key={i} s={s} i={i} m={m} />)}</div>
+          <p className="muted tiny">Olasılıklar birbirini dışlamaz (ör. "gollü akış" ile "ev sahibi oyunu kurar" aynı maçta birlikte olabilir); her biri kendi başına modelden okunur.</p>
+        </section>
       )}
       {a.narrative && <Card title="Meclis'in notu"><div className="an"><MiniMd text={a.narrative} skipFirst published={published} /></div></Card>}
       <Card title="Meclis'in yaklaşımı"><Approach a={a} m={m} /></Card>

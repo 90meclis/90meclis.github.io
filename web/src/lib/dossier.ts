@@ -22,6 +22,8 @@ export interface GameRow {
   gf: number; ga: number; vals: Partial<Record<MetricKey, [number | null, number | null]>>; res: "G" | "B" | "M";
   /** Avrupa kupası aşaması: "Ön eleme/play-off" | "Lig aşaması" | "Eleme turları" (görünümden) */
   stage?: string | null;
+  /** lehte–aleyhte xG (yalnızca görünüm satırlarında, kaynakta varsa) */
+  xg?: [number | null, number | null];
 }
 
 /** v_takim_mac_istatistik satırlarından (takım × maç, lehte/aleyhte) maç satırları. */
@@ -40,7 +42,7 @@ export function viewGameRows(rows: TeamStatRow[]): GameRow[] {
     const gf = r.goals_for, ga = r.goals_against;
     return {
       m, home, opp: r.opponent, comp: r.competition === "Avrupa" ? "avrupa" : r.league === ml ? "lig" : "diger", gf, ga,
-      res: gf > ga ? "G" : gf === ga ? "B" : "M", stage: r.competition === "Avrupa" ? r.asama : null,
+      res: gf > ga ? "G" : gf === ga ? "B" : "M", stage: r.competition === "Avrupa" ? r.asama : null, xg: [r.xg_for, r.xg_against],
       vals: {
         gol: [gf, ga], iy: p(r.ht_for, r.ht_against), kg: [gf > 0 ? 1 : 0, ga > 0 ? 1 : 0], korner: p(r.corners_for, r.corners_against),
         kart: p(r.cards_for, r.cards_against), sut: p(r.shots_for, r.shots_against), isabet: p(r.sot_for, r.sot_against),
