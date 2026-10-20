@@ -219,3 +219,18 @@ def test_key_state_never_returns_value():
     states = {d.name: key_state(d, S()) for d in SOURCES}
     assert states["sportmonks"] == "tanımlı" and states["footystats"] == "anahtar bekleniyor"
     assert states["openligadb"] == "gerekmez" and "gizli" not in json.dumps(states)
+
+
+def test_met_norway_parse_nearest_hour():
+    from meclis.sources import met_no
+
+    data = {"properties": {"timeseries": [
+        {"time": "2026-10-20T18:00:00Z", "data": {"instant": {"details": {"air_temperature": 11.2, "wind_speed": 5.0,
+                                                                          "relative_humidity": 80}},
+                                                  "next_1_hours": {"summary": {"symbol_code": "rain"},
+                                                                   "details": {"precipitation_amount": 1.4}}}},
+        {"time": "2026-10-20T19:00:00Z", "data": {"instant": {"details": {"air_temperature": 10.0}}}}]}}
+    w = met_no.parse(data, "2026-10-20T18:15:00+00:00")
+    assert w["temperature_c"] == 11.2 and w["wind_kmh"] == 18.0 and w["summary"] == "Yağmurlu"
+    assert w["attribution"] == "Data from MET Norway"
+    assert met_no.parse(data, "2026-10-25T18:00:00+00:00") is None

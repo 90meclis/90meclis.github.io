@@ -969,15 +969,24 @@ class DataPool:
         t = self.team_info(match["home_team_id"], match["home_name"])
         if t.get("lat") is None:
             return None
-        try:
-            data = open_meteo.match_weather(t["lat"], t["lon"], match["kickoff_at"])
+        from .sources import met_no
+
+        data, src = None, None
+        try:  # birincil: MET Norway (ticari kullanım serbest, CC BY 4.0)
+            data, src = met_no.match_weather(t["lat"], t["lon"], match["kickoff_at"]), "met-norway"
         except Exception as e:
-            self._note("open-meteo", False, str(e))
-            return w["data"] if w else None
+            self.log.append(f"⚠️ met-norway: {e} — Open-Meteo deneniyor")
+        if not data:
+            try:
+                data, src = open_meteo.match_weather(t["lat"], t["lon"], match["kickoff_at"]), "open-meteo"
+            except Exception as e:
+                self._note("open-meteo", False, str(e))
+                return w["data"] if w else None
         if data:
+            data["source"] = src
             data["location"] = t.get("city") or t.get("stadium")
             data["approx"] = "Ev sahibi takımın şehir koordinatı (stadyum noktası değil)"
-            self.store.upsert("weather", [{"match_id": match["id"], "data": data, "source": "open-meteo",
+            self.store.upsert("weather", [{"match_id": match["id"], "data": data, "source": src,
                                            "updated_at": to_iso(now_utc())}])
         return data
 

@@ -17,6 +17,8 @@ Supabase Vault içinde durur; kodda, depoda veya tabloda yalnızca değişkenin 
 | **openfootball / football.json** | — | GitHub ham dosyaları, CC0 (kamu malı) | fikstür, sonuç, İY skoru | https://github.com/openfootball/football.json |
 | **TheSportsDB** | `THESPORTSDB_KEY` | Ücretsiz anahtar '123': ~30 istek/dk, günlük liste lig başına 3 maç | fikstür, sonuç, stadyum, şehir, kadro listesi | https://www.thesportsdb.com/pricing |
 | **Wikidata (SPARQL)** | — | Ücretsiz, CC0; sorgu başına 60 sn, User-Agent zorunlu | stadyum, stadyum kapasitesi, şehir, stadyum koordinatı, teknik direktör | https://query.wikidata.org |
+| **MET Norway** (birincil hava) | — | Ticari kullanım serbest (CC BY 4.0), tanıtıcı User-Agent, Expires süresine uyulur; atıf "Data from MET Norway" | saatlik sıcaklık, rüzgâr, yağış, nem (10 gün) | https://api.met.no/doc/TermsOfService |
+| **API-Football /odds?date=** | `API_FOOTBALL_KEY` | Ücretsiz planda dün–yarın; günde ~30 istek (bugün + yarın, sayfa başı 10 maç) | 9 şirketin (Pinnacle, Bet365, William Hill, Betfair, Marathonbet, Betano…) medyan oranı: 1X2, çifte şans, Asya handikap, gol/İY/takım A-Ü, KG, korner, kart, isabetli şut | https://www.api-football.com/documentation-v3#tag/Odds-(Pre-Match) |
 | **Open-Meteo** | — | Ticari olmayan kullanım ücretsiz, 10.000 istek/gün | hava durumu, şehir koordinatı | https://open-meteo.com/en/pricing |
 | **Haber RSS akışları** | — | Yayıncıların herkese açık RSS akışları | haber başlığı, özet, bağlantı | — |
 | **Wikipedia (güncel kadro)** | — | Ücretsiz MediaWiki API; seri istek, tanımlayıcı User-Agent, maxlag=5 | güncel A takım kadrosu, forma no, mevki | https://www.mediawiki.org/wiki/API:Etiquette |
