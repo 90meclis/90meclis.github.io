@@ -3,7 +3,7 @@
  * Yalnızca BU SEZON (1 Temmuz'dan itibaren). Ortalama yok sayılmaz: her şey maç maç seriden türetilir.
  */
 import { supabase } from "./supabase";
-import { NoDataError, corruptRow, leagueSlugs, nameKey, similarKey, seasonStartIso, type TeamStatRow } from "./data";
+import { NoDataError, corruptRow, leagueSlugs, prefetchLeagueSlugs, nameKey, similarKey, seasonStartIso, type TeamStatRow } from "./data";
 import { addDays, dayBoundsUtc, trDay } from "./format";
 import { league } from "./labels";
 
@@ -102,6 +102,7 @@ export const isEuroLeague = (lg: string) => EURO.has(lg);
 /** Yanlış ad eşlemesiyle başka takımın kimliğine yazılmış maçları ayıklar (Maç Merkezi ile aynı kural). */
 async function clean(rows: LabRow[]): Promise<LabRow[]> {
   const ids = [...new Map(rows.map((r) => [r.match_id, r])).values()];
+  await prefetchLeagueSlugs(rows.map((r) => r.league));
   const bad = new Set<string>();
   await Promise.all(ids.map(async (r) => {
     const home = r.side === "home" ? r.team_name : r.opponent, away = r.side === "home" ? r.opponent : r.team_name;
@@ -163,14 +164,11 @@ export async function bulletinRows(maxFixtures?: number): Promise<{ fixtures: Fi
 
 export interface ScanRow { match_id: string; market: string; selection: string; line: number | null; p_model: number | null; odds: number | null; edge: number | null; deger: boolean | null; secildi: boolean | null }
 export async function scanFor(ids: string[]): Promise<ScanRow[]> {
-  const out: ScanRow[] = [];
-  for (let i = 0; i < ids.length; i += 60) {
-    try {
-      const part = ids.slice(i, i + 60);
-      out.push(...await paged<ScanRow>(() => db().from("v_bot_tarama").select("match_id,market,selection,line,p_model,odds,edge,deger,secildi").in("match_id", part)));
-    } catch { /* görünüm yoksa değer bayrağı gösterilmez */ }
-  }
-  return out;
+  const parts: string[][] = [];
+  for (let i = 0; i < ids.length; i += 60) parts.push(ids.slice(i, i + 60));
+  const res = await Promise.all(parts.map((part) => paged<ScanRow>(() => db().from("v_bot_tarama").select("match_id,market,selection,line,p_model,odds,edge,deger,secildi").in("match_id", part))
+    .catch(() => [] as ScanRow[]))); // görünüm yoksa değer bayrağı gösterilmez
+  return res.flat();
 }
 
 export interface TeamLite { id: string; name: string; league: string }

@@ -71,6 +71,8 @@ export async function matchesOnDay(day: string): Promise<Match[]> {
   const [lo, hi] = dayBoundsUtc(day);
   const rows = await all<Match>(() => db().from("matches").select(MATCH_LIST).gte("kickoff_at", lo).lt("kickoff_at", hi).order("kickoff_at"));
   // Yanlış ad eşlemesiyle başka takımın kimliğine yazılmış satırları ayıkla (yalnız ad ↔ kimlik uyuşmayanlar denetlenir)
+  const sus = rows.filter((m) => { const p = m.id.split(":"); return p.length >= 4 && (nameKey(m.home_name) !== p[2] || nameKey(m.away_name) !== p[3]); });
+  await prefetchLeagueSlugs(sus.map((m) => m.league));
   const flags = await Promise.all(rows.map((m) => {
     const p = m.id.split(":");
     return p.length >= 4 && (nameKey(m.home_name) !== p[2] || nameKey(m.away_name) !== p[3])
@@ -312,6 +314,16 @@ export function leagueSlugs(lg: string): Promise<Set<string>> {
   }
   return slugCache.get(lg)!;
 }
+/** Birden çok ligin takım anahtarlarını TEK sorguda önbelleğe alır (lig başına ayrı istek yerine). */
+export function prefetchLeagueSlugs(lgs: string[]): Promise<void> {
+  const need = [...new Set(lgs)].filter((l) => l && !slugCache.has(l));
+  if (!need.length) return Promise.resolve();
+  const q = all<{ id: string; league: string }>(() => db().from("teams").select("id,league").in("league", need).order("id"))
+    .then((r) => { const m = new Map<string, Set<string>>(need.map((l) => [l, new Set<string>()])); for (const x of r) m.get(x.league)?.add(slugOf(x.id)); return m; })
+    .catch(() => new Map<string, Set<string>>());
+  for (const l of need) slugCache.set(l, q.then((m) => m.get(l) ?? new Set<string>()));
+  return q.then(() => undefined);
+}
 /** id "LG:tarih:evslug:depslug" ve adlar; yanlış eşlenmiş satırsa true. */
 export async function corruptRow(id: string, league: string, homeName: string, awayName: string): Promise<boolean> {
   const parts = id.split(":");
@@ -323,6 +335,7 @@ export async function corruptRow(id: string, league: string, homeName: string, a
   });
 }
 export async function dropCorrupt<T extends { id: string; league: string; home_name: string; away_name: string }>(rows: T[]): Promise<T[]> {
+  await prefetchLeagueSlugs(rows.map((r) => r.league));
   const flags = await Promise.all(rows.map((r) => corruptRow(r.id, r.league, r.home_name, r.away_name)));
   return rows.filter((_, i) => !flags[i]);
 }
