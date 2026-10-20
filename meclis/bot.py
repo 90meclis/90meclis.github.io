@@ -193,6 +193,11 @@ class Bot:
             sx["formation_source"] = ((lu or {}).get("source") or "lineups") if lu else "mevki sayısından türetildi"
             sx["uncertainty"] = xi_uncertainty(sx)
         a = analyze_match(match, ctx, self.s, injuries, known, players, weather, xi=xi)
+        if isinstance(a, dict):
+            try:
+                a["dosya"] = self._dossier(match, ctx, lineups)
+            except Exception as e:
+                self.log.append(f"⚠️ maç dosyası ({match['home_name']}): {e}")
         if isinstance(a, dict) and isinstance(xi, dict):
             a["xi_uncertainty"] = max((xi.get(s_) or {}).get("uncertainty", 0.5) if xi.get(s_) else 0.5
                                       for s_ in ("home", "away"))
@@ -201,6 +206,45 @@ class Bot:
         if self.is_cup(match["league"]) and match["league"] in LEAGUES and isinstance(a, dict):
             a["avrupa_baglam"] = self._europe_context(match, ctx)
         return a
+
+    def _dossier(self, match: dict, ctx, lineups: list[dict]) -> dict:
+        """Senaryo ve maç sayfası için maçın kendi sayıları: iç/dış saha ortalamaları (bu sezon), dinlenme günü,
+        hakemin bu sezonki kart/faul ortalaması, teknik direktör."""
+        from .timeutil import parse_dt as _pd
+
+        out = {"venue_split": {}, "rest": {}, "referee": {}, "coach": {}}
+        ko = _pd(match["kickoff_at"])
+        for side in ("home", "away"):
+            tid = match[f"{side}_team_id"]
+            slug = tid.split(":", 1)[-1]
+            ms = [m for m in ctx.matches if m.get("home_goals") is not None and
+                  (m["home_team_id"] if side == "home" else m["away_team_id"]).split(":", 1)[-1] == slug]
+            if ms:
+                gf = [m["home_goals"] if side == "home" else m["away_goals"] for m in ms]
+                ga = [m["away_goals"] if side == "home" else m["home_goals"] for m in ms]
+                cf = [((ctx.stats.get(m["id"]) or {}).get(side) or {}).get("corners") for m in ms]
+                cf = [c for c in cf if c is not None]
+                out["venue_split"][side] = {"n": len(ms), "gf": round(sum(gf) / len(ms), 2), "ga": round(sum(ga) / len(ms), 2),
+                                            "cf": round(sum(cf) / len(cf), 2) if cf else None}
+            prev = [m for m in ctx.matches if slug in (m["home_team_id"].split(":", 1)[-1], m["away_team_id"].split(":", 1)[-1])
+                    and _pd(m["kickoff_at"]) < ko and m.get("home_goals") is not None]
+            if prev:
+                out["rest"][side] = round((ko - _pd(max(prev, key=lambda m: m["kickoff_at"])["kickoff_at"])).total_seconds() / 86400, 1)
+            lu = next((x for x in lineups if x.get("side") == side and x.get("coach")), None)
+            if lu:
+                out["coach"][side] = lu["coach"]
+        ref = match.get("referee")
+        if ref:
+            rm = [m for m in ctx.matches if m.get("referee") == ref and m.get("home_goals") is not None]
+            cards = []
+            for m in rm:
+                st = ctx.stats.get(m["id"]) or {}
+                c = [((st.get(sd) or {}).get("yellow") or 0) + ((st.get(sd) or {}).get("red") or 0)
+                     for sd in ("home", "away") if (st.get(sd) or {}).get("yellow") is not None]
+                if len(c) == 2:
+                    cards.append(sum(c))
+            out["referee"] = {"ad": ref, "n": len(cards), "kart": round(sum(cards) / len(cards), 2) if cards else None}
+        return out
 
     def _europe_context(self, match: dict, ctx) -> dict:
         """Avrupa izi: her takımın bu sezonki Avrupa maçları (ön eleme dahil) ve lig maçları ayrı ayrı + lig gücü."""
@@ -263,6 +307,7 @@ class Bot:
         from .analysis import annotate_scan, slate_bias
 
         good = [a for a in pre.values() if isinstance(a, dict)]
+        mby = {m["id"]: m for m in matches}
         bias = slate_bias(good)
         from .config import LEAGUES
 
@@ -283,6 +328,12 @@ class Bot:
                 a["cal_w_factor"] = 0.75  # kupa: ligler arası güç farkı belirsiz → piyasaya daha yakın
             a["cal_params"] = cal_params
             a["best_pick"] = annotate_scan(a, self.s)
+            try:  # film senaryoları (benzetim + maçın kendi sayıları); seçim bilindikten sonra kurulur
+                from .senaryo import build_film
+
+                a["senaryolar"] = build_film(a, mby.get(a.get("match_id")) or {}, a.get("dosya"))
+            except Exception as e:
+                self.log.append(f"⚠️ senaryo ({a.get('home')}): {e}")
         if bias:
             self.log.append("ℹ️ kalibrasyon (model − piyasa, bülten ortalaması): " + ", ".join(
                 f"{k} {v:+.3f}" for k, v in sorted(bias.items()) if abs(v) >= 0.01)[:400])
