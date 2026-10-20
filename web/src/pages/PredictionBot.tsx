@@ -38,7 +38,9 @@ function verdictOf(a: BotAnalysis | undefined, rows: ScanRow[], pub: Prediction[
   if (Math.min(mm.home ?? 0, mm.away ?? 0) < (a.min_team_matches ?? 4)) return { kind: "pas", text: `Geçiyorum: takımların bu sezon modelde ${mm.home ?? 0} ve ${mm.away ?? 0} maçı var, en az ${a.min_team_matches ?? 4} isterim.` };
   const val = rows.filter((r) => r.value);
   const wild = rows.filter((r) => r.wild && r.odds);
-  if (val.length) return { kind: "deger", text: `${val.length} pazarda piyasadan iyi fiyat görüyorum.${wild.length ? ` ${wild.length} pazarda modelim piyasadan aşırı ayrışıyor; onları oynamıyorum.` : ""}` };
+  const chk = rows.filter((r) => r.check && r.odds);
+  if (!val.length && chk.length && chk.length === wild.length) return { kind: "pas", text: `Geçiyorum: ${chk.length} pazarda hesaplanan değer %25'in üstünde. Bu kadarı gerçek olmaz; oran ya da maç eşleşmesi kontrol ediliyor.` };
+  if (val.length) return { kind: "deger", text: `${val.length} pazarda piyasadan iyi fiyat görüyorum.${wild.length - chk.length > 0 ? ` ${wild.length - chk.length} pazarda modelim piyasadan aşırı ayrışıyor; onları oynamıyorum.` : ""}${chk.length ? ` ${chk.length} pazarda değer %25'in üstünde çıkıyor; oran ya da eşleşme kontrol edilene kadar saymıyorum.` : ""}` };
   if (wild.length) return { kind: "pas", text: `Geçiyorum: modelim bu maçta piyasadan aşırı ayrışıyor (${wild.length} pazar). Bu büyüklükte fark değer değil, büyük olasılıkla ölçüm hatası.` };
   const priced = rows.filter((r) => r.odds && r.pModel != null && !r.wild);
   if (!priced.length) return { kind: "pas", text: "Geçiyorum: hesapladığım pazarlarda piyasa oranı yok." };
@@ -235,6 +237,7 @@ export default function PredictionBot() {
                       <header>
                         <span className="oc-t">{time(m.kickoff_at)}<small>{league(m.league).flag} {league(m.league).name}</small></span>
                         <Link to={matchPath(m.id)} className="oc-m">{m.home_name} <i>–</i> {m.away_name}</Link>
+                        {rows.some((r) => r.check && r.odds) && <span className="vk" title="Bazı pazarlarda değer %25'in üstünde: oran ya da eşleşme kontrol ediliyor">veri kontrol</span>}
                         <span className={`wb-v ${v.kind}`}>{v.kind === "secim" ? "KARAR" : v.kind === "deger" ? "DEĞER" : v.kind === "pas" ? "PAS" : "SIRADA"}</span>
                       </header>
                       <DualBar rows={rows} m={m} />

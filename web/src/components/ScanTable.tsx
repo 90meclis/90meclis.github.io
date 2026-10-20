@@ -26,7 +26,7 @@ export function ScanTable({ rows, home, away, groups, picked }: {
                     {hasM && <td className="n">{r.pModel != null ? pct(r.pModel) : <span className="dim">·</span>}</td>}
                     {hasP && <td className="n">{r.pMarket != null ? pct(r.pMarket) : <span className="dim">·</span>}</td>}
                     {hasO && <td className="n">{r.odds ? num(r.odds) : <span className="dim">·</span>}</td>}
-                    {hasM && hasO && <td className={`n ${r.edge != null && !r.wild ? (r.edge >= 0.03 ? "pos" : r.edge < 0 ? "neg" : "") : ""}`}>{r.wild ? <span className="dim" title="Model piyasadan 20 puandan fazla ayrışıyor: değer sayılmaz">⚠ ayrışma</span> : r.edge != null && r.pModel != null ? `${signed(r.edge * 100, 1)}%` : <span className="dim">·</span>}</td>}
+                    {hasM && hasO && <td className={`n ${r.edge != null && !r.wild ? (r.edge >= 0.03 ? "pos" : r.edge < 0 ? "neg" : "") : ""}`}>{r.check ? <span className="vk" title="Değer %25'in üstünde: oran ya da maç eşleşmesi kontrol ediliyor; değer sayılmaz">veri kontrol</span> : r.wild ? <span className="dim" title="Model piyasadan 20 puandan fazla ayrışıyor: değer sayılmaz">⚠ ayrışma</span> : r.edge != null && r.pModel != null ? `${signed(r.edge * 100, 1)}%` : <span className="dim">·</span>}</td>}
                   </tr>
                 );
               })}
@@ -34,7 +34,7 @@ export function ScanTable({ rows, home, away, groups, picked }: {
           </table>
         </div>
       ))}
-      <p className="muted tiny">Ortak: Meclis modelinin olasılığı. · işareti: o hücrede veri yok. ⚠ ayrışma: model piyasadan 20 puandan fazla uzak; Ortak bunu değer saymaz. Piyasa: oranlardan marjı arındırılmış olasılık. Değer: piyasa ile kalibre edilmiş olasılık × oran − 1. {srcs.length ? `Oran kaynağı: ${srcs.join(", ")}.` : ""}</p>
+      <p className="muted tiny">Ortak: Meclis modelinin olasılığı. · işareti: o hücrede veri yok. ⚠ ayrışma: model piyasadan 20 puandan fazla uzak; veri kontrol: hesaplanan değer %25'in üstünde, oran ya da eşleşme doğrulanıyor. Ortak ikisini de değer saymaz. Piyasa: oranlardan marjı arındırılmış olasılık. Değer: piyasa ile kalibre edilmiş olasılık × oran − 1. {srcs.length ? `Oran kaynağı: ${srcs.join(", ")}.` : ""}</p>
     </div>
   );
 }

@@ -12,6 +12,8 @@ export interface ScanRow {
   market: string; selection: string; line: number | null; group: string;
   pModel: number | null; odds: number | null; pMarket: number | null; src: string | null;
   pCal: number | null; edge: number | null; value: boolean; wild: boolean;
+  /** Değer > %25: oran ya da eşleşme hatası şüphesi → "veri kontrol"; asla seçim/en büyük fark olmaz. */
+  check: boolean;
 }
 
 const GROUP_OF: Record<string, string> = Object.fromEntries(Object.entries(MARKET_GROUPS).flatMap(([g, ms]) => ms.map((m) => [m, g])));
@@ -55,7 +57,7 @@ export function scanMatch(m: Pick<Match, "odds">, markets: MarketRow[] | null | 
     const edge = pCal != null && o ? pCal * o - 1 : null;
     const wild = pModel != null && ((pMarket != null && Math.abs(pModel - pMarket) > MAX_GAP) || (edge != null && edge > MAX_EDGE));
     const value = modelBased && !wild && edge != null && o != null && o >= MIN_ODDS && o <= MAX_ODDS && pCal! >= 0.3 && edge >= EDGE_MIN;
-    return { market, selection, line, group: GROUP_OF[market], pModel, odds: o, pMarket, src: g ? String(g.src ?? "") || null : null, pCal, edge, value, wild };
+    return { market, selection, line, group: GROUP_OF[market], pModel, odds: o, pMarket, src: g ? String(g.src ?? "") || null : null, pCal, edge, value, wild, check: edge != null && edge > MAX_EDGE };
   };
   for (const x of markets ?? []) {
     if (x.market === "CS") continue;
