@@ -120,10 +120,58 @@ begin
   alter table fetch_jobs enable row level security;  -- politika yok: yalnızca service_role
 end $$;
 
+-- görünümler yeniden kurulur (sütun listesi değişen eski görünümler için önce düşürülür; veri tablolarına dokunulmaz)
+drop view if exists v_bot_tarama, v_arsiv, v_bot_bulten, v_guven_pazar, v_guven_haftalik, v_tutanak, v_kayit, v_kayit_tekli, v_kaynak_durumu cascade;
+
+-- Kural: aynı gün Günün Kararı ayağı olan maç o gün Meclis Görüşü olarak SAYILMAZ (19.10.2026 Getafe/Parma
+-- çakışması kilitli satırlarda kalır ama hiçbir herkese açık görünümde ayrı kayıt olarak görünmez/sayılmaz).
+-- Kupon ayakları ayrı kayıt değildir: güven/kâr görünümlerinde her kupon TEK kayıttır.
+create or replace view v_kayit_tekli with (security_invoker = true) as
+  select p.* from predictions p
+  where p.tag = 'meclis_gorusu'
+    and not exists (select 1 from predictions g
+                    where g.tag = 'gunun_karari' and g.match_id = p.match_id
+                      and (g.kickoff_at at time zone 'Europe/Istanbul')::date
+                          = (p.kickoff_at at time zone 'Europe/Istanbul')::date);
+
+create or replace view v_kayit with (security_invoker = true) as
+  select t.id::text as id, 'meclis_gorusu'::text as tag, t.market, t.kickoff_at, t.status, t.odds,
+         t.probability, t.profit, t.clv, 1 as ayak
+  from v_kayit_tekli t
+  union all
+  select c.id::text, c.tag, 'KUPON'::text, c.first_kickoff_at, c.status, c.total_odds, c.joint_probability,
+         c.profit, null::numeric, c.legs_count
+  from coupons c;
+
 create or replace view v_tutanak with (security_invoker = true) as
   select p.id, p.recorded_at, p.kickoff_at, p.league, p.home_name, p.away_name, p.tag, p.market, p.selection,
          p.line, p.probability, p.odds, p.fair_odds, p.status, p.result_value, p.profit, p.clv, p.coupon_id
-  from predictions p;
+  from predictions p
+  where p.tag <> 'meclis_gorusu' or p.id in (select id from v_kayit_tekli);
+
+create or replace view v_guven_haftalik with (security_invoker = true) as
+  select to_char(kickoff_at at time zone 'Europe/Istanbul', 'IYYY-"H"IW') as hafta,
+         count(*) as tahmin,
+         count(*) filter (where status = 'kazandi') as kazanan,
+         count(*) filter (where status = 'kaybetti') as kaybeden,
+         count(*) filter (where status = 'iade') as iade,
+         round(100.0 * count(*) filter (where status = 'kazandi')
+               / nullif(count(*) filter (where status in ('kazandi','kaybetti')), 0), 1) as isabet_yuzde,
+         round(coalesce(sum(profit) filter (where odds is not null), 0), 2) as kar_birim,
+         round(100.0 * sum(profit) filter (where odds is not null and status in ('kazandi','kaybetti'))
+               / nullif(count(*) filter (where odds is not null and status in ('kazandi','kaybetti')), 0), 1) as roi_yuzde
+  from v_kayit group by 1 order by 1 desc;
+
+create or replace view v_guven_pazar with (security_invoker = true) as
+  select tag, market, count(*) as tahmin,
+         count(*) filter (where status = 'kazandi') as kazanan,
+         count(*) filter (where status = 'kaybetti') as kaybeden,
+         round(100.0 * count(*) filter (where status = 'kazandi')
+               / nullif(count(*) filter (where status in ('kazandi','kaybetti')), 0), 1) as isabet_yuzde,
+         round(coalesce(sum(profit) filter (where odds is not null), 0), 2) as kar_birim
+  from v_kayit group by 1, 2 order by 1, 2;
+
+grant select on v_tutanak, v_guven_haftalik, v_guven_pazar, v_kayit, v_kayit_tekli to anon, authenticated;
 
 -- Tahmin Botu sayfası: botun ham bülteni (yayımlanmış olsun olmasın her seçim)
 create or replace view v_bot_bulten with (security_invoker = true) as
@@ -140,10 +188,23 @@ create or replace view v_arsiv with (security_invoker = true) as
          b.kind as bot_kind, c.total_odds as kupon_oran, c.status as kupon_durum
   from predictions p
   left join bot_picks b on b.id = p.bot_pick_id
-  left join coupons c on c.id = p.coupon_id;
-grant select on v_bot_bulten, v_arsiv to anon, authenticated;
-
-grant select on v_tutanak, v_guven_haftalik, v_guven_pazar to anon, authenticated;
+  left join coupons c on c.id = p.coupon_id
+  where p.tag <> 'meclis_gorusu' or p.id in (select id from v_kayit_tekli);
+-- Tahmin Botu taraması: günün bütün maçlarının BÜTÜN pazarları (model olasılığı, kalibre olasılık, piyasa oranı,
+-- değer, seçildi/geçildi nedeni) — en güncel analizden
+create or replace view v_bot_tarama with (security_invoker = true) as
+  select a.match_id, a.created_at, (a.payload->>'kickoff_at')::timestamptz as kickoff_at, a.payload->>'league' as league,
+         a.payload->>'home' as home_name, a.payload->>'away' as away_name, a.payload->>'basis' as basis,
+         x->>'market' as market, x->>'selection' as selection, (x->>'line')::numeric as line,
+         (x->>'probability')::numeric as p_model, (x->>'p_kal')::numeric as p_kal,
+         (x->>'p_piyasa')::numeric as p_piyasa, (x->>'odds')::numeric as odds, x->>'odds_source' as odds_source,
+         (x->>'fair_odds')::numeric as fair_odds, coalesce((x->>'edge_kal')::numeric, (x->>'edge')::numeric) as edge,
+         coalesce((x->>'deger')::boolean, false) as deger, coalesce((x->>'secildi')::boolean, false) as secildi,
+         x->>'neden' as neden
+  from analyses a
+  cross join lateral jsonb_array_elements(a.payload->'markets') x
+  where (a.payload->>'kickoff_at')::timestamptz > now() - interval '3 hours';
+grant select on v_bot_bulten, v_arsiv, v_bot_tarama to anon, authenticated;
 
 create or replace view v_kaynak_durumu as
   select source, ok,

@@ -158,7 +158,7 @@ class Bot:
         locked = {r["match_id"] for r in self.store.select(
             "predictions", [("status", "eq", "bekliyor")]) if r["match_id"] in ids and r.get("tag") != "karar_birligi"}
         pre = self._analyze_all([m for m in matches if m["id"] not in locked], now, fetch_extras)
-        from .analysis import select_single, slate_bias
+        from .analysis import annotate_scan, slate_bias
 
         good = [a for a in pre.values() if isinstance(a, dict)]
         bias = slate_bias(good)
@@ -168,7 +168,7 @@ class Bot:
             a["bias"] = bias
             if a.get("league") in LEAGUES and LEAGUES[a["league"]].cup:
                 a["cal_w"] = 0.5  # kupa: ligler arası güç farkı belirsiz → piyasaya daha yakın
-            a["best_pick"] = select_single(a, self.s)
+            a["best_pick"] = annotate_scan(a, self.s)
         if bias:
             self.log.append("ℹ️ kalibrasyon (model − piyasa, bülten ortalaması): " + ", ".join(
                 f"{k} {v:+.3f}" for k, v in sorted(bias.items()) if abs(v) >= 0.01)[:400])

@@ -14,6 +14,15 @@ from .timeutil import TR
 SETTLED = ("kazandi", "kaybetti", "iade")
 
 
+def public_singles(preds: list[dict]) -> list[dict]:
+    """Herkese açık Meclis Görüşü kayıtları: aynı gün Günün Kararı ayağı olan maçın teklisi SAYILMAZ
+    (v_kayit_tekli ile aynı kural). Kupon ayakları ayrı kayıt değildir — kuponlar kendi tablosundan tek kayıt sayılır."""
+    from .timeutil import tr_date
+
+    legs = {(p["match_id"], tr_date(p["kickoff_at"])) for p in preds if p.get("tag") == "gunun_karari"}
+    return [p for p in preds if p.get("tag") == "meclis_gorusu" and (p["match_id"], tr_date(p["kickoff_at"])) not in legs]
+
+
 def predictions_frame(rows: list[dict]) -> pd.DataFrame:
     if not rows:
         return pd.DataFrame(columns=["id", "kickoff_at", "tag", "market", "status", "odds", "probability", "profit"])

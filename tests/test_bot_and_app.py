@@ -353,3 +353,12 @@ def test_api_football_odds_parser_and_attach():
     assert away["odds"] == 1.75
     cor = attach_odds({"market": "CORNERS_OU", "selection": "ALT", "line": 9.5, "probability": 0.6}, o)
     assert cor["odds"] == 1.9 and abs(cor["edge"] - 0.14) < 1e-6
+
+
+def test_public_singles_exclude_same_day_coupon_legs():
+    from meclis.trust import public_singles
+
+    preds = [{"match_id": "g", "tag": "gunun_karari", "kickoff_at": "2026-10-19T17:00:00+00:00"},
+             {"match_id": "g", "tag": "meclis_gorusu", "kickoff_at": "2026-10-19T17:00:00+00:00"},
+             {"match_id": "x", "tag": "meclis_gorusu", "kickoff_at": "2026-10-19T17:00:00+00:00"}]
+    assert [p["match_id"] for p in public_singles(preds)] == ["x"]

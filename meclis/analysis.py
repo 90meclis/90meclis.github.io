@@ -335,8 +335,11 @@ def slate_bias(payloads: list[dict], min_n: int = 20) -> dict:
     return {k: round(sum(v) / len(v), 4) for k, v in acc.items() if len(v) >= min_n}
 
 
-def rank_picks(payload: dict, settings, model_based: bool | None = None, q: float | None = None) -> list[dict]:
-    """Maçın bütün pazarlarındaki adaylar, değere göre sıralı (en iyisi başta)."""
+def rank_picks(payload: dict, settings, model_based: bool | None = None, q: float | None = None,
+               annotate: bool = False) -> list[dict]:
+    """Maçın bütün pazarlarındaki adaylar, değere göre sıralı (en iyisi başta).
+    annotate=True: payload["markets"] satırlarına tarama sonucu yazılır (p_kal, edge_kal, deger, neden) — Tahmin
+    Botu sayfası maçın BÜTÜN pazarlarını "neden seçildi / neden geçildi" ile gösterir."""
     if q is None:
         q = payload["quality"]["factor"]
     if model_based is None:
@@ -347,6 +350,8 @@ def rank_picks(payload: dict, settings, model_based: bool | None = None, q: floa
     bias = payload.get("bias") or {}
     for m in payload["markets"]:
         if m["market"] == "CS":
+            if annotate:
+                m.update(deger=False, neden="skor pazarı yalnızca bilgi (seçim yapılmaz)")
             continue
         p = m["probability"]
         o = m.get("odds")
@@ -357,16 +362,61 @@ def rank_picks(payload: dict, settings, model_based: bool | None = None, q: floa
             w = payload.get("cal_w", CAL_W)
             pc = w * p + (1 - w) * pm if pm else p
             edge = pc * o - 1
-            if not (SINGLE_MIN_ODDS <= o <= SINGLE_MAX_ODDS) or pc < 0.30 or edge < edge_min:
+            if annotate:
+                m.update(p_kal=round(pc, 4), edge_kal=round(edge, 4), p_piyasa=round(pm, 4) if pm else None)
+            why = None
+            if o < SINGLE_MIN_ODDS:
+                why = f"oran {o:.2f} < {SINGLE_MIN_ODDS:.2f} (tekli için çok düşük)"
+            elif o > SINGLE_MAX_ODDS:
+                why = f"oran {o:.2f} > {SINGLE_MAX_ODDS:.2f}"
+            elif pc < 0.30:
+                why = f"olasılık %{pc * 100:.0f} çok düşük"
+            elif edge < edge_min:
+                why = f"değer {edge * 100:+.1f}% < %{edge_min * 100:.0f}"
+            if why:
+                if annotate:
+                    m.update(deger=False, neden=why)
                 continue
             score = edge * q
+            if annotate:
+                m.update(deger=True, neden=f"değerli: {edge * 100:+.1f}%")
             value.append(dict(m, kind="değer", probability_model=round(p, 4), probability=round(pc, 4),
                               edge=round(edge, 4), confidence=round(score, 4)))
-        elif model_based and m["market"] != "DC":
+        else:
             fo = 1 / p if p > 0 else 99
-            if p < 0.55 or fo < SINGLE_MIN_ODDS:
-                continue
-            fair.append(dict(m, kind="adil oran (piyasa oranı yok)", confidence=round(p * q * 0.25, 4)))
+            ok = model_based and m["market"] != "DC" and p >= 0.55 and fo >= SINGLE_MIN_ODDS
+            if annotate:
+                m.update(deger=False, neden=("piyasa oranı yok — adil oran adayı (arşive girmez)" if ok else
+                                             "piyasa oranı yok — değer ölçülemez"))
+            if ok:
+                fair.append(dict(m, kind="adil oran (piyasa oranı yok)", confidence=round(p * q * 0.25, 4)))
     value.sort(key=lambda x: -x["confidence"])
     fair.sort(key=lambda x: -x["confidence"])
     return value + fair
+
+
+def annotate_scan(payload: dict, settings) -> dict | None:
+    """Tarama notlarını yazar ve maçın seçimini döndürür (select_single ile aynı kural)."""
+    model_based = str(payload.get("basis") or "").startswith("model")
+    ranked = rank_picks(payload, settings, model_based, annotate=True)
+    best = select_single(payload, settings)
+    gate = None
+    if not payload.get("ready"):
+        gate = "analiz hazır değil"
+    elif best is None and ranked:
+        gate = "takımların bu sezon modelde yeterli maçı yok — seçim yayımlanmaz"
+    for m in payload["markets"]:
+        if best and m["market"] == best["market"] and m["selection"] == best["selection"] and \
+                m.get("line") == best.get("line"):
+            m.update(secildi=True, neden=f"SEÇİLDİ — {m.get('neden')}")
+        else:
+            m["secildi"] = False
+            if gate and m.get("deger"):
+                m["neden"] = f"{m['neden']}; {gate}"
+            elif best and m.get("deger"):
+                m["neden"] = f"{m['neden']} (maçın en değerlisi değil)"
+    payload["scan_summary"] = {"pazar": len(payload["markets"]),
+                               "oranli": sum(1 for m in payload["markets"] if m.get("odds")),
+                               "degerli": sum(1 for m in payload["markets"] if m.get("deger")),
+                               "secim": (best or {}).get("market")}
+    return best

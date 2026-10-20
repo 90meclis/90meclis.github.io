@@ -178,3 +178,35 @@ def test_app_rows_fit_schema_and_triggers(pg):
         past = dict(m, id="T1:past:a:b", kickoff_at=to_iso(now_utc() - timedelta(minutes=1)))
         st.upsert("matches", [past])
         st.insert("predictions", [_prediction_row(past, pick, "meclis_gorusu", "geç")])
+
+
+def test_public_views_exclude_singles_that_are_coupon_legs_and_count_coupon_once():
+    """19.10.2026: Getafe/Parma hem Günün Kararı ayağı hem Meclis Görüşü idi — herkese açık görünümlerde
+    o günün tekli satırı görünmez/sayılmaz; kupon tek kayıttır."""
+    import psycopg2
+
+    conn = psycopg2.connect(DSN)
+    try:
+        cur = conn.cursor()
+        cur.execute((ROOT / "supabase" / "schema.sql").read_text(encoding="utf-8"))
+        cur.execute("""
+          insert into matches (id, league, kickoff_at, home_team_id, away_team_id, home_name, away_name) values
+            ('VX:1','SP1', now()+interval '5 hours','a','b','Getafe','B'), ('VX:2','I1', now()+interval '5 hours','c','d','Parma','D');
+          insert into coupons (id, coupon_date, tag, total_odds, joint_probability, legs_count, first_kickoff_at)
+            values ('00000000-0000-0000-0000-0000000000aa', current_date, 'gunun_karari', 3.1, 0.35, 2, now()+interval '5 hours');
+          insert into predictions (match_id, kickoff_at, tag, coupon_id, market, selection, probability, odds) values
+            ('VX:1', now()+interval '5 hours','gunun_karari','00000000-0000-0000-0000-0000000000aa','1X2','1',0.6,1.8),
+            ('VX:2', now()+interval '5 hours','gunun_karari','00000000-0000-0000-0000-0000000000aa','1X2','1',0.6,1.7),
+            ('VX:1', now()+interval '5 hours','meclis_gorusu', null, 'OU_GOALS','ALT',0.6,1.8),
+            ('VX:2', now()+interval '5 hours','meclis_gorusu', null, 'BTTS','YOK',0.6,1.9);""")
+        cur.execute("select count(*) from v_tutanak where tag='meclis_gorusu' and home_name in ('Getafe','Parma')")
+        assert cur.fetchone()[0] == 0
+        cur.execute("select count(*) from v_arsiv where tag='meclis_gorusu' and home_name in ('Getafe','Parma')")
+        assert cur.fetchone()[0] == 0
+        cur.execute("select count(*) from v_kayit where id = '00000000-0000-0000-0000-0000000000aa'")
+        assert cur.fetchone()[0] == 1
+        cur.execute("select count(*) from v_kayit where id in (select id::text from predictions where match_id like 'VX:%')")
+        assert cur.fetchone()[0] == 0  # ayaklar ve çakışan tekliler ayrı kayıt değil
+    finally:
+        conn.rollback()
+        conn.close()
