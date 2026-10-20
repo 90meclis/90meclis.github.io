@@ -1,5 +1,6 @@
 // Maç dosyası hesapları. Hepsi havuzdaki gerçek kayıtlardan; veri yoksa sonuç boş döner (uydurma yok).
 import type { Match, MatchStat } from "./types";
+import type { StandRow, TeamStatRow } from "./data";
 import { hasScore, sameTeam } from "./match";
 
 export const UEFA = new Set(["CL", "EL", "ECL"]);
@@ -19,6 +20,41 @@ export const METRICS: { key: MetricKey; label: string; lines: number[]; teamLine
 export interface GameRow {
   m: Match; home: boolean; opp: string; comp: "avrupa" | "lig" | "diger";
   gf: number; ga: number; vals: Partial<Record<MetricKey, [number | null, number | null]>>; res: "G" | "B" | "M";
+  /** Avrupa kupası aşaması: "Ön eleme/play-off" | "Lig aşaması" | "Eleme turları" (görünümden) */
+  stage?: string | null;
+}
+
+/** v_takim_mac_istatistik satırlarından (takım × maç, lehte/aleyhte) maç satırları. */
+export function viewGameRows(rows: TeamStatRow[]): GameRow[] {
+  const c = new Map<string, number>();
+  for (const r of rows) if (r.competition !== "Avrupa") c.set(r.league, (c.get(r.league) ?? 0) + 1);
+  const ml = [...c.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+  const p = (a: number | null, b: number | null): [number | null, number | null] => [a, b];
+  return rows.map((r) => {
+    const home = r.side === "home";
+    const m = {
+      id: r.match_id, league: r.league, kickoff_at: r.kickoff_at,
+      home_name: home ? r.team_name : r.opponent, away_name: home ? r.opponent : r.team_name,
+      home_goals: home ? r.goals_for : r.goals_against, away_goals: home ? r.goals_against : r.goals_for,
+    } as Match;
+    const gf = r.goals_for, ga = r.goals_against;
+    return {
+      m, home, opp: r.opponent, comp: r.competition === "Avrupa" ? "avrupa" : r.league === ml ? "lig" : "diger", gf, ga,
+      res: gf > ga ? "G" : gf === ga ? "B" : "M", stage: r.competition === "Avrupa" ? r.asama : null,
+      vals: {
+        gol: [gf, ga], iy: p(r.ht_for, r.ht_against), kg: [gf > 0 ? 1 : 0, ga > 0 ? 1 : 0], korner: p(r.corners_for, r.corners_against),
+        kart: p(r.cards_for, r.cards_against), sut: p(r.shots_for, r.shots_against), isabet: p(r.sot_for, r.sot_against),
+        kale: p(r.goal_kicks_for, r.goal_kicks_against),
+      },
+    } as GameRow;
+  });
+}
+
+/** Görünümdeki puan durumu satırları → TableRow (sıra görünümden, eşitlikte ad sırası). */
+export function viewTable(rows: StandRow[], idOf: (r: StandRow) => string): TableRow[] {
+  return [...rows].sort((a, b) => a.sira - b.sira || a.team_name.localeCompare(b.team_name)).map((r, i) => ({
+    id: idOf(r), name: r.team_name, p: r.o, w: r.g, d: r.b, l: r.m, gf: r.ag, ga: r.yg, pts: r.puan, pos: i + 1,
+  }));
 }
 
 const cards = (s?: MatchStat) => (s && (s.yellow != null || s.red != null) ? (s.yellow ?? 0) + (s.red ?? 0) : null);
@@ -97,12 +133,12 @@ export function standings(ms: Match[]): TableRow[] {
     .map((r, i) => ({ ...r, pos: i + 1 }));
 }
 
-/** Son maçından bu yana gün ve son 30 gündeki maç sayısı (bütün kulvarlar). */
-export function rest(games: Match[], kickoff: string): { days: number | null; last30: number } {
+/** Son maçından bu yana gün ve son 14 gündeki maç sayısı (bütün kulvarlar; v_dinlenme ile aynı tanım). */
+export function rest(games: Match[], kickoff: string): { days: number | null; last14: number } {
   const ko = new Date(kickoff).getTime();
   const past = games.filter((g) => new Date(g.kickoff_at).getTime() < ko);
   const last = past.sort((a, b) => b.kickoff_at.localeCompare(a.kickoff_at))[0];
-  return { days: last ? Math.floor((ko - new Date(last.kickoff_at).getTime()) / 864e5) : null, last30: past.filter((g) => ko - new Date(g.kickoff_at).getTime() <= 30 * 864e5).length };
+  return { days: last ? Math.floor((ko - new Date(last.kickoff_at).getTime()) / 864e5) : null, last14: past.filter((g) => ko - new Date(g.kickoff_at).getTime() <= 14 * 864e5).length };
 }
 
 /** λ'lardan bağımsız Poisson skor dağılımı (0–5). */

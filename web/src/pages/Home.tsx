@@ -144,7 +144,7 @@ export default function Home() {
       <section className="manifesto">
         <div>
           <h2>Masanın kuralları</h2>
-          <p>Her maç analiz edilir; yalnızca değer taşıyan seçim karara dönüşür. Karar maç başlamadan saatler önce deftere yazılır; kayıt anı sunucu saatiyle damgalanır, seçim, oran ve olasılık sonradan değiştirilemez, kayıt silinemez. Model bu sezon genelinde çalışır.</p>
+          <p>Her maç analiz edilir. Karar maç başlamadan deftere yazılır; kayıt anı sunucu saatiyle damgalanır, seçim, oran ve olasılık sonradan değiştirilemez, kayıt silinemez. Model bu sezon genelinde çalışır.</p>
         </div>
         <ul>
           <li><b>Kilitli defter</b><span>Maç başladıktan sonra ekleme ya da düzeltme yok.</span></li>

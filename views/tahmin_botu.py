@@ -21,17 +21,13 @@ with st.expander("Bot nasıl çalışır?", expanded=False):
    FootyStats, SportDevs, BSD, Wikipedia, The Odds API, OddsPapi, Club Elo). Eksik alan bir kaynaktan diğerine
    tamamlanır; hiçbir kaynakta olmayan alan boş kalır, uydurulmaz.
 3. **Her maç analiz edilir:** Eksik veri analizi durdurmaz; boşluklar ek kaynaklar, güncel sezon verisi, Elo
-   önseli ve piyasa oranıyla kapatılır. Tamlık puanı yalnızca **güven göstergesidir**. Yalnızca **değer kuralını**
-   geçen seçim yayımlanır; geçmeyen maçlar her çalışmada (gece dahil) güncel veriyle yeniden hesaplanır.
-   **Yayın zamanı:** maçtan en az **{s.publish_lead_hours:g} saat** önce — sabah çalışması günün bütün maçlarına
-   karar verir; yayımlanan seçim kilitlenir.
+   önseli ve piyasa oranıyla kapatılır. Tamlık puanı yalnızca **güven göstergesidir**. Maçlar her çalışmada
+   güncel veriyle yeniden hesaplanır; verilen karar maç başlamadan kilitlenir.
 4. **Modeller:** Gol/skor için zaman ağırlıklı **Dixon-Coles** (Poisson skor matrisi), Elo önseliyle (%45)
    harmanlanır; korner, kart, isabetli şut,
    kale vuruşu için takım oranları + **negatif binom/Poisson**. Sakatlıklar **Eksik Etkisi (0–100)** ile λ'ya işlenir.
-5. **Seçim:** Maç başına tek **Meclis Görüşü** (piyasa oranı varsa değer ≥ %{100 * s.value_edge_min:.0f};
-   yoksa olasılık ≥ %{100 * s.no_odds_min_prob:.0f}). **Günün Kararı**: 2–3 maç, toplam oran
-   {s.coupon_min_odds:.2f}–{s.coupon_max_odds:.2f}. **Karar Birliği**: günde ≥ {s.consensus_min_singles} Meclis Görüşü varsa
-   en güvenilen 2–3 seçim.
+5. **Seçim:** Her maç için bütün pazarlar taranır; Meclis maç başına tek **Meclis Görüşü** verir. **Günün Kararı**:
+   Meclis'in ana tercihlerinden oluşan günün kuponu. **Karar Birliği**: günün en güvenilen tekli kararlarından kombinasyon.
 6. **Kilit:** Kayıtlar veritabanı tetikleyicisiyle kilitlidir: maç başladıktan sonra eklenemez, değiştirilemez, silinemez.
 """)
 

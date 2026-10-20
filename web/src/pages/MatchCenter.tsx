@@ -8,6 +8,10 @@ import { usePageMeta, ROUTES } from "../lib/seo";
 import { groupBy } from "../lib/trust";
 import { MatchRow } from "../components/MatchRow";
 import { Empty, Gate, PageHead, Skeleton } from "../components/ui";
+import type { Prediction } from "../lib/types";
+
+const UEFA_CODES = new Set(["CL", "EL", "ECL"]);
+const inKulvar = (lg: string, k: "" | "avrupa" | "lig") => !k || (k === "avrupa" ? UEFA_CODES.has(lg) : !UEFA_CODES.has(lg));
 
 const BACK = 3, AHEAD = 14;
 
@@ -17,6 +21,7 @@ export default function MatchCenter() {
   const [sp, setSp] = useSearchParams();
   const today = trDay();
   const lig = sp.get("lig") ?? "";
+  const kulvar = (sp.get("kulvar") ?? "") as "" | "avrupa" | "lig";
 
   const daysQ = useAsync(`days:${today}`, () => api.matchDays(addDays(today, -BACK), addDays(today, AHEAD)));
   const lgQ = useAsync("leagues", api.leaguesInDb);
@@ -24,10 +29,10 @@ export default function MatchCenter() {
   const counts = useMemo(() => {
     const out: Record<string, number> = {};
     for (const [d, byL] of Object.entries(daysQ.data ?? {})) {
-      out[d] = lig ? byL[lig] ?? 0 : Object.values(byL).reduce((a, b) => a + b, 0);
+      out[d] = lig ? byL[lig] ?? 0 : Object.entries(byL).filter(([l]) => inKulvar(l, kulvar)).reduce((a, [, b]) => a + b, 0);
     }
     return out;
-  }, [daysQ.data, lig]);
+  }, [daysQ.data, lig, kulvar]);
 
   const defaultDay = useMemo(() => {
     const ds = Object.keys(counts).filter((d) => counts[d] > 0).sort();
@@ -39,6 +44,7 @@ export default function MatchCenter() {
   const dayQ = useAsync(day ? `day:${day}` : null, () => api.matchesOnDay(day!), [day]);
   const ids = (dayQ.data ?? []).map((m) => m.id);
   const predQ = useAsync(day && dayQ.data ? `daypreds:${day}:${ids.length}` : null, () => api.predictionsForMatches(ids), [day, ids.length]);
+  const anQ = useAsync(day && dayQ.data ? `dayan:${day}:${ids.length}` : null, () => api.analysesLite(ids, true), [day, ids.length]);
 
   const leagues = useMemo(() => {
     const set = new Set<string>([...(lgQ.data ?? [])]);
@@ -53,9 +59,11 @@ export default function MatchCenter() {
     setSp(n, { replace: true });
   };
 
-  const matches = (dayQ.data ?? []).filter((m) => !lig || m.league === lig);
+  const matches = (dayQ.data ?? []).filter((m) => (!lig || m.league === lig) && inKulvar(m.league, kulvar));
+  const shownLeagues = leagues.filter((l) => inKulvar(l, kulvar));
   const groups = groupBy(matches, (m) => m.league).sort((a, b) => league(a[0]).order - league(b[0]).order);
-  const pickBy = new Map((predQ.data ?? []).filter((p) => p.tag === "meclis_gorusu").map((p) => [p.match_id, p]));
+  const pickBy = new Map<string, Prediction[]>();
+  for (const p of predQ.data ?? []) pickBy.set(p.match_id, [...(pickBy.get(p.match_id) ?? []), p]);
   const nextDay = Object.keys(counts).sort().find((d) => d > (day ?? today) && counts[d] > 0);
 
   return (
@@ -83,9 +91,15 @@ export default function MatchCenter() {
             <input type="date" value={day ?? ""} onChange={(e) => e.target.value && set("gun", e.target.value)} />
           </label>
         </div>
+        <div className="chips scroll kulvar" role="radiogroup" aria-label="Kulvar filtresi">
+          {([["", "Tümü"], ["avrupa", "🇪🇺 Avrupa kupaları"], ["lig", "Ligler"]] as const).map(([k, label]) => (
+            <button key={k} type="button" role="radio" aria-checked={kulvar === k} className={`chip ${kulvar === k ? "on" : ""}`}
+              onClick={() => { const n = new URLSearchParams(sp); if (k) n.set("kulvar", k); else n.delete("kulvar"); if (lig && !inKulvar(lig, k)) n.delete("lig"); setSp(n, { replace: true }); }}>{label}</button>
+          ))}
+        </div>
         <div className="chips scroll" role="radiogroup" aria-label="Lig filtresi">
-          <button type="button" role="radio" aria-checked={!lig} className={`chip ${!lig ? "on" : ""}`} onClick={() => set("lig", null)}>Tüm ligler</button>
-          {leagues.map((l) => (
+          <button type="button" role="radio" aria-checked={!lig} className={`chip ${!lig ? "on" : ""}`} onClick={() => set("lig", null)}>{kulvar === "avrupa" ? "Bütün kupalar" : "Tüm ligler"}</button>
+          {shownLeagues.map((l) => (
             <button key={l} type="button" role="radio" aria-checked={lig === l} className={`chip ${lig === l ? "on" : ""}`} onClick={() => set("lig", l)}>
               <span aria-hidden="true">{league(l).flag}</span> {league(l).name}
             </button>
@@ -104,7 +118,7 @@ export default function MatchCenter() {
             {groups.map(([code, ms]) => (
               <section key={code} className="lgroup">
                 <h3 className="lgroup-title"><span aria-hidden="true">{league(code).flag}</span> {league(code).name}<small>{league(code).country}</small></h3>
-                <div className="mlist">{ms.map((m) => <MatchRow key={m.id} m={m} pick={pickBy.get(m.id)} />)}</div>
+                <div className="mlist">{ms.map((m) => <MatchRow key={m.id} m={m} picks={pickBy.get(m.id)} an={anQ.data?.[m.id]} />)}</div>
               </section>
             ))}
           </div>

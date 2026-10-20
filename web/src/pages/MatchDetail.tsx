@@ -14,7 +14,7 @@ import { PickCard } from "../components/PickCard";
 import { ScanTable } from "../components/ScanTable";
 import { scanMatch } from "../lib/scan";
 import {
-  METRICS, UEFA, gameRows, implied1x2, mainLeague, poissonGrid, rest, standings, streaks,
+  METRICS, UEFA, gameRows, implied1x2, mainLeague, poissonGrid, rest, standings, streaks, viewGameRows, viewTable,
   type GameRow, type MetricKey, type TableRow,
 } from "../lib/dossier";
 import { story } from "../lib/story";
@@ -44,38 +44,80 @@ export default function MatchDetail() {
 interface Dossier {
   a?: AnalysisPayload; picks: Prediction[]; lineups: Lineup[]; inj: Injury[];
   weather?: NonNullable<AnalysisPayload["weather"]>; news: Awaited<ReturnType<typeof api.newsForMatch>>;
-  h2h: Match[]; hGames: Match[]; aGames: Match[]; stats: MatchStat[]; ref: Match[];
+  h2h: Match[]; hGames: Match[]; aGames: Match[]; hRows: GameRow[]; aRows: GameRow[]; stats: MatchStat[]; ref: Match[];
   tables: Record<string, TableRow[]>; phaseKey: string | null; homeLg: string | null; awayLg: string | null;
+  rest: { home: RestInfo; away: RestInfo }; snaps: api.OddsSnap[];
+  /** hangi blok hangi kaynaktan: "görünüm" (veritabanı görünümü) ya da "ham" (maç + istatistik tablosundan) */
+  via: { form: string; table: string };
 }
+interface RestInfo { days: number | null; last14: number }
 
 const PHASE = (m: Match) => `${m.league}:faz`;
 
+/** Görünüm puan durumu ham hesapla aynıysa görünüm kullanılır (aynı takımlar, aynı puan/averaj). */
+function sameTable(a: TableRow[], b: TableRow[]): boolean {
+  if (a.length !== b.length) return false;
+  const ib = new Map(b.map((r) => [r.id, r]));
+  return a.every((r) => { const x = ib.get(r.id); return !!x && x.pts === r.pts && x.p === r.p && x.gf - x.ga === r.gf - r.ga; });
+}
+
 async function loadDossier(m: Match): Promise<Dossier> {
   const ko = m.kickoff_at;
-  const [an, picks, lineups, inj, w, news, h2h, hGames, aGames, ref] = await Promise.all([
+  const [an, picks, lineups, inj, w, news, h2h0, hG0, aG0, ref0, hV, aV, restV, snaps] = await Promise.all([
     api.analysisFor(m.id), api.predictionsForMatch(m.id), api.lineupsFor(m.id), api.injuriesFor(m), api.weatherFor(m.id),
     api.newsForMatch(m.id), api.h2hAll(m.home_team_id, m.away_team_id, ko), api.teamSeason(m.home_team_id, ko),
     api.teamSeason(m.away_team_id, ko), m.referee ? api.refereeSeason(m.referee, ko) : Promise.resolve([] as Match[]),
+    api.teamStatRows(m.home_team_id, ko), api.teamStatRows(m.away_team_id, ko), api.restView(m.id), api.oddsSnapshots(m.id),
   ]);
+  // Yanlış eşlenmiş satırlar (ör. adı Trabzonspor, kimliği samsunspor) hiçbir hesaba girmez
+  const [h2h, hGames, aGames, ref] = await Promise.all([api.dropCorrupt(h2h0), api.dropCorrupt(hG0), api.dropCorrupt(aG0), api.dropCorrupt(ref0)]);
   const cup = UEFA.has(m.league);
   const homeLg = mainLeague(hGames), awayLg = mainLeague(aGames);
   const lgs = [...new Set([m.league, ...(cup ? [homeLg, awayLg] : [])].filter((x): x is string => !!x))];
   const ids = [...new Set([...hGames, ...aGames, ...h2h, ...ref].map((x) => x.id))];
-  const [stats, ...played] = await Promise.all([api.statsFor(ids), ...lgs.map((lg) => api.leaguePlayed(lg, ko))]);
+  const [stats, played, views] = await Promise.all([
+    api.statsFor(ids),
+    Promise.all(lgs.map((lg) => api.leaguePlayed(lg, ko).then(api.dropCorrupt))),
+    Promise.all(lgs.map((lg) => (UEFA.has(lg) ? api.europeTableView(lg) : api.leagueTableView(lg)))),
+  ]);
   const tables: Record<string, TableRow[]> = {};
   let phaseKey: string | null = null;
+  const via = { form: "ham", table: "ham" };
   lgs.forEach((lg, i) => {
+    let raw: TableRow[];
     if (UEFA.has(lg)) {
       // Lig aşaması: ön eleme/play-off maçları (Eylül öncesi) puan durumuna girmez
       const y = new Date(seasonStart(ko)).getUTCFullYear();
-      const ph = played[i].filter((x) => x.kickoff_at >= `${y}-09-01`);
-      if (ph.length) { tables[PHASE(m)] = standings(ph); phaseKey = PHASE(m); }
-    } else tables[lg] = standings(played[i]);
+      raw = standings(played[i].filter((x) => x.kickoff_at >= `${y}-09-01`));
+    } else raw = standings(played[i]);
+    const v = views[i] ? viewTable(views[i]!, (r) => (UEFA.has(lg) ? `${lg}:${r.team_slug}` : r.team_id!)) : null;
+    const use = v && sameTable(v, raw) ? v : raw;
+    if (v && use === v) via.table = "görünüm";
+    if (!use.length) return;
+    if (UEFA.has(lg)) { tables[PHASE(m)] = use; phaseKey = PHASE(m); } else tables[lg] = use;
   });
+  // Takım maç satırları: görünüm, ham hesapla aynı maç kümesini veriyorsa görünümden (aşama bilgisiyle)
+  const fromView = async (v: api.TeamStatRow[] | null, games: Match[]) => {
+    if (!v) return null;
+    const rows = viewGameRows(v);
+    const ok = await api.dropCorrupt(rows.map((r) => ({ id: r.m.id, league: r.m.league, home_name: r.m.home_name, away_name: r.m.away_name })));
+    const keep = new Set(ok.map((x) => x.id));
+    const out = rows.filter((r) => keep.has(r.m.id));
+    const gi = new Set(games.map((g) => g.id));
+    return out.length === games.length && out.every((r) => gi.has(r.m.id)) ? out : null;
+  };
+  const [hv, av] = await Promise.all([fromView(hV, hGames), fromView(aV, aGames)]);
+  const hRows = hv ?? gameRows(hGames, m.home_team_id, stats), aRows = av ?? gameRows(aGames, m.away_team_id, stats);
+  if (hv && av) via.form = "görünüm";
+  const rv = (side: "home" | "away", games: Match[]): RestInfo => {
+    const x = restV?.find((r) => r.side === side);
+    return x ? { days: x.dinlenme_gun != null ? Math.floor(x.dinlenme_gun) : null, last14: x.son14_mac } : rest(games, ko);
+  };
   const order: Record<string, number> = { meclis_gorusu: 0, gunun_karari: 1, karar_birligi: 2 };
   return {
     a: an[0]?.payload, picks: [...picks].sort((x, y) => (order[x.tag] ?? 9) - (order[y.tag] ?? 9)), lineups, inj,
-    weather: w[0]?.data ?? an[0]?.payload?.weather, news, h2h, hGames, aGames, stats, ref, tables, phaseKey, homeLg, awayLg,
+    weather: w[0]?.data ?? an[0]?.payload?.weather, news, h2h, hGames, aGames, hRows, aRows, stats, ref, tables, phaseKey, homeLg, awayLg,
+    rest: { home: rv("home", hGames), away: rv("away", aGames) }, snaps: snaps ?? [], via,
   };
 }
 const seasonStart = (iso: string) => api.seasonStartIso(new Date(iso));
@@ -92,7 +134,7 @@ type TabKey = (typeof TABS)[number][0];
 function Detail({ m }: { m: Match }) {
   const [sp, setSp] = useSearchParams();
   const raw = sp.get("bolum");
-  const tab: TabKey = (TABS.find((t) => t[0] === raw)?.[0] ?? "ozet") as TabKey;
+  const want: TabKey = (TABS.find((t) => t[0] === raw)?.[0] ?? "ozet") as TabKey;
   const go = (k: TabKey) => {
     const n = new URLSearchParams(sp);
     if (k === "ozet") n.delete("bolum"); else n.set("bolum", k);
@@ -101,6 +143,7 @@ function Detail({ m }: { m: Match }) {
     if (el && el.getBoundingClientRect().top < 0) el.scrollIntoView({ block: "start" });
   };
   const d = useAsync(`dos:${m.id}`, () => loadDossier(m), [m.id]);
+  const tab: TabKey = want === "senaryo" && d.data && !d.data.a ? "ozet" : want;
   useEffect(() => {
     // Seçili bölüm düğmesi her zaman görünür kalsın (yatay kaydırma)
     document.querySelector<HTMLElement>("#mtabs button.on")?.scrollIntoView({ inline: "center", block: "nearest" });
@@ -135,7 +178,7 @@ function Detail({ m }: { m: Match }) {
       </section>
 
       <nav id="mtabs" className="mtabs" role="tablist" aria-label="Maç dosyası bölümleri">
-        {TABS.map(([k, label]) => (
+        {TABS.filter(([k]) => k !== "senaryo" || !d.data || d.data.a).map(([k, label]) => (
           <button key={k} role="tab" type="button" aria-selected={tab === k} className={tab === k ? "on" : ""} onClick={() => go(k)}>
             {label}{counts[k] ? <small>{counts[k]}</small> : null}
           </button>
@@ -151,7 +194,7 @@ function Detail({ m }: { m: Match }) {
             {tab === "form" && <FormTab m={m} d={d.data} />}
             {tab === "h2h" && <H2HTab m={m} d={d.data} />}
             {tab === "oran" && <OddsTab m={m} d={d.data} />}
-            {tab === "senaryo" && <ScenarioTab m={m} d={d.data} />}
+            {tab === "senaryo" && d.data.a && <ScenarioTab m={m} d={d.data} />}
           </div>
         )}
       </Gate>
@@ -167,8 +210,7 @@ function injuryCount(d: Dossier, m: Match): number {
 }
 
 const modelOwn = (a?: AnalysisPayload) => (a?.basis ?? "").startsWith("model");
-const rowsFor = (m: Match, d: Dossier, side: "home" | "away") =>
-  gameRows(side === "home" ? d.hGames : d.aGames, side === "home" ? m.home_team_id : m.away_team_id, d.stats);
+const rowsFor = (_m: Match, d: Dossier, side: "home" | "away") => (side === "home" ? d.hRows : d.aRows);
 
 // ---------------------------------------------------------------------------------------------
 // ÖZET
@@ -183,7 +225,7 @@ function Ozet({ m, d, go }: { m: Match; d: Dossier; go: (k: TabKey) => void }) {
   const homeVen = ven(H, true), awayVen = ven(A, false);
   const scanRows = useMemo(() => scanMatch(m, a?.markets, modelOwn(a) && !!a?.ready), [m, a]);
   const best = scanRows.filter((r) => r.value).sort((x, y) => (y.edge ?? 0) - (x.edge ?? 0))[0] ?? null;
-  const rH = rest(d.hGames, m.kickoff_at), rA = rest(d.aGames, m.kickoff_at);
+  const rH = d.rest.home, rA = d.rest.away;
   const tKey = cup ? d.phaseKey : m.league;
   const table = tKey ? d.tables[tKey] ?? null : null;
   const fl = (n: number) => fmtLine(n);
@@ -204,8 +246,7 @@ function Ozet({ m, d, go }: { m: Match; d: Dossier; go: (k: TabKey) => void }) {
       <div className="col-main">
         {published && <Verdict picks={d.picks} a={a} m={m} />}
         <Card title="Maç konuşuyor" className="analysis">
-          {lines.length ? <div className="story">{lines.map((x, i) => <p key={i}>{x}</p>)}</div>
-            : <p className="muted small">Bu maç için anlatı kurulacak kadar sayı henüz havuzda yok; oranlar ve kadro geldikçe burası dolar.</p>}
+          {lines.length > 0 && <div className="story">{lines.map((x, i) => <p key={i}>{x}</p>)}</div>}
           {p1["1"] !== undefined && modelOwn(a) ? (
             <div className="pb-block"><span className="kicker">Meclis olasılıkları</span><ProbBar p1={p1["1"]} px={p1["X"]} p2={p1["2"]} home={m.home_name} away={m.away_name} /></div>
           ) : imp ? (
@@ -222,7 +263,7 @@ function Ozet({ m, d, go }: { m: Match; d: Dossier; go: (k: TabKey) => void }) {
           )}
           {bp && !published && modelOwn(a) && (
             <div className="best-pick">
-              <span className="kicker">Meclis'in eğilimi · karar maçtan saatler önce yayımlanır</span>
+              <span className="kicker">Meclis'in eğilimi</span>
               <strong>{pickLabel(bp.market, bp.selection, bp.line, m.home_name, m.away_name)}</strong>
               <span className="muted">olasılık {pct(bp.probability)} · {bp.odds ? `oran ${num(bp.odds)}` : `adil oran ${num(bp.fair_odds)}`}</span>
             </div>
@@ -307,10 +348,10 @@ function MiniTable({ title, rows, ids, phase }: { title: string; rows: TableRow[
   );
 }
 
-function RestCard({ m, rH, rA }: { m: Match; rH: ReturnType<typeof rest>; rA: ReturnType<typeof rest> }) {
+function RestCard({ m, rH, rA }: { m: Match; rH: RestInfo; rA: RestInfo }) {
   if (rH.days == null && rA.days == null) return null;
-  const row = (name: string, r: ReturnType<typeof rest>) => (
-    <div className="rest-row"><b>{name}</b><span>{r.days != null ? `${r.days} gün dinlenme` : "—"}</span><span className="muted small">son 30 günde {r.last30} maç</span></div>
+  const row = (name: string, r: RestInfo) => (
+    <div className="rest-row"><b>{name}</b><span>{r.days != null ? `${r.days} gün dinlenme` : "—"}</span><span className="muted small">son 14 günde {r.last14} maç</span></div>
   );
   return (
     <Card title="Dinlenme ve yoğunluk">
@@ -351,12 +392,7 @@ function RefereeCard({ m, d }: { m: Match; d: Dossier }) {
 }
 
 function WeatherCard({ m, w }: { m: Match; w: Dossier["weather"] }) {
-  if (!w) {
-    if (!m.venue) return null;
-    const far = new Date(m.kickoff_at).getTime() - Date.now() > 15 * 864e5;
-    const past = new Date(m.kickoff_at).getTime() < Date.now();
-    return <Card title="Saha ve hava"><p className="small">🏟 {m.venue}{m.city ? `, ${m.city}` : ""}</p><p className="muted tiny">{far ? "Hava tahmini maça 16 gün kala açılır." : past ? "Bu maç için hava kaydı yok." : "Hava tahmini maç analiziyle eklenir."}</p></Card>;
-  }
+  if (!w) return null;
   return (
     <Card title="Saha ve hava">
       {m.venue && <p className="small">🏟 {m.venue}{m.city ? `, ${m.city}` : ""}</p>}
@@ -469,11 +505,9 @@ const shortName = (n: string) => { const s = n.trim().split(/\s+/); return s.len
 function Squads({ m, d }: { m: Match; d: Dossier }) {
   const sides = (["home", "away"] as const).map((side) => ({ side, name: side === "home" ? m.home_name : m.away_name, xis: xisFor(d.lineups, side, d.a), dropped: xisRaw(d.lineups, side, d.a).length - xisFor(d.lineups, side, d.a).length }));
   if (sides.every((s) => !s.xis.length)) {
-    const px = (d.a as { predicted_xi?: Record<string, { basis?: string[] }> } | undefined)?.predicted_xi;
-    const why = px?.home?.basis?.join(", ");
     return (
       <Card title="Kadrolar">
-        <p className="muted small">Bu maç için doğrulanmış bir ilk 11 henüz yok. Resmî kadro maçtan yaklaşık bir saat önce açıklanır ve burada sahaya dizilir; Meclis tahmini 11, takımın bu sezonki oyuncu dakikaları havuza geldiğinde yayımlanır{why ? ` (şu anki durum: ${why})` : ""}.</p>
+        <p className="muted small">Resmî ilk 11 maçtan yaklaşık bir saat önce açıklanır ve burada sahaya dizilir.</p>
         <p className="muted tiny">Doğrulanamayan kadro gösterilmez.</p>
       </Card>
     );
@@ -482,7 +516,7 @@ function Squads({ m, d }: { m: Match; d: Dossier }) {
     <div className="two-cards">
       {sides.map((s) => (
         <Card key={s.side} title={s.name}>
-          {!s.xis.length && <p className="muted small">Bu takım için doğrulanmış ilk 11 henüz yok.{s.dropped ? " Kaynağın tahmini 11'i tutarlılık denetiminden geçmedi (ör. iki kaleci ya da eksik oyuncu), bu yüzden gösterilmiyor." : ""} Resmî kadro maçtan yaklaşık bir saat önce burada dizilir.</p>}
+          {!s.xis.length && <p className="muted small">Resmî ilk 11 maçtan yaklaşık bir saat önce burada dizilir.</p>}
           {s.xis.map((x, i) => (
             <details key={i} className="lineup" open={i === 0}>
               <summary className="lu-head">
@@ -690,7 +724,7 @@ function TeamForm({ name, rows, all, metric, scope, comp }: { name: string; rows
                 {rows.map((r) => (
                   <tr key={r.m.id}>
                     <td>{dateShort(r.m.kickoff_at)}</td>
-                    <td className="opp"><Link to={matchPath(r.m.id)}>{r.home ? "" : "@ "}{r.opp}</Link>{r.comp !== "lig" && <small className={`comp ${r.comp}`}>{r.comp === "avrupa" ? r.m.league : "Kupa"}</small>}</td>
+                    <td className="opp"><Link to={matchPath(r.m.id)}>{r.home ? "" : "@ "}{r.opp}</Link>{r.comp !== "lig" && <small className={`comp ${r.comp}`}>{r.comp === "avrupa" ? r.m.league : "Kupa"}</small>}{r.stage && r.stage !== "Lig aşaması" && <small className="comp diger" title={r.stage}>{r.stage.startsWith("Ön") ? "ÖE" : "ET"}</small>}</td>
                     {COLS.map((x) => {
                       const v = r.vals[x.key];
                       const sel = x.key === metric || (metric === "kg" && x.key === "gol");
@@ -702,7 +736,7 @@ function TeamForm({ name, rows, all, metric, scope, comp }: { name: string; rows
               </tbody>
             </table>
           </div>
-          <p className="muted tiny">Her hücre takımın bakış açısıyla lehte–aleyhte; "@" deplasman. Krn korner, İsb isabetli şut, KV kale vuruşu. "–": o maç için kaynakta veri yok.</p>
+          <p className="muted tiny">Her hücre takımın bakış açısıyla lehte–aleyhte; "@" deplasman. Krn korner, İsb isabetli şut, KV kale vuruşu; ÖE ön eleme/play-off. "–": o maç için kaynakta veri yok.</p>
         </>
       )}
     </Card>
@@ -790,16 +824,59 @@ function OddsTab({ m, d }: { m: Match; d: Dossier }) {
       <Card title="Maç sonucu: Meclis ve piyasa">
         {own && p1["1"] !== undefined && <div className="pb-block"><span className="kicker">Meclis</span><ProbBar p1={p1["1"]} px={p1["X"]} p2={p1["2"]} home={m.home_name} away={m.away_name} /></div>}
         {imp && <div className="pb-block"><span className="kicker">Piyasa (marjsız)</span><ProbBar p1={imp[0]} px={imp[1]} p2={imp[2]} home={m.home_name} away={m.away_name} /></div>}
-        {!imp && !(own && p1["1"] !== undefined) && <p className="muted small">Bu maç için henüz oran ve model olasılığı yok.</p>}
         {!own && a?.markets?.length ? <p className="muted tiny">Bu maçta olasılıklar piyasa oranından türetildi ({a.basis}); bu yüzden değer sütunu boş kalır.</p> : null}
-        {srcs.length > 0 && <p className="muted tiny">Oran kaynağı: {srcs.join(", ")}. Oranlar değişebilir; oran hareketi kaydı açıldığında burada çizilir.</p>}
+        {srcs.length > 0 && <p className="muted tiny">Oran kaynağı: {srcs.join(", ")}. Oranlar değişebilir.</p>}
       </Card>
+      <OddsMove m={m} snaps={d.snaps} />
       {a?.lambdas && <ScoreGrid m={m} a={a} />}
       <Card title="Bütün pazarlar" aside={<span className="muted tiny">{rows.length} seçim</span>}>
         {rows.length ? <ScanTable rows={rows} home={m.home_name} away={m.away_name} picked={picked} /> : <p className="muted small">Bu maç için pazar verisi yok.</p>}
       </Card>
     </>
   );
+}
+
+/** Oran hareketi: odds_snapshots kayıtlarından açılış → güncel (en az iki görüntü varsa; yoksa hiç gösterilmez). */
+const MOVE_KEYS: [string, string[], string][] = [["1X2", ["1", "X", "2"], "Maç sonucu"], ["OU_GOALS_2.5", ["ALT", "ÜST"], "2,5 Gol"], ["BTTS", ["VAR", "YOK"], "KG"]];
+function OddsMove({ m, snaps }: { m: Match; snaps: api.OddsSnap[] }) {
+  if (snaps.length < 2) return null;
+  const first = snaps[0], last = snaps[snaps.length - 1];
+  const val = (o: api.OddsSnap, k: string, sel: string) => { const v = o.odds?.[k]?.[sel]; return typeof v === "number" && v > 1 ? v : null; };
+  const rows = MOVE_KEYS.flatMap(([k, sels, label]) => sels.map((sel) => {
+    const series = snaps.map((x) => val(x, k, sel)).filter((v): v is number => v != null);
+    const a = val(first, k, sel), b = val(last, k, sel);
+    return a && b ? { k, sel, label, a, b, series } : null;
+  })).filter((x): x is NonNullable<typeof x> => !!x);
+  if (!rows.length) return null;
+  const selName = (k: string, sel: string) => pickLabel(k === "1X2" ? "1X2" : k === "BTTS" ? "BTTS" : "OU_GOALS", sel, k.startsWith("OU_") ? 2.5 : null, m.home_name, m.away_name);
+  return (
+    <Card title="Oran hareketi" aside={<span className="muted tiny">{snaps.length} görüntü · {dateTime(first.taken_at)} → {dateTime(last.taken_at)}</span>}>
+      <div className="table-wrap">
+        <table className="tbl tight odds-move">
+          <thead><tr><th>Seçim</th><th>Açılış</th><th>Güncel</th><th>Değişim</th><th></th></tr></thead>
+          <tbody>
+            {rows.map((r) => {
+              const ch = (r.b - r.a) / r.a;
+              return (
+                <tr key={r.k + r.sel}>
+                  <td>{selName(r.k, r.sel)}</td><td>{num(r.a)}</td><td><b>{num(r.b)}</b></td>
+                  <td className={Math.abs(ch) < 0.01 ? "muted" : ch < 0 ? "pos" : "neg"}>{Math.abs(ch) < 0.005 ? "—" : `${ch < 0 ? "▼" : "▲"} ${num(Math.abs(ch) * 100, 1)}%`}</td>
+                  <td><Spark v={r.series} /></td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      <p className="muted tiny">Düşen oran (▼) piyasanın o seçime daha çok inandığını gösterir. Kaynak: oran görüntüleri (odds_snapshots).</p>
+    </Card>
+  );
+}
+function Spark({ v }: { v: number[] }) {
+  if (v.length < 2) return null;
+  const lo = Math.min(...v), hi = Math.max(...v), w = 60, h = 18;
+  const pts = v.map((x, i) => `${(i / (v.length - 1)) * w},${hi === lo ? h / 2 : h - ((x - lo) / (hi - lo)) * h}`).join(" ");
+  return <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} aria-hidden="true"><polyline points={pts} fill="none" stroke="currentColor" strokeWidth="1.5" /></svg>;
 }
 
 function ScoreGrid({ m, a }: { m: Match; a: AnalysisPayload }) {
@@ -831,7 +908,7 @@ function ScoreGrid({ m, a }: { m: Match; a: AnalysisPayload }) {
 function ScenarioTab({ m, d }: { m: Match; d: Dossier }) {
   const a = d.a;
   const published = d.picks.length > 0;
-  if (!a) return <Card title="Senaryolar"><p className="muted small">Bu maç için Meclis analizi henüz kaydedilmedi; senaryolar analizle birlikte gelir.</p></Card>;
+  if (!a) return null;
   return (
     <>
       {!!a.scenarios?.length && (

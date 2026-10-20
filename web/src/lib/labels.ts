@@ -29,6 +29,14 @@ export const LEAGUES: Record<string, LeagueInfo> = {
   ECL: { name: "Konferans Ligi", country: "UEFA", flag: "🇪🇺", order: 0.7 },
 };
 
+/** Veritabanındaki lig adlarını (leagues tablosu) bilinmeyen kodlar için kaydeder. */
+export function registerLeagues(rows: { code: string; name: string | null; country: string | null; cup: boolean | null }[]) {
+  rows.forEach((r, i) => {
+    if (!r.code || !r.name || LEAGUES[r.code]) return;
+    LEAGUES[r.code] = { name: r.name, country: r.country ?? "", flag: r.cup ? "🏆" : "⚽", order: 100 + i };
+  });
+}
+
 export function league(code: string | null | undefined): LeagueInfo {
   if (!code) return { name: "—", country: "", flag: "⚽", order: 99 };
   return LEAGUES[code] ?? { name: code, country: "", flag: "⚽", order: 90 };

@@ -43,6 +43,17 @@ class TeamRegistry:
             if ak and ak != key:
                 self.alias.setdefault(league, {})[ak] = key
 
+    def prune_conflicting(self) -> list[tuple[str, str, str]]:
+        """Kayıtlı eşlemelerden, ligde KENDİ takım kaydı olan ve adı benzemeyen başka bir kulübü bir takıma
+        bağlayanları atar (ör. 'trabzonspor' → samsunspor). Elle girilmiş kısa adlar ('barca', 'psv') etkilenmez."""
+        dropped = []
+        for lg, mp in self.alias.items():
+            for ak, tgt in list(mp.items()):
+                if ak in self.keys.get(lg, {}) and not _similar(ak, tgt):
+                    del mp[ak]
+                    dropped.append((lg, ak, tgt))
+        return dropped
+
     def _alias(self, league: str, k: str) -> str:
         seen = set()
         while k in self.alias.get(league, {}) and k not in seen:
@@ -73,19 +84,42 @@ class TeamRegistry:
         return k
 
 
+_GENERIC_SUFFIX = ("spor", "united", "town", "city", "rovers", "athletic", "afc", "fc", "sk", "fk", "if")
+
+
+def _core(k: str) -> str:
+    """Genel ekleri (spor, united, town, city…) atılmış çekirdek ad: 'trabzonspor' → 'trabzon'."""
+    changed = True
+    while changed:
+        changed = False
+        for suf in _GENERIC_SUFFIX:
+            if k.endswith(suf) and len(k) - len(suf) >= 3:
+                k, changed = k[: -len(suf)], True
+    return k
+
+
 def _similar(a: str, b: str) -> bool:
     """Fikstür eşleşmesi varken ad benzerliği için GEVŞEK ölçüt (ör. 'hearts' ~ 'heartofmidlothian',
-    'spgijon' ~ 'sportinggijon', 'forsittard' ~ 'fortunasittard')."""
+    'spgijon' ~ 'sportinggijon', 'forsittard' ~ 'fortunasittard'). Ortak parça yalnızca genel ek ('spor',
+    'united') olamaz ve iki adda da aynı hizada (baş-baş ya da son-son) olmalıdır: 'trabzonspor' ≁ 'samsunspor',
+    'konyaspor' ≁ 'alanyaspor', 'worthing' ≁ 'tamworth', 'scunthorpeunited' ≁ 'southendunited'."""
     import difflib
 
     if not a or not b:
         return False
-    if a[:4] == b[:4] or a in b or b in a:
+    if (a, b) in _DISTINCT or (b, a) in _DISTINCT:
+        return False
+    ca, cb = _core(a), _core(b)
+    if ca == cb or ca[:4] == cb[:4] or ca in cb or cb in ca:
         return True
-    sm = difflib.SequenceMatcher(None, a, b)
-    lcs = sm.find_longest_match(0, len(a), 0, len(b)).size
-    # ortak uzun parça (ör. 'sittard', 'gijon', 'braunschweig') ya da yüksek benzerlik + ortak parça
-    return lcs >= 5 or (lcs >= 4 and sm.ratio() >= 0.6)
+    sm = difflib.SequenceMatcher(None, ca, cb)
+    m = sm.find_longest_match(0, len(ca), 0, len(cb))
+    aligned = (m.a == 0 and m.b == 0) or (m.a + m.size == len(ca) and m.b + m.size == len(cb))
+    return (m.size >= 5 and aligned) or m.size >= 7 or (m.size >= 4 and aligned and sm.ratio() >= 0.6)
+
+
+# Ad benzerliğine rağmen farklı kulüpler (yanlış birleştirme bir kez yaşandı)
+_DISTINCT = {("osters", "ostersunds")}
 
 
 def learn_aliases(records: list[dict], reg: "TeamRegistry", existing: list[dict] | None = None) -> int:
@@ -117,6 +151,15 @@ def learn_aliases(records: list[dict], reg: "TeamRegistry", existing: list[dict]
     for lg, keys in reg.keys.items():
         for k in keys:
             freq[(lg, k)] += 5  # veritabanında olan anahtar tercih edilir
+    # Aynı kaynak iki adı da (iki ayrı takım olarak) veriyorsa bunlar farklı kulüplerdir: asla eşlenmez.
+    src_keys: dict = defaultdict(set)
+    for lg, _, h, a, src in rows:
+        if src != "_db":
+            src_keys[(lg, src)].update((h, a))
+
+    def same_source(lg, a, b):
+        return any(a in ks and b in ks for (l2, _s), ks in src_keys.items() if l2 == lg)
+
     by_day = defaultdict(list)
     for row in rows:
         by_day[(row[0], row[1].date())].append(row)
@@ -136,7 +179,7 @@ def learn_aliases(records: list[dict], reg: "TeamRegistry", existing: list[dict]
                     pairs = [(x[2], y[2])]
                 elif x[2] != y[2] and x[3] != y[3]:  # iki taraf da farklı: iki ad çifti de benzer olmalı
                     pairs = [(x[2], y[2]), (x[3], y[3])]
-                if pairs and all(_similar(a, b) for a, b in pairs):
+                if pairs and all(_similar(a, b) and not same_source(lg, a, b) for a, b in pairs):
                     for a, b in pairs:
                         votes[(lg, *sorted((a, b)))] += 1
     n = 0
@@ -736,6 +779,8 @@ class DataPool:
         teams_all = self.store.select("teams")
         for t in teams_all:
             reg.add(t["league"], t["id"].split(":", 1)[1], t["name"], t.get("aliases"))
+        for lg, ak, tgt in reg.prune_conflicting():
+            self.log.append(f"⚠️ hatalı ad eşlemesi yok sayıldı: {lg} '{ak}' → {tgt}")
         merged = merge_records(recs, reg, existing)
         self._save_learned_aliases(reg, teams_all)
         if getattr(reg, "unmatched", None):
