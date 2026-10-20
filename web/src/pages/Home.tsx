@@ -82,8 +82,8 @@ export default function Home() {
                 <p className="muted tiny">Maçlardan önce kilitlendi · <StatusPill status={gk.status} /></p>
               </>
             ) : (
-              <Empty title="Günün Kararı maçtan saatler önce yayımlanır" icon="◆">
-                Masa, 2,30–4,00 bandında değer taşıyan 2–3 maçlık bir kombinasyon bulduğunda kuponu burada açar.
+              <Empty title="Bugünün kuponu henüz masada değil" icon="◆">
+                Meclis'in ana tercihlerinden oluşan günün kuponu burada açılır.
                 {lastGk && <> Son kupon: {dateLong(lastGk.coupon_date + "T12:00:00+03:00")} · {num(lastGk.total_odds)} · <StatusPill status={lastGk.status} /></>}
               </Empty>
             )}
@@ -93,7 +93,7 @@ export default function Home() {
         <Card title="Güven Panosu" aside={<Link to="/guven-panosu" className="more">Tüm kayıt →</Link>}>
           {offline ? <p className="muted small">Veri şu an alınamıyor.</p> : book.loading ? <Skeleton rows={1} h={64} /> : (
             <div className="kpis two">
-              <Stat label="Kilitli karar" value={preds.length} />
+              <Stat label="Kilitli karar" value={T.total} sub="tekliler + kuponlar" />
               <Stat label="Tekli isabet" value={pct(S.hit, 1)} sub={`${S.won}/${S.won + S.lost} sonuçlanan`} />
               <Stat label="Toplam kâr" value={T.profit !== null ? signed(T.profit) : "—"} tone={(T.profit ?? 0) > 0 ? "pos" : (T.profit ?? 0) < 0 ? "neg" : "muted"} sub="birim · tekliler + kuponlar" />
               <Stat label="Toplam ROI" value={T.roi !== null ? `${signed(T.roi * 100, 1)}%` : "—"} sub={`${T.priced} piyasa oranlı bahis`} />

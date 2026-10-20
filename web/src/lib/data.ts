@@ -213,3 +213,49 @@ export async function botBulten(day: string): Promise<BotBultenRow[] | null> {
   if (error) { botBultenMissing = true; return null; }
   return (data ?? []) as BotBultenRow[];
 }
+
+// ---------------------------------------------------------------------------------------------
+// Maç dosyası. Takım kimliği "lig:slug"; aynı kulübün lig, Avrupa ve kupa maçları slug ile birleşir
+// (v_takim_mac_istatistik ile aynı kural). Yalnızca BU SEZON (1 Temmuz'dan itibaren), yalnızca bitmiş maçlar.
+// ---------------------------------------------------------------------------------------------
+const slugOf = (id: string) => id.slice(id.indexOf(":") + 1);
+
+export async function teamSeason(teamId: string, beforeIso: string): Promise<Match[]> {
+  const same = await run<{ id: string }>(db().from("teams").select("id").like("id", `%:${slugOf(teamId)}`));
+  const ids = [...new Set([teamId, ...same.map((x) => x.id)])].map((x) => `"${x}"`).join(",");
+  return run<Match>(
+    db().from("matches").select(MATCH_LIST)
+      .or(`home_team_id.in.(${ids}),away_team_id.in.(${ids})`)
+      .gte("kickoff_at", seasonStartIso(new Date(beforeIso))).lt("kickoff_at", beforeIso).not("home_goals", "is", null)
+      .order("kickoff_at", { ascending: false }).limit(80),
+  );
+}
+
+/** Aralarındaki maçlar (bütün kulvarlar, veri havuzundaki bütün sezonlar). */
+export async function h2hAll(a: string, b: string, beforeIso: string): Promise<Match[]> {
+  const sa = slugOf(a), sb = slugOf(b);
+  return run<Match>(
+    db().from("matches").select(MATCH_LIST)
+      .or(`and(home_team_id.like.*:${sa},away_team_id.like.*:${sb}),and(home_team_id.like.*:${sb},away_team_id.like.*:${sa})`)
+      .lt("kickoff_at", beforeIso).not("home_goals", "is", null)
+      .order("kickoff_at", { ascending: false }).limit(10),
+  );
+}
+
+/** Hakemin bu sezon yönettiği bitmiş maçlar. */
+export async function refereeSeason(name: string, beforeIso: string): Promise<Match[]> {
+  return run<Match>(
+    db().from("matches").select(MATCH_LIST).eq("referee", name)
+      .gte("kickoff_at", seasonStartIso(new Date(beforeIso))).lt("kickoff_at", beforeIso).not("home_goals", "is", null)
+      .order("kickoff_at", { ascending: false }).limit(60),
+  );
+}
+
+/** Bir ligin bu sezon oynanmış maçları (puan durumu, benzer maçlar). */
+export async function leaguePlayed(lg: string, beforeIso: string): Promise<Match[]> {
+  return all<Match>(() =>
+    db().from("matches").select(MATCH_LIST).eq("league", lg)
+      .gte("kickoff_at", seasonStartIso(new Date(beforeIso))).lt("kickoff_at", beforeIso).not("home_goals", "is", null)
+      .order("kickoff_at", { ascending: false }),
+  );
+}

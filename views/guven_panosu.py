@@ -24,9 +24,7 @@ DONE = ("kazandi", "kaybetti", "iade")
 
 def bets_frame(preds: list[dict], coupons: list[dict]) -> pd.DataFrame:
     rows = []
-    for p in preds:
-        if p["tag"] != "meclis_gorusu":
-            continue
+    for p in trust.public_singles(preds):
         rows.append({"tür": "Tekli", "t": p["kickoff_at"], "status": p["status"], "priced": p.get("odds") is not None,
                      "profit": p.get("profit"), "league": p.get("league"), "market": p["market"]})
     for c in coupons:
@@ -69,7 +67,7 @@ summary = pd.DataFrame([{"Grup": "Tekliler (Meclis Görüşü)", **summ(singles)
                         {"Grup": "Kuponlar (Günün Kararı + Karar Birliği)", **summ(cps)},
                         {"Grup": "Toplam", **summ(bets)}])
 st.dataframe(summary, hide_index=True, width="stretch")
-sd = trust.summarize(trust.predictions_frame([p for p in preds if p["tag"] == "meclis_gorusu"]))
+sd = trust.summarize(trust.predictions_frame(trust.public_singles(preds)))
 k = st.columns(3)
 k[0].metric("Brier (tekliler)", f"{sd['brier']:.3f}" if sd["brier"] is not None else "—", help="Düşük = daha iyi kalibrasyon")
 k[1].metric("Ortalama CLV", f"%{100 * sd['clv']:+.2f}" if sd.get("clv") is not None else "—", f"{sd.get('clv_n', 0)} tahmin", delta_color="off")
@@ -107,7 +105,7 @@ with c4:
                  hide_index=True, width="stretch")
 
 st.subheader("Kalibrasyon (tekliler)")
-cal = trust.calibration(trust.predictions_frame([p for p in preds if p["tag"] == "meclis_gorusu"]))
+cal = trust.calibration(trust.predictions_frame(trust.public_singles(preds)))
 if cal.empty:
     st.caption("Yeterli sonuç yok.")
 else:

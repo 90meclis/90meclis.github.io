@@ -1,6 +1,6 @@
 import streamlit as st
 
-from meclis import ui
+from meclis import trust, ui
 from meclis.markets import TAG_LABELS, pick_label
 from meclis.timeutil import tr_str
 
@@ -33,7 +33,7 @@ if _days:
                             f"({(p.get('odds') or p.get('fair_odds') or 0):.2f}) {ui.status_badge(p['status'])}")
             st.caption("Maçlardan önce kilitlendi · 18+ · garanti yoktur")
     if not _gk:
-        st.info("Bu gün için Günün Kararı kurulmadı: 2,30–4,00 bandında yeterince değerli 2–3 maçlık kombinasyon çıkmadı.")
+        st.info("Bu gün için Günün Kararı yok.")
     _ss = [p for p in preds if p["tag"] == "meclis_gorusu" and tr_str(p["kickoff_at"], "%Y-%m-%d") == _focus and p["match_id"] not in _gk_m]
     st.markdown(f"#### 🗳️ Meclis Görüşleri · {len(_ss)}")
     if _ss:
@@ -61,7 +61,7 @@ if _rdays:
 
 st.subheader("🎫 Kuponlar")
 if not coupons:
-    ui.empty_state("Henüz kupon yok. Günün Kararı yalnızca toplam oran bandında değerli bir kombinasyon bulunursa kurulur.")
+    ui.empty_state("Henüz kupon yok.")
 for c in coupons:
     if c["tag"] not in tags or c["status"] not in statuses:
         continue
@@ -74,7 +74,9 @@ for c in coupons:
                    f"kâr: {c.get('profit') if c.get('profit') is not None else '—'} birim · kayıt: {tr_str(c.get('created_at'))}")
 
 st.subheader("🗳️ Tekli kayıtlar")
-singles = [p for p in preds if p["tag"] in tags and p["status"] in statuses and (p["tag"] == "meclis_gorusu" or not p.get("coupon_id"))]
+_pub_ids = {p["id"] for p in trust.public_singles(preds)}
+singles = [p for p in preds if p["tag"] in tags and p["status"] in statuses
+           and ((p["tag"] == "meclis_gorusu" and p["id"] in _pub_ids) or (p["tag"] != "meclis_gorusu" and not p.get("coupon_id")))]
 if singles:
     df = ui.predictions_table(singles)
     st.dataframe(df, hide_index=True, width="stretch")

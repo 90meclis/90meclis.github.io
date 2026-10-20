@@ -40,7 +40,7 @@ export const TAG_LABELS: Record<Tag, string> = {
   karar_birligi: "Karar Birliği",
 };
 export const TAG_HINT: Record<Tag, string> = {
-  gunun_karari: "2–3 maçlık kupon, toplam oran 2.30–4.00 bandında",
+  gunun_karari: "Meclis'in ana tercihlerinden oluşan günün kuponu",
   meclis_gorusu: "Maç başına tek seçim (tekli)",
   karar_birligi: "Günde 5+ Meclis Görüşü varsa en güvenilenlerden kombine",
 };

@@ -1,7 +1,7 @@
 """Açılış sayfası: marka, Günün Kararı, bugünün maçları, Güven Panosu özeti, gündem ve bölümler."""
 import streamlit as st
 
-from meclis import ui
+from meclis import trust, ui
 from meclis.markets import pick_label
 from meclis.pool import today_tr
 from meclis.timeutil import day_bounds_utc, tr_str
@@ -30,15 +30,17 @@ with c1:
                 st.markdown(f"- {tr_str(p['kickoff_at'], '%H:%M')} {p['home_name']} – {p['away_name']}: "
                             f"**{pick_label(p['market'], p['selection'], p.get('line'), p['home_name'], p['away_name'])}**")
         else:
-            st.caption("Günün Kararı maçtan saatler önce yayımlanır: 2,30–4,00 bandında değer taşıyan 2–3 maçlık kombinasyon.")
+            st.caption("Meclis'in ana tercihlerinden oluşan günün kuponu.")
         st.page_link("views/tahmin_arsivi.py", label="Masaya git →")
 with c2:
     with st.container(border=True):
         st.markdown("#### 🛡️ Güven Panosu")
-        settled = [p for p in preds if p["tag"] == "meclis_gorusu" and p["status"] in ("kazandi", "kaybetti")]
+        # Sitedekiyle aynı sayım: kupon = 1 kayıt; Günün Kararı ayağı olan maçın teklisi ayrıca sayılmaz.
+        singles = trust.public_singles(preds)
+        settled = [p for p in singles if p["status"] in ("kazandi", "kaybetti")]
         won = sum(p["status"] == "kazandi" for p in settled)
         k1, k2 = st.columns(2)
-        k1.metric("Kilitli karar", len(preds))
+        k1.metric("Kilitli karar", len(singles) + len(coupons), help="Tekli görüşler + kuponlar (her kupon tek kayıt)")
         k2.metric("Tekli isabet", f"%{100 * won / len(settled):.1f}" if settled else "—", f"{won}/{len(settled)}", delta_color="off")
         st.page_link("views/guven_panosu.py", label="Tüm kayıt →")
 

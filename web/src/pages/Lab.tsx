@@ -8,7 +8,7 @@ import { hasScore } from "../lib/match";
 import { usePageMeta, ROUTES } from "../lib/seo";
 import { GameBars } from "../components/charts";
 import { Card, Chips, Empty, Gate, PageHead } from "../components/ui";
-import { TeamSeries } from "./MatchDetail";
+import { TeamSeries } from "../components/TeamSeries";
 import type { Match, MatchStat, Trend } from "../lib/types";
 
 type Tab = "seri" | "takim" | "puan";
