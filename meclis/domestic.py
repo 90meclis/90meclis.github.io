@@ -139,15 +139,17 @@ class DomesticTrack:
         return out
 
     # ---------------- 2) yerel ligi doldur
-    def fill_league(self, tsdb_id: str, cup_teams: dict[str, str], max_rounds: int = 46) -> int:
+    def fill_league(self, tsdb_id: str, cup_teams: dict[str, str], max_rounds: int = 46, code: str | None = None) -> int:
         """tsdb_id ligi için bu sezonun bütün haftalarını yazar. cup_teams: {kupa_slug: takım adı} — bu takımlar
         kupa slug'ıyla yazılır (Avrupa ↔ Lig birleşmesi)."""
         info = (self._tsdb("lookupleague.php", {"id": tsdb_id}).get("leagues") or [{}])[0]
         season = info.get("strCurrentSeason")
         if not season:
             return 0
-        code = f"Y{tsdb_id}"
-        self.store.upsert("leagues", [{"code": code, "name": info.get("strLeague"), "country": info.get("strCountry"),
+        own = code is not None  # bizim çekirdek ligimiz (ör. T2): lig/takım kayıtlarına dokunulmaz, yalnızca maç eklenir
+        code = code or f"Y{tsdb_id}"
+        if not own:
+            self.store.upsert("leagues", [{"code": code, "name": info.get("strLeague"), "country": info.get("strCountry"),
                                        "cup": False, "source": "thesportsdb"}])
         s0 = season_start()
         events, empty = [], 0
@@ -184,12 +186,18 @@ class DomesticTrack:
                 teams[f"{code}:{s}"] = {"id": f"{code}:{s}", "league": code, "name": e[f"str{side}Team"],
                                         "ext_ids": {"tsdb": e[f"id{side}Team"]}, "domestic_league": code}
         if teams:
-            self.store.upsert("teams", list(teams.values()))
+            have = {t["id"] for t in self.store.select("teams", [("league", "eq", code)])}
+            new = [t for tid, t in teams.items() if tid not in have]
+            if new:
+                self.store.upsert("teams", new)
         for i in range(0, len(rows), 200):
             self.store.upsert("matches", rows[i:i + 200])
         self.log.append(f"ℹ️ yerel lig {info.get('strLeague')} ({code}, {season}): {len(rows)} oynanmış maç "
                         f"(TheSportsDB, {len(events)} fikstür)")
         return len(rows)
+
+    # Çekirdek ligde ana kaynakların kapsamadığı / az kapsadığı ligler: TheSportsDB haftaları (sonuçlar)
+    CORE_TSDB = {"T2": "4676"}
 
     def run(self, hours: float = 60) -> dict:
         res = self.resolve(hours)
@@ -203,5 +211,10 @@ class DomesticTrack:
                 n += self.fill_league(lg, cup_teams)
             except Exception as e:
                 self.log.append(f"⚠️ yerel lig Y{lg}: {e}")
+        for code, tsdb in self.CORE_TSDB.items():
+            try:
+                n += self.fill_league(tsdb, {}, code=code)
+            except Exception as e:
+                self.log.append(f"⚠️ {code} (TheSportsDB): {e}")
         return {"resolved": res["resolved"], "missing": res["missing"], "matches": n, "apif_calls": self.apif_calls,
                 "log": self.log}

@@ -205,8 +205,9 @@ def analyze_match(match: dict, ctx: LeagueContext, settings, injuries: list[dict
         euro = match["league"] in LEAGUES and LEAGUES[match["league"]].cup
         if mkt:
             # Geri test (20.10.2026): güncel sezon modeli kapanış oranını tek başına yenemiyor → gol beklentisi her
-            # zaman piyasayla harmanlanır. Avrupa kupası: ligler arası güç belirsiz → piyasa ağırlığı 0.70.
-            wm = 0.70 if euro else (0.55 if min(nh_cur, na_cur) < THIN_CURRENT else 0.40)
+            # zaman piyasayla harmanlanır. Avrupa kupası: ligler arası güç belirsiz → piyasa ağırlığı 0.85 (canlı denetim 20.10: 0.70 ile
+            # bile kupa maçlarının çoğu 20 puanlık model–piyasa ayrışma sınırını aşıyordu).
+            wm = 0.85 if euro else (0.55 if min(nh_cur, na_cur) < THIN_CURRENT else 0.40)
             lh0, la0 = blend((lh0, la0), mkt, wm)
             basis += f" + piyasa oranı (ağırlık {wm:.2f}" + ("; Avrupa kupası" if euro else
                                                               "; bu sezon verisi az" if wm == 0.55 else "") + ")"
@@ -371,7 +372,7 @@ def rank_picks(payload: dict, settings, model_based: bool | None = None, q: floa
             if annotate:
                 m.update(deger=False, neden="skor pazarı yalnızca bilgi (seçim yapılmaz)")
             continue
-        p = m["probability"]
+        p = m.get("p_model", m["probability"])  # annotate_scan üretim olasılığını yazdıktan sonra da aynı sonuç
         o = m.get("odds")
         if o:
             # bülten genelinde modelin piyasadan sistematik sapması (ör. hep "alt"a kayma) düzeltilir
@@ -454,6 +455,16 @@ def annotate_scan(payload: dict, settings) -> dict | None:
                 m["neden"] = f"{m['neden']}; {gate}"
             elif best and m.get("deger"):
                 m["neden"] = f"{m['neden']} (maçın en değerlisi değil)"
+    # ÜRETİM OLASILIĞI = kalibre harman (model ↔ marjsız piyasa). Ham model olasılığı p_model'de saklanır;
+    # sitede gösterilen olasılık / adil oran / değer bu kalibre değerdir (geri test: piyasa modeli yeniyor).
+    for m in payload["markets"]:
+        if m.get("p_kal") is None:
+            continue
+        m.setdefault("p_model", m["probability"])
+        m["probability"] = m["p_kal"]
+        m["fair_odds"] = round(1 / m["p_kal"], 3) if m["p_kal"] > 0 else None
+        m["edge"] = m.get("edge_kal")
+    payload["probability_basis"] = "kalibre (model ↔ marjsız piyasa); ham model p_model"
     payload["scan_summary"] = {"pazar": len(payload["markets"]),
                                "oranli": sum(1 for m in payload["markets"] if m.get("odds")),
                                "degerli": sum(1 for m in payload["markets"] if m.get("deger")),

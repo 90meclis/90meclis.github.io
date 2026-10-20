@@ -71,6 +71,8 @@ class Bot:
                 priors = self.pool.elo_priors(league) if league != "DEMO" else {}
             except Exception:
                 priors = {}
+            if self.is_cup(league):
+                priors = {**self._cup_elo_priors(league, ms), **priors}
             self.contexts[league] = LeagueContext.build(league, ms, stats, elo_priors=priors, strength_prior=sp)
         return self.contexts[league]
 
@@ -120,19 +122,35 @@ class Bot:
             if not self.is_cup(m["league"]):
                 for t in (m["home_team_id"], m["away_team_id"]):
                     dom[t.split(":", 1)[-1]] = m["league"]
-        agg: dict[str, list] = {}
+        # Ligler arası güç = Avrupa maçlarında lig-lig averaj regresyonu (rakibin ligi hesaba katılır):
+        #   averaj ≈ g[ev ligi] − g[dep ligi] + saha avantajı;  ridge (λ=6) ile sıfıra büzülür.
+        # Eski ölçü (ham Avrupa averajı) ön elemede zayıf rakip ezen ligleri şişiriyordu (Azerbaycan > 0).
+        import numpy as np
+
+        rows, n_by = [], {}
         for m in self._all_season:
             if m["league"] not in ("CL", "EL", "ECL") or m.get("home_goals") is None:
                 continue
-            for t, gd in ((m["home_team_id"], m["home_goals"] - m["away_goals"]),
-                          (m["away_team_id"], m["away_goals"] - m["home_goals"])):
-                lg = dom.get(t.split(":", 1)[-1])
-                if lg:
-                    a = agg.setdefault(lg, [0, 0])
-                    a[0] += gd
-                    a[1] += 1
-        self._lstr = {lg: {"mac": n, "averaj_mac": round(g / n, 3), "s": round(0.35 * (g / n) * n / (n + 20), 4)}
-                      for lg, (g, n) in agg.items() if n}
+            lh, la = dom.get(m["home_team_id"].split(":", 1)[-1]), dom.get(m["away_team_id"].split(":", 1)[-1])
+            if not lh or not la or lh == la:
+                continue
+            rows.append((lh, la, m["home_goals"] - m["away_goals"]))
+            for lg in (lh, la):
+                n_by[lg] = n_by.get(lg, 0) + 1
+        leagues = sorted(n_by)
+        self._lstr = {}
+        if rows:
+            ix = {lg: i for i, lg in enumerate(leagues)}
+            X = np.zeros((len(rows), len(leagues) + 1))
+            y = np.zeros(len(rows))
+            for r, (lh, la, gd) in enumerate(rows):
+                X[r, ix[lh]], X[r, ix[la]], X[r, -1], y[r] = 1.0, -1.0, 1.0, gd
+            R = np.eye(len(leagues) + 1) * 6.0
+            R[-1, -1] = 0.0
+            beta = np.linalg.solve(X.T @ X + R, X.T @ y)
+            for lg, i in ix.items():
+                self._lstr[lg] = {"mac": n_by[lg], "averaj_mac": round(float(beta[i]), 3),
+                                  "s": round(0.35 * float(beta[i]), 4), "yontem": "lig-lig regresyon"}
         return self._lstr
 
     def _league_strength_prior(self, league: str, ms: list[dict]) -> dict[str, float]:
@@ -148,6 +166,22 @@ class Bot:
                 if not t.startswith(f"{league}:"):
                     out[t] = s
         return out
+
+    ELO_PER_STRENGTH = 650.0  # log-güç 1.0 ≈ 650 Elo (Δ/400 → gol regresyonu eğimi ≈ 1.2, iki yön)
+
+    def _cup_elo_priors(self, league: str, ms: list[dict]) -> dict[str, float]:
+        """Kupada Elo, ligler arası karşılaştırılabilir olsun diye takımın yerel liginin gücüyle başlatılır
+        (Elo 1500 + 650·s; s = ligin bu sezonki Avrupa sonuçlarından ölçülen log-gücü). Aksi halde Azerbaycan
+        şampiyonu ile Bundesliga takımı aynı 1500'den başlar ve kupada 'eşit' görünür."""
+        ls = self.league_strength()
+        dom: dict[str, str] = {}
+        for m in ms:
+            dl = m.get("dom_league")
+            if not dl:
+                continue
+            for t in (m["home_team_id"], m["away_team_id"]):
+                dom.setdefault(t, dl)
+        return {t: 1500.0 + self.ELO_PER_STRENGTH * ls.get(dl, {}).get("s", 0.0) for t, dl in dom.items()}
 
     def analyze(self, match: dict, fetch_extras: bool = True) -> dict:
         ctx = self.context(match["league"])
@@ -325,7 +359,7 @@ class Bot:
         for a in good:  # en iyi seçim bülten geneli kalibrasyonla yeniden seçilir
             a["bias"] = bias
             if self.is_cup(a.get("league") or ""):
-                a["cal_w_factor"] = 0.75  # kupa: ligler arası güç farkı belirsiz → piyasaya daha yakın
+                a["cal_w_factor"] = 0.5  # kupa: ligler arası güç farkı belirsiz → piyasaya daha yakın
             a["cal_params"] = cal_params
             a["best_pick"] = annotate_scan(a, self.s)
             try:  # film senaryoları (benzetim + maçın kendi sayıları); seçim bilindikten sonra kurulur
