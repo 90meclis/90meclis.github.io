@@ -116,3 +116,49 @@ def predict_xi(players: list[dict], unavailable: list[dict] | None = None, recen
     return {"players": [{"name": p["name"], "position": p.get("position"), "score": round(s, 3),
                          "note": "şüpheli" if _status_of(p["name"], unavailable) else None} for p, s in pred],
             "basis": used, "effect_rows": effect}
+
+
+GROUP_ORDER = {"GK": 0, "DEF": 1, "MID": 2, "ATT": 3}
+
+
+def assign_grid(players: list[dict], formation: str | None) -> tuple[str | None, list[dict]]:
+    """Diziliş + oyuncu sırası → API-Football tarzı 'satır:sütun' ızgarası (1:1 kaleci, 2:x savunma…).
+    Oyuncular mevki grubuna göre (K, D, OS, F) sıralanır, dizilişin satırlarına sırayla yerleştirilir.
+    Diziliş bilinmiyorsa mevki sayılarından türetilir (ör. 4 D, 3 OS, 3 F → '4-3-3'); 'formation_source' bunu söyler."""
+    if not players:
+        return formation, players
+    ps = sorted(enumerate(players), key=lambda ip: (GROUP_ORDER.get(_pos_group(ip[1].get("position")), 2), ip[0]))
+    ps = [p for _, p in ps]
+    rows = None
+    if formation:
+        try:
+            rows = [int(x) for x in str(formation).split("-") if x.strip()]
+        except ValueError:
+            rows = None
+    if not rows or sum(rows) != len(ps) - 1:
+        cnt = {}
+        for p in ps[1:]:
+            g = _pos_group(p.get("position"))
+            cnt[g] = cnt.get(g, 0) + 1
+        rows = [cnt.get(g, 0) for g in ("DEF", "MID", "ATT") if cnt.get(g)]
+        formation = "-".join(str(r) for r in rows) if rows else None
+    out, i = [], 0
+    for r_idx, n in enumerate([1] + rows):
+        for c in range(n):
+            if i < len(ps):
+                out.append(dict(ps[i], grid=f"{r_idx + 1}:{c + 1}"))
+                i += 1
+    out += [dict(p, grid=None) for p in ps[i:]]
+    return formation, out
+
+
+def xi_uncertainty(xi_side: dict) -> float:
+    """İlk 11'deki kilit oyuncuların (en yüksek 5 olasılık) oynama belirsizliği: 1 − ortalama olasılık, 'şüpheli'
+    notu ek ceza. 0 = kesin, 1 = tamamen belirsiz."""
+    ps = (xi_side or {}).get("players") or []
+    if not ps:
+        return 0.5
+    top = sorted(ps, key=lambda p: -(p.get("score") or 0))[:5]
+    u = 1 - sum(min(1.0, p.get("score") or 0) for p in top) / len(top)
+    u += 0.1 * sum(1 for p in ps if p.get("note") == "şüpheli")
+    return round(min(1.0, max(0.0, u)), 3)

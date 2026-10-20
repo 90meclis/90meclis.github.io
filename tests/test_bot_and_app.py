@@ -377,3 +377,37 @@ def test_dixon_coles_strength_prior_shifts_weak_league_opponents():
     m0 = fit_dixon_coles(rows)
     gap = lambda mm: mm.attack["CL:b"] - mm.attack["CL:a"]  # noqa: E731
     assert gap(m) > gap(m0) + 0.05
+
+
+def test_assign_grid_follows_formation_and_positions():
+    from meclis.xi import assign_grid
+
+    ps = [{"name": f"D{i}", "position": "Defender"} for i in range(4)] + \
+         [{"name": "K", "position": "Goalkeeper"}] + [{"name": f"M{i}", "position": "Midfielder"} for i in range(3)] + \
+         [{"name": f"F{i}", "position": "Attacker"} for i in range(3)]
+    f, out = assign_grid(ps, "4-3-3")
+    assert f == "4-3-3" and out[0]["name"] == "K" and out[0]["grid"] == "1:1"
+    assert [p["grid"] for p in out if p["name"].startswith("F")] == ["4:1", "4:2", "4:3"]
+    f2, _ = assign_grid(ps, None)
+    assert f2 == "4-3-3"
+
+
+def test_rank_picks_blocks_absurd_edge_and_uses_backtest_weight():
+    from types import SimpleNamespace
+
+    from meclis.analysis import rank_picks
+
+    mk = [{"market": "1X2", "selection": "1", "line": None, "probability": 0.80, "odds": 2.50},
+          {"market": "1X2", "selection": "X", "line": None, "probability": 0.12, "odds": 3.40},
+          {"market": "1X2", "selection": "2", "line": None, "probability": 0.08, "odds": 3.00}]
+    pl = {"markets": [dict(m) for m in mk], "quality": {"factor": 1.0}, "basis": "model"}
+    r = rank_picks(pl, SimpleNamespace(value_edge_min=0.03), True, annotate=True)
+    assert not [x for x in r if x.get("kind") == "değer"]  # %25 üstü değer → yayımlanmaz
+    assert pl["markets"][0]["deger"] is False
+    mk = [{"market": "1X2", "selection": "1", "line": None, "probability": 0.55, "odds": 2.70},
+          {"market": "1X2", "selection": "X", "line": None, "probability": 0.25, "odds": 3.40},
+          {"market": "1X2", "selection": "2", "line": None, "probability": 0.20, "odds": 3.00}]
+    pl2 = {"markets": [dict(m) for m in mk], "quality": {"factor": 1.0}, "basis": "model",
+           "cal_params": {"1X2": {"w": 0.1, "roi": 0.02}}}
+    r2 = rank_picks(pl2, SimpleNamespace(value_edge_min=0.03), True)
+    assert r2 and r2[0]["calibration"]["kaynak"] == "geri test" and r2[0]["calibration"]["w"] == 0.1

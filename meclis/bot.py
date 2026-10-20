@@ -34,6 +34,7 @@ def _prediction_row(match: dict, pick: dict, tag: str, rationale: str, coupon_id
         "confidence": pick.get("confidence"), "stake": 1, "rationale": rationale[:2000],
         "scenario_note": (scenario_note or "")[:2000] or None, "completeness": completeness,
         "model_version": MODEL_VERSION, "status": "bekliyor",
+        "calibration": dict(pick.get("calibration") or {}, model_version=MODEL_VERSION) if pick.get("calibration") else None,
     }
 
 
@@ -45,14 +46,27 @@ class Bot:
         self.log: list[str] = []
         self.contexts: dict[str, LeagueContext] = {}
 
+    def is_cup(self, league: str) -> bool:
+        """Kupa mı? config (CL/EL/ECL) + BSD'den keşfedilen ligler tablosundaki kupa bayrağı (FA Cup, DFB Pokal…)."""
+        from .config import LEAGUES
+
+        if league in LEAGUES:
+            return bool(LEAGUES[league].cup)
+        if "_cup_codes" not in self.__dict__:
+            try:
+                self._cup_codes = {r["code"] for r in self.store.select("leagues", [("cup", "eq", True)])}
+            except Exception:
+                self._cup_codes = set()
+        return league in self._cup_codes
+
     def context(self, league: str) -> LeagueContext:
         if league not in self.contexts:
             ms, stats = self.pool.history(league)
             from .config import LEAGUES
 
-            if league in LEAGUES and LEAGUES[league].cup:
+            if self.is_cup(league):
                 ms, stats = self._with_domestic(league, ms, stats)
-            sp = self._league_strength_prior(league, ms) if league in LEAGUES and LEAGUES[league].cup else None
+            sp = self._league_strength_prior(league, ms) if self.is_cup(league) else None
             try:
                 priors = self.pool.elo_priors(league) if league != "DEMO" else {}
             except Exception:
@@ -75,7 +89,7 @@ class Bot:
 
         extra = []
         for m in self._all_season:
-            if m["league"] == league or (m["league"] in LEAGUES and LEAGUES[m["league"]].cup):
+            if m["league"] == league or self.is_cup(m["league"]):
                 continue
             hs, as_ = m["home_team_id"].split(":", 1)[-1], m["away_team_id"].split(":", 1)[-1]
             if hs in slugs or as_ in slugs:
@@ -103,12 +117,12 @@ class Bot:
                                                              ("kickoff_at", "gte", to_iso(season_start()))])
         dom = {}
         for m in self._all_season:
-            if m["league"] in LEAGUES and not LEAGUES[m["league"]].cup:
+            if not self.is_cup(m["league"]):
                 for t in (m["home_team_id"], m["away_team_id"]):
                     dom[t.split(":", 1)[-1]] = m["league"]
         agg: dict[str, list] = {}
         for m in self._all_season:
-            if not (m["league"] in LEAGUES and LEAGUES[m["league"]].cup) or m.get("home_goals") is None:
+            if m["league"] not in ("CL", "EL", "ECL") or m.get("home_goals") is None:
                 continue
             for t, gd in ((m["home_team_id"], m["home_goals"] - m["away_goals"]),
                           (m["away_team_id"], m["away_goals"] - m["home_goals"])):
@@ -168,10 +182,23 @@ class Bot:
         except Exception as e:  # tahmini 11 kurulamazsa sakat listesiyle devam
             self.log.append(f"⚠️ tahmini ilk 11 kurulamadı ({match['home_name']}): {e}")
             xi = {}
+        from .xi import assign_grid, xi_uncertainty
+
+        for side in ("home", "away"):  # diziliş + ızgara (frontend oyuncuları dizilişe göre yerleştirir)
+            sx = xi.get(side) if isinstance(xi, dict) else None
+            if not sx or not sx.get("players"):
+                continue
+            lu = next((x for x in lineups if x.get("side") == side and x.get("formation")), None)
+            sx["formation"], sx["players"] = assign_grid(sx["players"], (lu or {}).get("formation"))
+            sx["formation_source"] = ((lu or {}).get("source") or "lineups") if lu else "mevki sayısından türetildi"
+            sx["uncertainty"] = xi_uncertainty(sx)
         a = analyze_match(match, ctx, self.s, injuries, known, players, weather, xi=xi)
+        if isinstance(a, dict) and isinstance(xi, dict):
+            a["xi_uncertainty"] = max((xi.get(s_) or {}).get("uncertainty", 0.5) if xi.get(s_) else 0.5
+                                      for s_ in ("home", "away"))
         from .config import LEAGUES
 
-        if match["league"] in LEAGUES and LEAGUES[match["league"]].cup and isinstance(a, dict):
+        if self.is_cup(match["league"]) and match["league"] in LEAGUES and isinstance(a, dict):
             a["avrupa_baglam"] = self._europe_context(match, ctx)
         return a
 
@@ -211,8 +238,10 @@ class Bot:
         """Başlamamış TÜM maçlar (ufuk boyunca). Yayın kararı ayrıca publishable() ile verilir."""
         lo = now
         hi = now + timedelta(hours=self.s.horizon_hours)
-        ms = self.pool.matches_between(to_iso(lo), to_iso(hi), self.s.leagues)
-        return [m for m in ms if m.get("status") in ("planlandi", None)]
+        # BÜTÜN ligler (BSD'nin keşfettikleri dahil): bültendeki hiçbir maç atlanmaz. 'Y' ligleri yalnızca
+        # Avrupa takımlarının yerel lig geçmişi içindir (fikstürü bültene girmez).
+        ms = self.pool.matches_between(to_iso(lo), to_iso(hi), None)
+        return [m for m in ms if m.get("status") in ("planlandi", None) and not m["league"].startswith("Y")]
 
     def run(self, record: bool = True, now=None, fetch_extras: bool = True, publish: bool = True) -> dict:
         """record=False: kuru. publish=False: yalnızca analiz + bot bülteni (arşive tahmin/kupon yazılmaz).
@@ -237,10 +266,22 @@ class Bot:
         bias = slate_bias(good)
         from .config import LEAGUES
 
+        try:  # pazar başına kalibrasyon ağırlığı ve değer kuralının geri test ROI'si (model_backtest)
+            # w = max(w*, CAL_W_FLOOR): geri testte model kapanış oranını yenemiyor (w*≈0); modele asgari söz hakkı
+            # bırakılır, büyük ayrışmalar zaten MAX_MODEL_GAP ile elenir.
+            from .analysis import CAL_W_FLOOR
+
+            cal_params = {r["market"]: {"w": max(CAL_W_FLOOR, float(r["w_opt"])), "w_opt": float(r["w_opt"]),
+                                        "roi": r.get("roi_value"), "n": r.get("n")}
+                          for r in self.store.select("model_backtest", [("segment", "eq", "tum")])
+                          if r.get("w_opt") is not None and (r.get("n") or 0) >= 100}
+        except Exception:
+            cal_params = {}
         for a in good:  # en iyi seçim bülten geneli kalibrasyonla yeniden seçilir
             a["bias"] = bias
-            if a.get("league") in LEAGUES and LEAGUES[a["league"]].cup:
-                a["cal_w"] = 0.5  # kupa: ligler arası güç farkı belirsiz → piyasaya daha yakın
+            if self.is_cup(a.get("league") or ""):
+                a["cal_w_factor"] = 0.75  # kupa: ligler arası güç farkı belirsiz → piyasaya daha yakın
+            a["cal_params"] = cal_params
             a["best_pick"] = annotate_scan(a, self.s)
         if bias:
             self.log.append("ℹ️ kalibrasyon (model − piyasa, bülten ortalaması): " + ", ".join(
@@ -301,6 +342,7 @@ class Bot:
                 "selection": bp["selection"], "line": bp.get("line"), "probability": bp["probability"],
                 "odds": bp.get("odds"), "fair_odds": bp.get("fair_odds"), "edge": bp.get("edge"),
                 "confidence": bp.get("confidence"), "kind": bp.get("kind"), "basis": a.get("basis"),
+                "calibration": bp.get("calibration"),
                 "completeness": a["quality"]["score"], "status": "aday", "computed_at": to_iso(now),
                 "model_version": MODEL_VERSION}
 

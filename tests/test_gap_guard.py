@@ -18,6 +18,6 @@ def test_wild_gap_is_not_value():
 
 
 def test_normal_edge_still_value():
-    pl = _payload(0.50, 2.20, 3.4, 3.6)
+    pl = _payload(0.53, 2.20, 3.4, 3.6)  # kalibrasyon (w=0.35) sonrası değer ≈ +%4
     picks = rank_picks(pl, SimpleNamespace(value_edge_min=0.03))
     assert any(x["selection"] == "1" and x.get("kind") == "değer" for x in picks)

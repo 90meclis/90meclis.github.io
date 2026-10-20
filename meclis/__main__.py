@@ -25,7 +25,7 @@ from .store import get_store
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="python -m meclis", description="90 Meclis komut satırı")
     ap.add_argument("komut", choices=["yenile", "gundem", "bot", "sonuclandir", "sabah", "durum", "kadro",
-                                        "gecmis", "analiz", "sezon", "yedek", "gunici"])
+                                        "gecmis", "analiz", "sezon", "yedek", "gunici", "yerel", "geritest"])
     ap.add_argument("--zorla", action="store_true", help="kadro: 7 günlük önbelleği yok say")
     ap.add_argument("--saat", type=float, default=168, help="kadro: kaç saat sonrasına kadarki maçlar (varsayılan 168 = 7 gün)")
     ap.add_argument("--gecmis", action="store_true", help="geçmiş sezon verisini de çek")
@@ -48,8 +48,9 @@ def main(argv=None) -> int:
 
     pool = DataPool(store, s)
     out_logs: list[str] = []
-    STEPS = {"sabah": {"yenile_s", "gundem", "kadro", "bot", "sezon", "sonuclandir"},
-             "gunici": {"yenile", "kadro", "bot", "sonuclandir"}, "gecmis": {"gecmis", "sezon"}}
+    STEPS = {"sabah": {"yenile_s", "gundem", "kadro", "yerel", "bot", "sezon", "sonuclandir"},
+             "gunici": {"yenile", "kadro", "yerel", "bot", "sonuclandir"}, "gecmis": {"gecmis", "yerel", "sezon", "geritest"},
+             "analiz": {"yerel"}}
     steps = set(STEPS.get(a.komut, {a.komut}))
     if a.komut == "yenile" and a.gecmis:
         steps = {"yenile_s"}
@@ -103,6 +104,27 @@ def main(argv=None) -> int:
 
         out_logs += Backfill(pool).run()["log"]
         _done(store, "gecmis")
+    if "yerel" in steps and not s.demo_mode:
+        # Avrupa kupası takımlarının yerel ligi (bizim lig değilse TheSportsDB'den bu sezonun bütün haftaları)
+        from .domestic import DomesticTrack
+
+        try:
+            r = DomesticTrack(store, s, s.api_football_key,
+                              max_apif=25 if a.komut == "gunici" else 40).run(hours=60)
+            out_logs += r["log"] + [f"ℹ️ yerel lig: {len(r['resolved'])} takım çözüldü, çözülemeyen: "
+                                    f"{', '.join(r['missing']) or 'yok'} ({r['apif_calls']} API-Football isteği)"]
+        except Exception as e:
+            out_logs.append(f"⚠️ yerel lig izi: {e}")
+    if "geritest" in steps and not s.demo_mode:  # model geri testi → model_backtest (pazar başına kalibrasyon)
+        from .backtest import run_backtest
+
+        try:
+            r = run_backtest(store)
+            out_logs.append(f"ℹ️ geri test: {r['rows']} tahmin; " + "; ".join(
+                f"{x['market']}: n={x['n']} LL model {x['ll_model']} / piyasa {x['ll_market']} / harman {x['ll_blend']} "
+                f"(w*={x['w_opt']}), değer ROI {x['roi_value']}" for x in r["markets"]))
+        except Exception as e:
+            out_logs.append(f"⚠️ geri test: {e}")
     if "bot" in steps:
         r = Bot(store, s, pool).run(record=not a.kuru)
         out_logs += r["log"]

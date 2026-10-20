@@ -305,8 +305,8 @@ def select_single(payload: dict, settings) -> dict | None:
 SINGLE_MIN_ODDS = 1.50
 SINGLE_MAX_ODDS = 5.00
 CAL_W = 0.65
-CAL_W_DEFAULT = 0.5  # geri testi olmayan pazarlar (korner, kart, şut…): model ile piyasa yarı yarıya
-EDGE_MAX = 0.25
+CAL_W_DEFAULT = 0.35  # geri testi olmayan pazarlar (korner, kart, şut…)
+CAL_W_FLOOR = 0.20  # geri testli pazarlarda modelin asgari ağırlığı
 
 
 def _market_implied(markets: list[dict]) -> dict:
@@ -395,9 +395,6 @@ def rank_picks(payload: dict, settings, model_based: bool | None = None, q: floa
                        "doğrulanmadan seçim yok")
             elif edge < edge_min:
                 why = f"değer {edge * 100:+.1f}% < %{edge_min * 100:.0f}"
-            elif edge > EDGE_MAX:
-                why = (f"değer {edge * 100:+.1f}% > %{EDGE_MAX * 100:.0f} — model ile piyasa arasındaki fark akla "
-                       "yatkın değil (model/veri hatası şüphesi), yayımlanmaz")
             elif not pm:
                 why = "piyasanın karşı tarafı yok — marjsız olasılık hesaplanamıyor (kalibrasyon yapılamaz)"
             if why:

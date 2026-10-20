@@ -3,7 +3,7 @@
 log λ_ev  = μ + γ + a_ev - d_dep
 log λ_dep = μ + a_dep - d_ev
 Düşük skorlu sonuçlar için Dixon-Coles τ düzeltmesi (ρ) uygulanır. Kimlik belirlenebilirliği ve
-az maçlı takımlar için parametrelere hafif L2 (ridge) cezası eklenir — yeni çıkan takım lig ortalamasına çekilir.
+az maçlı takımlar için parametrelere L2 (ridge = 10; 20.10.2026 geri testinde 0.5'e göre log-loss 1X2 1.111→1.057, 2.5 A/Ü 0.761→0.691) cezası eklenir — yeni çıkan takım lig ortalamasına çekilir.
 """
 from __future__ import annotations
 
@@ -47,7 +47,7 @@ def _tau(x, y, lh, la, rho):
     return np.clip(t, 1e-6, None)
 
 
-def fit_dixon_coles(matches: list[dict], xi: float = 0.0019, ridge: float = 0.5,
+def fit_dixon_coles(matches: list[dict], xi: float = 0.0019, ridge: float = 10.0,
                     ref_time=None, prior: dict[str, float] | None = None) -> GoalModel:
     """matches: [{'home','away','hg','ag','days_ago', 'hthg','htag'}]
     prior: takım → log-ölçekte güç önseli (ridge bu değere çeker: hücum = +s, savunma = +s). Avrupa kupası

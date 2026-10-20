@@ -30,6 +30,9 @@ JSON_COLS: dict[str, set[str]] = {
     "analysis_queue": {"missing"},
     "analyses": {"payload"},
     "odds_snapshots": {"odds"},
+    "model_backtest": {"calib", "leagues"},
+    "predictions": {"calibration"},
+    "bot_picks": {"calibration"},
 }
 BOOL_COLS: dict[str, set[str]] = {"injuries": {"is_key"}, "source_status": {"ok"},
                                   "sources": {"requires_key", "is_active"}, "leagues": {"cup"}, "player_matches": {"started"}}
@@ -55,6 +58,7 @@ PRIMARY_KEYS: dict[str, list[str]] = {
     "source_status": ["source"],
     "coupons": ["id"],
     "predictions": ["id"],
+    "model_backtest": ["market", "segment"],
 }
 
 
@@ -126,7 +130,7 @@ class BaseStore:
 _SQLITE_SCHEMA = """
 create table if not exists teams (id text primary key, league text not null, name text not null,
   aliases text default '[]', ext_ids text default '{}', stadium text, city text, lat real, lon real, coach text,
-  capacity int, updated_at text);
+  capacity int, updated_at text, domestic_league text);
 create table if not exists matches (id text primary key, league text not null, season text, kickoff_at text not null,
   home_team_id text not null, away_team_id text not null, home_name text not null, away_name text not null,
   status text not null default 'planlandi' check (status in ('planlandi','basladi','bitti','ertelendi','iptal')),
@@ -171,11 +175,15 @@ create table if not exists odds_snapshots (match_id text not null, taken_at text
   odds text not null, primary key (match_id, taken_at));
 create table if not exists fetch_jobs (id text primary key, source text not null, attempts int default 0,
   status text default 'tekrar', next_try_at text, last_error text, fallback text, updated_at text);
+create table if not exists model_backtest (market text not null, segment text not null, n int, brier_model real,
+  brier_market real, brier_blend real, ll_model real, ll_market real, ll_blend real, w_opt real, n_value int,
+  hit_value real, roi_value real, calib text, computed_at text, label text, model_version text, leagues text,
+  primary key (market, segment));
 create table if not exists bot_picks (id text primary key, match_id text not null, kickoff_at text not null, league text,
   home_name text, away_name text, market text not null, selection text not null, line real, probability real not null,
   odds real, fair_odds real, edge real, confidence real, kind text, basis text, completeness real, model_version text,
   status text not null default 'aday' check (status in ('aday','gunun_karari','meclis_gorusu')), computed_at text,
-  locked_at text);
+  locked_at text, calibration text);
 create trigger if not exists bot_picks_lock before update on bot_picks when old.locked_at is not null
 begin select raise(ignore); end;
 create table if not exists source_status (source text primary key, ok int, message text, calls_today int default 0,
@@ -194,7 +202,7 @@ create table if not exists predictions (id text primary key, recorded_at text, m
   scenario_note text, completeness real, model_version text, status text not null default 'bekliyor'
   check (status in ('bekliyor','basladi','kazandi','kaybetti','iade')),
   result_value text, profit real, closing_odds real, clv real, settled_at text, settlement_note text,
-  bot_pick_id text);
+  bot_pick_id text, calibration text);
 create unique index if not exists predictions_single_unique on predictions (match_id, market, selection, coalesce(line, -1))
   where tag = 'meclis_gorusu';
 create unique index if not exists predictions_leg_unique on predictions (coupon_id, match_id) where coupon_id is not null;
