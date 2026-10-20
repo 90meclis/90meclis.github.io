@@ -127,8 +127,6 @@ class SeasonFill:
         # önce önümüzdeki 36 saatte oynayacak takımların maçları (yarının bülteni), sonra en yeni maç önce
         from datetime import timedelta
 
-        from .timeutil import now_utc, to_iso
-
         soon = self.store.select("matches", [("kickoff_at", "gte", to_iso(now_utc())),
                                              ("kickoff_at", "lt", to_iso(now_utc() + timedelta(hours=36)))])
         hot = {t for x in soon for t in (x.get("home_team_id"), x.get("away_team_id"))}

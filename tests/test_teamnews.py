@@ -525,3 +525,17 @@ def test_news_url_normalisation_clusters_same_link():
               "published_at": "2"}]
     out, dup = dedup_news(items)
     assert len(out) == 1 and dup == 1 and out[0]["cluster_size"] == 2
+
+
+def test_season_fill_pending_runs_on_empty_store():
+    from types import SimpleNamespace
+
+    from meclis.season import SeasonFill
+    from meclis.store import SQLiteStore
+
+    st = SQLiteStore(":memory:")
+    pool = SimpleNamespace(store=st, bsd=SimpleNamespace(available=False), s=SimpleNamespace(leagues=["T1"]))
+    sf = SeasonFill.__new__(SeasonFill)
+    sf.pool, sf.store = pool, st
+    ms, _, _ = sf.pending()
+    assert ms == []
