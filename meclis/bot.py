@@ -48,12 +48,46 @@ class Bot:
     def context(self, league: str) -> LeagueContext:
         if league not in self.contexts:
             ms, stats = self.pool.history(league)
+            from .config import LEAGUES
+
+            if league in LEAGUES and LEAGUES[league].cup:
+                ms, stats = self._with_domestic(league, ms, stats)
             try:
                 priors = self.pool.elo_priors(league) if league != "DEMO" else {}
             except Exception:
                 priors = {}
             self.contexts[league] = LeagueContext.build(league, ms, stats, elo_priors=priors)
         return self.contexts[league]
+
+    def _with_domestic(self, league: str, ms: list[dict], stats: dict) -> tuple[list[dict], dict]:
+        """Avrupa kupası: takımın kupada bu sezon 2-3 maçı vardır; model takımın BU SEZONKİ lig maçlarını da görür
+        (kimlikler 'lig:slug' → kupa kimliğine eşlenir). Ligler arası güç farkını Elo (clubelo) ve piyasa kalibrasyonu
+        dengeler."""
+        from .analysis import season_start
+
+        up = self.store.select("matches", [("league", "eq", league), ("kickoff_at", "gte", to_iso(season_start()))])
+        slugs = {t.split(":", 1)[1] for m in up + ms for t in (m["home_team_id"], m["away_team_id"])}
+        if "_all_season" not in self.__dict__:
+            self._all_season = self.store.select("matches", [("status", "eq", "bitti"),
+                                                             ("kickoff_at", "gte", to_iso(season_start()))])
+        from .config import LEAGUES
+
+        extra = []
+        for m in self._all_season:
+            if m["league"] == league or (m["league"] in LEAGUES and LEAGUES[m["league"]].cup):
+                continue
+            hs, as_ = m["home_team_id"].split(":", 1)[-1], m["away_team_id"].split(":", 1)[-1]
+            if hs in slugs or as_ in slugs:
+                extra.append(dict(m, home_team_id=f"{league}:{hs}" if hs in slugs else m["home_team_id"],
+                                  away_team_id=f"{league}:{as_}" if as_ in slugs else m["away_team_id"]))
+        ids = [m["id"] for m in extra]
+        stats = dict(stats)
+        for i in range(0, len(ids), 200):
+            for r in self.store.select("match_stats", [("match_id", "in", ids[i:i + 200])]):
+                stats.setdefault(r["match_id"], {})[r["side"]] = r
+        if extra:
+            self.log.append(f"ℹ️ {league}: modele takımların bu sezonki {len(extra)} lig maçı eklendi")
+        return sorted(ms + extra, key=lambda m: m["kickoff_at"]), stats
 
     def analyze(self, match: dict, fetch_extras: bool = True) -> dict:
         ctx = self.context(match["league"])
@@ -128,8 +162,12 @@ class Bot:
 
         good = [a for a in pre.values() if isinstance(a, dict)]
         bias = slate_bias(good)
+        from .config import LEAGUES
+
         for a in good:  # en iyi seçim bülten geneli kalibrasyonla yeniden seçilir
             a["bias"] = bias
+            if a.get("league") in LEAGUES and LEAGUES[a["league"]].cup:
+                a["cal_w"] = 0.5  # kupa: ligler arası güç farkı belirsiz → piyasaya daha yakın
             a["best_pick"] = select_single(a, self.s)
         if bias:
             self.log.append("ℹ️ kalibrasyon (model − piyasa, bülten ortalaması): " + ", ".join(

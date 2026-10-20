@@ -49,8 +49,15 @@ class Backfill:
                     have_lu[r["match_id"]] = have_lu.get(r["match_id"], 0) + 1
             if have_pm is None:
                 have_pm = set(ids)  # tablo yok: oyuncu işi atlanır
+        # önce önümüzdeki 36 saatte oynayacak takımların maçları (yarının bülteni), sonra en yeni maç önce
+        from datetime import timedelta
+
+        soon = self.store.select("matches", [("kickoff_at", "gte", to_iso(now_utc())),
+                                             ("kickoff_at", "lt", to_iso(now_utc() + timedelta(hours=36)))])
+        hot = {t for x in soon for t in (x.get("home_team_id"), x.get("away_team_id"))}
         out = []
-        for m in sorted(ms, key=lambda m: m["kickoff_at"], reverse=True):
+        for m in sorted(ms, key=lambda m: (m.get("home_team_id") in hot or m.get("away_team_id") in hot,
+                                           m["kickoff_at"]), reverse=True):
             jobs = [j for j, need in (("stats", m["id"] not in have_st), ("players", m["id"] not in have_pm),
                                       ("lineups", have_lu.get(m["id"], 0) < 2)) if need]
             if jobs:

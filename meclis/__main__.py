@@ -29,6 +29,7 @@ def main(argv=None) -> int:
     ap.add_argument("--zorla", action="store_true", help="kadro: 7 günlük önbelleği yok say")
     ap.add_argument("--saat", type=float, default=168, help="kadro: kaç saat sonrasına kadarki maçlar (varsayılan 168 = 7 gün)")
     ap.add_argument("--gecmis", action="store_true", help="geçmiş sezon verisini de çek")
+    ap.add_argument("--geri", type=int, help="yenile: kaç gün geriye (varsayılan 3; 0 = sezon başından bugüne)")
     ap.add_argument("--kuru", action="store_true", help="bot: kayda yazmadan çalıştır")
     ap.add_argument("--ligler", help="virgülle lig kodları (ör. T1,E0)")
     ap.add_argument("--cikti", help="yedek: çıktı klasörü (varsayılan ./yedek)")
@@ -66,7 +67,14 @@ def main(argv=None) -> int:
         if new:
             out_logs.append(f"ℹ️ ligler: çekirdek {len(s.leagues) - len(new)} + kaynaklardan keşfedilen {len(new)} lig")
     if steps & {"yenile", "yenile_s"} and not s.demo_mode:
-        r = pool.refresh(history="yenile_s" in steps)
+        back = 3
+        if a.geri is not None:
+            from .analysis import season_start
+            from .timeutil import now_utc
+
+            back = a.geri if a.geri > 0 else (now_utc().date() - season_start().date()).days + 1
+            pool.bsd.max_calls = max(pool.bsd.max_calls, 5000)  # sezon taraması: BSD günlük kota 7.500
+        r = pool.refresh(days_back=back, history="yenile_s" in steps or a.geri is not None)
         out_logs += r["log"] + [f"Havuz: {r['records']} kaynak kaydı → {r['matches']} birleşik maç"]
         pool.log.clear()
     if "gundem" in steps and not s.demo_mode:
@@ -85,6 +93,13 @@ def main(argv=None) -> int:
         pool.log.clear()
     if "gecmis" in steps and not s.demo_mode:
         from .backfill import Backfill
+        from .analysis import season_start
+        from .timeutil import now_utc
+
+        # gece: bu sezonun oynanmış bütün maçları (BSD lig listeleri + football-data.co.uk sezon CSV'leri) —
+        # havuzda olan istatistik/hakem/stadyum yeniden istenmez, yalnızca boşluk dolar
+        pool.bsd.max_calls = max(pool.bsd.max_calls, 3000)
+        pool.refresh(days_back=(now_utc().date() - season_start().date()).days + 1, days_ahead=7, history=True)
 
         out_logs += Backfill(pool).run()["log"]
         _done(store, "gecmis")

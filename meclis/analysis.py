@@ -353,7 +353,8 @@ def rank_picks(payload: dict, settings, model_based: bool | None = None, q: floa
             # bülten genelinde modelin piyasadan sistematik sapması (ör. hep "alt"a kayma) düzeltilir
             p = min(0.99, max(0.01, p - bias.get(f"{m['market']}|{m['selection']}|{m.get('line')}", 0.0)))
             pm = implied.get((m["market"], m["selection"], m.get("line")))
-            pc = CAL_W * p + (1 - CAL_W) * pm if pm else p
+            w = payload.get("cal_w", CAL_W)
+            pc = w * p + (1 - w) * pm if pm else p
             edge = pc * o - 1
             if not (SINGLE_MIN_ODDS <= o <= SINGLE_MAX_ODDS) or pc < 0.30 or edge < edge_min:
                 continue
