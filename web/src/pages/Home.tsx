@@ -142,7 +142,7 @@ export default function Home() {
     for (const c of coupons) if (SETTLED.has(c.status)) rows.push({ t: c.first_kickoff_at, label: `${TAG_LABELS[c.tag]} · ${c.legs_count} maç`, sub: `toplam oran ${num(c.total_odds)}`, status: c.status, to: "/tahmin-arsivi" });
     return rows.sort((a, b) => b.t.localeCompare(a.t)).slice(0, 6);
   }, [preds, coupons]);
-  const news = dedupNews(newsQ.data ?? []).slice(0, 5);
+  const news = useMemo(() => dedupNews(newsQ.data ?? []).slice(0, 5), [newsQ.data]);
   const O = ortak();
 
   const nd = next.data;

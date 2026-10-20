@@ -9,6 +9,7 @@ const tokens = (t: string) =>
 
 function same(a: Set<string>, b: Set<string>) {
   if (!a.size || !b.size) return false;
+  if (Math.min(a.size, b.size) / Math.max(a.size, b.size) < 0.6) return false; // Jaccard ≥ 0,6 zaten imkânsız
   let i = 0;
   for (const w of a) if (b.has(w)) i++;
   return i / (a.size + b.size - i) >= 0.6;
