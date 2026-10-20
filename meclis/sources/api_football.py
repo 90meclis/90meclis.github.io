@@ -260,11 +260,14 @@ class ApiFootball:
 def parse_fixture(f: dict, league: str, season: int) -> dict:
     fx, teams, goals, score = f["fixture"], f["teams"], f.get("goals") or {}, f.get("score") or {}
     ht = score.get("halftime") or {}
+    status = _STATUS.get((fx.get("status") or {}).get("short"), "planlandi")
+    if status not in ("bitti", "basladi"):  # planlı maçta skor yazılmaz
+        goals, ht = {}, {}
     return {
         "source": SOURCE, "league": APIF_TO_LEAGUE.get((f.get("league") or {}).get("id"), league),
         "kickoff_at": to_iso(fx.get("date")), "season": str(season),
         "home_name": teams["home"]["name"], "away_name": teams["away"]["name"],
-        "status": _STATUS.get((fx.get("status") or {}).get("short"), "planlandi"),
+        "status": status,
         "home_goals": goals.get("home"), "away_goals": goals.get("away"),
         "ht_home_goals": ht.get("home"), "ht_away_goals": ht.get("away"),
         "referee": fx.get("referee"), "venue": (fx.get("venue") or {}).get("name"),

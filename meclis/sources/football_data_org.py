@@ -16,6 +16,16 @@ _STATUS = {"SCHEDULED": "planlandi", "TIMED": "planlandi", "IN_PLAY": "basladi",
            "SUSPENDED": "ertelendi", "CANCELLED": "iptal"}
 
 
+# football-data.org kısa adlarındaki bilinen yazım hataları (görünen ad kaynağında düzeltilir)
+_NAME_FIX = {"Shaktar": "Shakhtar Donetsk"}
+
+
+def _name(t: dict | None) -> str | None:
+    t = t or {}
+    n = t.get("shortName") or t.get("name")
+    return _NAME_FIX.get(n, n)
+
+
 class FootballDataOrg:
     def __init__(self, token: str | None):
         self.token = token
@@ -41,12 +51,15 @@ class FootballDataOrg:
         ft = (m.get("score") or {}).get("fullTime") or {}
         ht = (m.get("score") or {}).get("halfTime") or {}
         refs = m.get("referees") or []
+        status = _STATUS.get(m.get("status"), "planlandi")
+        if status not in ("bitti", "basladi"):  # planlı maçta kaynak 0-0 döndürebiliyor; skor yazılmaz
+            ft, ht = {}, {}
         return {
             "source": SOURCE, "league": league, "kickoff_at": to_iso(m.get("utcDate")),
             "season": None,
-            "home_name": (m.get("homeTeam") or {}).get("shortName") or (m.get("homeTeam") or {}).get("name"),
-            "away_name": (m.get("awayTeam") or {}).get("shortName") or (m.get("awayTeam") or {}).get("name"),
-            "status": _STATUS.get(m.get("status"), "planlandi"),
+            "home_name": _name(m.get("homeTeam")),
+            "away_name": _name(m.get("awayTeam")),
+            "status": status,
             "home_goals": ft.get("home"), "away_goals": ft.get("away"),
             "ht_home_goals": ht.get("home"), "ht_away_goals": ht.get("away"),
             "referee": refs[0].get("name") if refs else None,
