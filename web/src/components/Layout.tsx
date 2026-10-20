@@ -1,3 +1,4 @@
+import { InstallPrompt } from "./InstallPrompt";
 import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { Logo } from "./Logo";
@@ -44,6 +45,7 @@ export function Layout() {
       <main id="main" tabIndex={-1} className="wrap main">
         <Outlet />
       </main>
+      <InstallPrompt />
       <footer className="footer">
         <div className="wrap footer-in">
           <div>

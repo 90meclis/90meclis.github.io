@@ -16,3 +16,7 @@ const render = () => createRoot(document.getElementById("root")!).render(
 );
 // Lig adları (leagues tablosu) en çok 1,5 sn beklenir; gelmezse kodlar sabit listeyle gösterilir.
 Promise.race([leagueNames().then(registerLeagues).catch(() => undefined), new Promise((r) => setTimeout(r, 1500))]).finally(render);
+
+if ("serviceWorker" in navigator && import.meta.env.PROD) {
+  window.addEventListener("load", () => navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).catch(() => undefined));
+}

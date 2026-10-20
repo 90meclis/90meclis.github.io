@@ -902,3 +902,11 @@ html, body { overflow-x: clip; }
 .topscn i { font-style: normal; font-size: 22px; color: var(--dim); }
 .share-btn { justify-self: start; margin-top: 8px; min-height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line-2); background: transparent; color: var(--text); font-weight: 700; font-size: 13px; cursor: pointer; }
 .share-btn:hover { border-color: var(--lime); color: var(--lime); }
+/* PWA yükleme şeridi */
+.install { position: fixed; left: 12px; right: 12px; bottom: 76px; z-index: 60; display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 16px; background: var(--bg-2); border: 1px solid var(--line); box-shadow: 0 12px 32px rgba(0,0,0,.45); animation: fadeUp .3s ease; }
+.install img { border-radius: 9px; }
+.install div { flex: 1; display: grid; line-height: 1.25; }
+.install small { color: var(--muted); font-size: 12px; }
+.install-x { background: none; border: 0; color: var(--muted); font-size: 22px; padding: 0 4px; cursor: pointer; }
+@media (min-width: 1024px) { .install { left: auto; right: 24px; bottom: 24px; width: 360px; } }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
