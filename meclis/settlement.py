@@ -36,15 +36,17 @@ def odds_key(market: str, line) -> str | None:
 
 
 def closing_odds(match: dict, pred: dict, store=None) -> tuple[float | None, str | None]:
-    """Kapanış oranı: önce football-data.co.uk 'C' sütunları, yoksa başlamadan önceki SON kendi oran görüntümüz.
-    CLV = alınan oran / kapanış − 1. Döner: (oran, kaynak)."""
-    key = odds_key(pred["market"], pred.get("line"))
+    """Kapanış oranı (bütün pazarlar, Avrupa kupaları dahil): önce başlama saatinden önceki SON kendi oran
+    görüntümüz (odds_snapshots; başlamaya ≤3 saat kala alınmışsa), yoksa football-data.co.uk kapanış ('C'
+    sütunları), o da yoksa daha eski son görüntümüz. CLV = alınan oran / kapanış − 1. Döner: (oran, kaynak)."""
+    mk, line, sel = pred["market"], pred.get("line"), pred["selection"]
+    if mk == "AH" and line is not None:
+        key = f"AH_{(float(line) if sel == '1' else -float(line)):g}"  # oran sözlüğü ev sahibi çizgisine göre
+    else:
+        key = odds_key(mk, line)
     if not key:
         return None, None
-    odds = match.get("odds") or {}
-    v = (odds.get(f"{key}_closing") or {}).get(pred["selection"])
-    if v:
-        return float(v), "football-data.co.uk kapanış"
+    snap = None
     if store is not None:
         try:
             snaps = store.select("odds_snapshots", [("match_id", "eq", match.get("id") or pred["match_id"]),
@@ -53,9 +55,16 @@ def closing_odds(match: dict, pred: dict, store=None) -> tuple[float | None, str
         except Exception:
             snaps = []
         if snaps:
-            v = ((snaps[0].get("odds") or {}).get(key) or {}).get(pred["selection"])
+            v = ((snaps[0].get("odds") or {}).get(key) or {}).get(sel)
             if v:
-                return float(v), f"kendi görüntümüz {snaps[0]['taken_at'][:16]}"
+                snap = (float(v), snaps[0]["taken_at"])
+    if snap and (parse_dt(pred["kickoff_at"]) - parse_dt(snap[1])).total_seconds() <= 3 * 3600:
+        return snap[0], f"kendi kapanış görüntümüz {snap[1][:16]}"
+    v = ((match.get("odds") or {}).get(f"{key}_closing") or {}).get(sel)
+    if v:
+        return float(v), "football-data.co.uk kapanış"
+    if snap:
+        return snap[0], f"kendi son görüntümüz {snap[1][:16]}"
     return None, None
 
 
