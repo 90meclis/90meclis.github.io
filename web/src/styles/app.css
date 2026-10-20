@@ -955,3 +955,14 @@ html, body { overflow-x: clip; }
 .sim2-bar u { display: block; height: 100%; border-radius: 3px; background: var(--lime); }
 .sim2-bar u.r { background: #ff6b6b; }
 .sim2-bar strong { text-align: right; font-variant-numeric: tabular-nums; }
+/* Maç Merkezi satırı: arma + olasılık şeridi */
+.crest.sm { width: 18px; height: 21px; flex: none; }
+.mrow .team { display: flex; align-items: center; gap: 7px; }
+.mrow .team .tname { flex: 1; min-width: 0; }
+.mrow-pb { display: grid; gap: 3px; margin-top: 5px; }
+.mrow-pb-bar { display: flex; height: 4px; border-radius: 2px; overflow: hidden; gap: 2px; max-width: 220px; }
+.mrow-pb-bar i { display: block; height: 100%; background: rgba(255,255,255,.18); }
+.mrow-pb-bar i:first-child { background: rgba(198,255,61,.55); } .mrow-pb-bar i:last-child { background: rgba(72,213,255,.55); }
+.mrow-pb.own .mrow-pb-bar i:first-child { background: var(--lime); } .mrow-pb.own .mrow-pb-bar i:last-child { background: #48d5ff; }
+.mrow-pb small { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mrow-pb .vk { justify-self: start; }
