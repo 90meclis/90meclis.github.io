@@ -26,7 +26,8 @@ if _days:
         legs = [p for p in preds if p.get("coupon_id") == c["id"]]
         _gk_m |= {p["match_id"] for p in legs}
         with st.container(border=True):
-            st.markdown(f"#### 🎯 Günün Kararı · {len(legs)} maç · toplam oran **{c['total_odds']:.2f}** · {ui.status_badge(c['status'])}")
+            st.markdown("### 🎯 GÜNÜN KARARI")
+            st.caption(f"{len(legs)} maç · toplam oran {c['total_odds']:.2f}".replace(".", ",") + f" · {ui.status_badge(c['status'])}")
             for p in legs:
                 st.markdown(f"- {tr_str(p['kickoff_at'], '%H:%M')} **{p['home_name']} – {p['away_name']}**: "
                             f"{pick_label(p['market'], p['selection'], p.get('line'), p['home_name'], p['away_name'])} "

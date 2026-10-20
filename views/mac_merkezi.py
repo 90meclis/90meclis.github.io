@@ -121,7 +121,19 @@ k[1].metric(f"{m['away_name']} gol bekl.", f"{lam['away']:.2f}" if lam else "—
 for i, (sel_, lab) in enumerate((("1", "MS 1"), ("X", "MS X"), ("2", "MS 2"))):
     k[2 + i].metric(lab, f"%{100 * p1x2[sel_]:.0f}" if p1x2 else "—",
                     help=f"Piyasa: {(m.get('odds') or {}).get('1X2', {}).get(sel_, '—')}")
+_o = (m.get("odds") or {}).get("1X2") or {}
+try:
+    _inv = {k_: 1 / float(_o[k_]) for k_ in ("1", "X", "2")}
+    _imp = {k_: v / sum(_inv.values()) for k_, v in _inv.items()}
+except (KeyError, TypeError, ValueError, ZeroDivisionError):
+    _imp = {}
+_off = bool(p1x2 and _imp and any(abs(p1x2[k_] - _imp[k_]) > 0.20 for k_ in ("1", "X", "2")))
 k[5].metric("Veri derinliği", f"{a.get('quality', {}).get('score', 0):.0f}/100", help="Güven göstergesi; tahmini durdurmaz.")
+
+if _off:
+    st.warning("⚠️ Veri kontrol: Meclis modelinin 1X2 olasılıkları bu maçta piyasadan 20 puandan fazla ayrışıyor "
+               f"(piyasa %{100 * _imp['1']:.0f} · %{100 * _imp['X']:.0f} · %{100 * _imp['2']:.0f}). Bu büyüklükte fark değer değil, "
+               "büyük olasılıkla veri/model hatasıdır; bu maçta modelin değer iddiası yok.")
 
 # Yayımlanmış karar: Meclis kararını net bir sesle söyler.
 _preds = [x for x in store.select("predictions", [("match_id", "eq", m["id"])])]
@@ -152,9 +164,47 @@ left, right = st.columns([3, 2])
 with left:
     st.markdown("#### 🎙️ Meclisin sesi")
     st.markdown(a.get("narrative") or "")
+_film = None
+try:
+    _an = store.select("analyses", [("match_id", "eq", m["id"])], order="created_at", desc=True, limit=1)
+    _film = ((_an[0].get("payload") or {}).get("senaryolar") if _an else None)
+except Exception:  # noqa: BLE001 — tablo/sütun yoksa eski görünüme düşülür
+    _film = None
 with right:
     st.markdown("#### 🎬 Senaryolar")
-    if a.get("scenarios"):
+    _list = (_film or {}).get("liste") if isinstance(_film, dict) else None
+    if _list:
+        st.caption("Maçı kafanda oynat: Meclis modelinin benzetiminden birbirini dışlayan ana senaryolar ve yan hikâyeler.")
+        for i_, sc in enumerate(_list):
+            p_ = sc.get("olasilik")
+            head = (f"{'Senaryo ' + str(i_ + 1) if sc.get('tur') == 'ana' else 'Yan hikâye'} · {sc.get('baslik')}"
+                    + (f" · %{100 * p_:.0f}" if p_ is not None else ""))
+            with st.expander(head, expanded=i_ == 0):
+                for pr in sc.get("perde") or []:
+                    st.markdown(f"**{pr.get('dakika')} · {pr.get('baslik')}**  \n{pr.get('metin')}")
+                if sc.get("kirilma_ani"):
+                    st.info(f"⚡ Kırılma anı · {sc['kirilma_ani'].get('dakika')}: {sc['kirilma_ani'].get('metin')}")
+                if sc.get("final_skor"):
+                    st.markdown(f"**Final:** {sc['final_skor']}" + ("  ·  en sık: " + ", ".join(
+                        f"{x['skor']} (%{100 * x['p']:.0f})" for x in sc.get("skorlar") or []) if sc.get("skorlar") else ""))
+                mk = sc.get("pazarlar") or {}
+                cells = []
+                for lab, v in mk.items():
+                    if isinstance(v, dict) and "beklenen" in v:
+                        cells.append(f"{lab} ~{v['beklenen']:.1f}")
+                    elif isinstance(v, (int, float)):
+                        cells.append(f"{'🟢' if v >= 0.6 else '🔴' if v <= 0.4 else '⚪'} {lab.replace('.', ',')} %{100 * v:.0f}")
+                if cells:
+                    st.caption(" · ".join(cells))
+                for sg in sc.get("canli_sinyaller") or []:
+                    st.markdown(f"- 📡 {sg.get('sinyal')}: %{100 * sg['olasilik_once']:.0f} → %{100 * sg['olasilik_sonra']:.0f}")
+                ms = sc.get("meclis_secimi")
+                if ms:
+                    st.markdown(f"🗳️ **Meclis'in kararı bu senaryoda:** {ms.get('etiket')} — {ms.get('durum')}"
+                                + (f" (tutma %{100 * ms['kazanma_olasiligi']:.0f})" if ms.get("kazanma_olasiligi") is not None else ""))
+        if (_film.get("eksik_etkisi") or {}).get("metin"):
+            st.caption("🩹 " + _film["eksik_etkisi"]["metin"])
+    elif a.get("scenarios"):
         st.dataframe(pd.DataFrame([{"Senaryo": x["ad"], "Olasılık %": round(100 * x["olasılık"], 1) if x["olasılık"] else None,
                                     "Akış": x["anlatım"]} for x in a["scenarios"]]), hide_index=True, width="stretch")
         st.markdown("**En olası skorlar:** " + " · ".join(f"{s_} (%{100 * p_:.0f})" for s_, p_ in a.get("top_scores", [])))
