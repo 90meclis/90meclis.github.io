@@ -111,7 +111,7 @@ Aynı işlemler arayüzde **Tahmin Botu** sayfasından da yapılabilir (anon ana
 - Repo → Settings → Secrets and variables → Actions → **Secrets**: `SUPABASE_URL`,
   `SUPABASE_SERVICE_ROLE_KEY` ve yukarıdaki tablodaki tüm veri anahtarları (`API_FOOTBALL_KEY`,
   `FOOTBALL_DATA_TOKEN`, `ODDS_API_KEY`, `ODDSPAPI_KEY`, `SPORTMONKS_KEY`, `FOOTYSTATS_KEY`, `SPORTDEVS_KEY`,
-  `THESPORTSDB_KEY`, `BSD_API_KEY`). Tanımlanmayan secret boş geçer; bot o kaynağı "anahtar bekleniyor" diye raporlar.
+  `THESPORTSDB_KEY`, `BSD_API_KEY`, isteğe bağlı `HIGHLIGHTLY_KEY`, `BIGBALLS_KEY`, `NOSYAPI_KEY`, `SOCCERDATA_KEY`, `PLAYERELO_KEY`). Tanımlanmayan secret boş geçer; bot o kaynağı "anahtar bekleniyor" diye raporlar.
   **Variables**: `LEAGUES` (boşsa 23 çekirdek lig + AUTO keşfi — bkz. `meclis/config.py`).
   Gece işi (03:40 TSİ) tabloları `backups` dalına JSON/CSV olarak commit'ler (defterin ikinci kopyası; düzenli
   commit GitHub'ın 60 gün hareketsizlikte zamanlanmış işleri kapatmasını da önler).

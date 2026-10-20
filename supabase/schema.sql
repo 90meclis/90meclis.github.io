@@ -85,7 +85,22 @@ insert into sources (name, api_key_secret, key_storage, daily_limit, fills_field
    'Ücretsiz katman: Ücretsiz: 300 istek/gün, 10 büyük lig. Kayıt/bilgi: https://sportdevs.com/football'),
   ('bsd', 'BSD_API_KEY', 'env + GitHub Actions Secrets + Supabase Vault', null,
    '["sakat/cezalı/şüpheli (maç başına, 7 gün önceden)","resmî ilk 11 (~1 saat önce)","tahmini ilk 11 (AI)","kadro + oyuncu uygunluğu","fikstür","sonuç","İY skoru","konsensüs oranları (1X2, A/Ü 1.5/2.5/3.5, KG)","maç istatistiği (şut, isabetli şut, korner, faul, kart, kale vuruşu, xG, topla oynama)","hakem","stadyum"]', true,
-   'Ücretsiz katman: Ücretsiz futbol planı: tüm v2 uç noktaları, günlük 7.500 istek (IP başına 10 istek/sn); 6 ligin hepsi kapsamda. Lisans v4.0: iç kullanım için saklama ve kendi uygulamanda gösterim serbest; ham verinin yeniden satışı yasak. Kayıt/bilgi: https://sports.bzzoiro.com/register/')
+   'Ücretsiz katman: Ücretsiz futbol planı: tüm v2 uç noktaları, günlük 7.500 istek (IP başına 10 istek/sn); 6 ligin hepsi kapsamda. Lisans v4.0: iç kullanım için saklama ve kendi uygulamanda gösterim serbest; ham verinin yeniden satışı yasak. Kayıt/bilgi: https://sports.bzzoiro.com/register/'),
+  ('highlightly', 'HIGHLIGHTLY_KEY', 'env + GitHub Actions Secrets + Supabase Vault', 100,
+   '["resmî ilk 11","maç istatistiği","sakat/cezalı","oyuncu sezon istatistiği"]', true,
+   'Ücretsiz katman: 100 istek/gün, kart yok. Koşullar saklama ve kendi üründe gösterime izin veriyor; ham API yeniden satılmaz. Anahtar tanımlanınca etkinleşir. Kayıt/bilgi: https://highlightly.net/'),
+  ('bigballs', 'BIGBALLS_KEY', 'env + GitHub Actions Secrets + Supabase Vault', 250,
+   '["resmî ilk 11","takım maç istatistiği","oyuncu sezon istatistiği"]', true,
+   'Ücretsiz katman: 250 istek/gün (GitHub ile 500). Yalnızca 5 büyük lig + Şampiyonlar Ligi. Anahtar tanımlanınca etkinleşir. Kayıt/bilgi: https://bigballsdata.com/'),
+  ('nosyapi', 'NOSYAPI_KEY', 'env + GitHub Actions Secrets + Supabase Vault', null,
+   '["sonuç","İY skoru","korner","kart"]', true,
+   'Ücretsiz katman: 500 kredi (kredi = dönen satır). YALNIZCA sonuç/istatistik uç noktaları; iddaa oranı kullanılmaz (kullanıcı kararı: oranlar yalnızca yabancı kaynaklardan). Anahtar tanımlanınca etkinleşir. Kayıt/bilgi: https://www.nosyapi.com/'),
+  ('soccerdata', 'SOCCERDATA_KEY', 'env + GitHub Actions Secrets + Supabase Vault', 75,
+   '["tahmini ilk 11","sakat/cezalı"]', true,
+   'Ücretsiz katman: 75 istek/gün; ücretsiz planda yalnızca UEL + E1. Anahtar tanımlanınca etkinleşir. Kayıt/bilgi: https://soccerdataapi.com/'),
+  ('playerelo', 'PLAYERELO_KEY', 'env + GitHub Actions Secrets + Supabase Vault', null,
+   '["oyuncu Elo (Eksik Etkisi için iç model girdisi)"]', true,
+   'Ücretsiz katman: 500 istek/ay, 10/dk. Ücretsiz katman değerlendirme/hobi amaçlı: yalnızca iç model girdisi, yayımlanmaz. Anahtar tanımlanınca etkinleşir. Kayıt/bilgi: https://playerelo.football/api-access')
 on conflict (name) do update set
   api_key_secret = excluded.api_key_secret, key_storage = excluded.key_storage, daily_limit = excluded.daily_limit,
   fills_fields = excluded.fills_fields, requires_key = excluded.requires_key, license_note = excluded.license_note,

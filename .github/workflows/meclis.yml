@@ -36,6 +36,11 @@ jobs:
       SPORTDEVS_KEY: ${{ secrets.SPORTDEVS_KEY }}
       THESPORTSDB_KEY: ${{ secrets.THESPORTSDB_KEY }}
       BSD_API_KEY: ${{ secrets.BSD_API_KEY }}
+      HIGHLIGHTLY_KEY: ${{ secrets.HIGHLIGHTLY_KEY }}
+      BIGBALLS_KEY: ${{ secrets.BIGBALLS_KEY }}
+      NOSYAPI_KEY: ${{ secrets.NOSYAPI_KEY }}
+      SOCCERDATA_KEY: ${{ secrets.SOCCERDATA_KEY }}
+      PLAYERELO_KEY: ${{ secrets.PLAYERELO_KEY }}
       LEAGUES: ${{ vars.LEAGUES }}  # boşsa 23 çekirdek lig + AUTO (BSD'deki diğer kulüp ligleri/kupaları)
     steps:
       - uses: actions/checkout@v4

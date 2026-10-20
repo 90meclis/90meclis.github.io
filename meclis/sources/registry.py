@@ -107,6 +107,22 @@ SOURCES: list[SourceDef] = [
                "kadro + oyuncu uygunluğu", "fikstür", "sonuç", "İY skoru", "konsensüs oranları (1X2, A/Ü 1.5/2.5/3.5, KG)",
                "maç istatistiği (şut, isabetli şut, korner, faul, kart, kale vuruşu, xG, topla oynama)", "hakem", "stadyum"],
               "Lisans v4.0: iç kullanım için saklama ve kendi uygulamanda gösterim serbest; ham verinin yeniden satışı yasak."),
+    # ---------------------------------------------------------------- isteğe bağlı (kullanıcı anahtar eklerse)
+    SourceDef("highlightly", "Highlightly Football API", "HIGHLIGHTLY_KEY", True, 100, "100 istek/gün, kart yok",
+              "https://highlightly.net/", ["resmî ilk 11", "maç istatistiği", "sakat/cezalı", "oyuncu sezon istatistiği"],
+              "Koşullar saklama ve kendi üründe gösterime izin veriyor; ham API yeniden satılmaz. Anahtar tanımlanınca etkinleşir."),
+    SourceDef("bigballs", "Big Balls Sports Data", "BIGBALLS_KEY", True, 250, "250 istek/gün (GitHub ile 500)",
+              "https://bigballsdata.com/", ["resmî ilk 11", "takım maç istatistiği", "oyuncu sezon istatistiği"],
+              "Yalnızca 5 büyük lig + Şampiyonlar Ligi. Anahtar tanımlanınca etkinleşir."),
+    SourceDef("nosyapi", "NosyAPI Maç Sonuçları", "NOSYAPI_KEY", True, None, "500 kredi (kredi = dönen satır)",
+              "https://www.nosyapi.com/", ["sonuç", "İY skoru", "korner", "kart"],
+              "YALNIZCA sonuç/istatistik uç noktaları; iddaa oranı kullanılmaz (kullanıcı kararı: oranlar yalnızca yabancı "
+              "kaynaklardan). Anahtar tanımlanınca etkinleşir."),
+    SourceDef("soccerdata", "SoccerdataAPI", "SOCCERDATA_KEY", True, 75, "75 istek/gün; ücretsiz planda yalnızca UEL + E1",
+              "https://soccerdataapi.com/", ["tahmini ilk 11", "sakat/cezalı"], "Anahtar tanımlanınca etkinleşir."),
+    SourceDef("playerelo", "PlayerElo", "PLAYERELO_KEY", True, None, "500 istek/ay, 10/dk",
+              "https://playerelo.football/api-access", ["oyuncu Elo (Eksik Etkisi için iç model girdisi)"],
+              "Ücretsiz katman değerlendirme/hobi amaçlı: yalnızca iç model girdisi, yayımlanmaz. Anahtar tanımlanınca etkinleşir."),
 ]
 
 BY_NAME = {s.name: s for s in SOURCES}
