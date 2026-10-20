@@ -17,6 +17,11 @@ _DROP_TOKENS = {
 
 # normalleştirilmiş anahtar -> kanonik anahtar
 ALIASES: dict[str, str] = {
+    # İngiltere League Two / İskoçya Championship: football-data.co.uk kısaltmaları (yinelenen takım önleme)
+    "accrington": "accringtonstanley", "bristolrvs": "bristolrovers", "crewe": "crewealexandra",
+    "oldham": "oldhamathletic", "tranmere": "tranmererovers", "ayr": "ayrunited", "dunfermline": "dunfermlineathletic",
+    "morton": "greenockmorton", "invernessc": "invernesscaledonianthistle", "partick": "partickthistle",
+    "raithrvs": "raithrovers",
     # Türkiye
     "buyuksehyr": "basaksehir", "istanbulbasaksehir": "basaksehir", "basaksehir": "basaksehir",
     "ibasaksehir": "basaksehir", "medipolbasaksehir": "basaksehir", "rams basaksehir": "basaksehir",

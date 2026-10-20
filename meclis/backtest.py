@@ -147,7 +147,8 @@ def summarize(rows: list[dict]) -> list[dict]:
                     "brier_market": round(sum(_brier(r["pk"], r["y"]) for r in rs) / n, 4),
                     "brier_blend": round(sum(_brier(blend(r, w_opt), r["y"]) for r in rs) / n, 4),
                     "ll_model": round(lls[1.0], 4), "ll_market": round(lls[0.0], 4), "ll_blend": round(lls[w_opt], 4),
-                    "w_opt": w_opt, "n_value": stake, "hit_value": round(hits / stake, 4) if stake else None,
+                    "w_opt": w_opt, "w_live": w_live, "ll_live": round(lls.get(w_live, lls[min(grid, key=lambda g: abs(g - w_live))]), 4),
+                    "brier_live": round(sum(_brier(blend(r, w_live), r["y"]) for r in rs) / n, 4), "n_value": stake, "hit_value": round(hits / stake, 4) if stake else None,
                     "roi_value": round(profit / stake, 4) if stake else None, "calib": bins,
                     "computed_at": to_iso(now_utc()), "label": "backtest", "model_version": MODEL_VERSION,
                     "leagues": sorted({r["league"] for r in rs})})

@@ -400,8 +400,10 @@ def rank_picks(payload: dict, settings, model_based: bool | None = None, q: floa
             elif (pm and abs(p - pm) > MAX_MODEL_GAP) or edge > MAX_EDGE:
                 # Model piyasadan aşırı ayrışıyorsa (ör. ligler arası güç farkı yanlış ölçülmüş) bu bir değer değil,
                 # büyük olasılıkla veri/model hatasıdır: seçim yapılmaz, satır "ayrışma" diye işaretlenir.
-                why = (f"model piyasadan aşırı ayrışıyor (model %{p * 100:.0f}, piyasa %{(pm or 0) * 100:.0f}); "
-                       "doğrulanmadan seçim yok")
+                why = (f"veri kontrol: model piyasadan aşırı ayrışıyor (model %{p * 100:.0f}, piyasa %{(pm or 0) * 100:.0f}"
+                       f", değer {edge * 100:+.0f}%); doğrulanmadan seçim yok")
+                if annotate:
+                    m["veri_kontrol"] = True
             elif edge < edge_min:
                 why = f"değer {edge * 100:+.1f}% < %{edge_min * 100:.0f}"
             elif not pm:

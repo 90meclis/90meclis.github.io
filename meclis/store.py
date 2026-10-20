@@ -188,7 +188,8 @@ create table if not exists sezon_simulasyonu (league text not null, team_id text
 create table if not exists paylasim_taslaklari (id text primary key, platform text not null, tur text, ref_id text,
   metin text not null, durum text not null default 'taslak', olusturuldu text);
 create table if not exists model_backtest (market text not null, segment text not null, n int, brier_model real,
-  brier_market real, brier_blend real, ll_model real, ll_market real, ll_blend real, w_opt real, n_value int,
+  brier_market real, brier_blend real, ll_model real, ll_market real, ll_blend real, w_opt real, w_live real,
+  ll_live real, brier_live real, n_value int,
   hit_value real, roi_value real, calib text, computed_at text, label text, model_version text, leagues text,
   primary key (market, segment));
 create table if not exists bot_picks (id text primary key, match_id text not null, kickoff_at text not null, league text,

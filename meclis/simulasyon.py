@@ -9,6 +9,8 @@ import numpy as np
 
 from .timeutil import now_utc, to_iso
 
+TEAM_COUNT = {"E0": 20, "SP1": 20, "I1": 20, "D1": 18, "F1": 18, "T1": 18, "E1": 24, "N1": 18, "P1": 18, "B1": 18,
+              "SC0": 12, "G1": 14, "D2": 18, "F2": 18, "SP2": 22, "I2": 20, "E2": 24, "E3": 24, "SC1": 10, "T2": 20}
 KUME_DUSME = {"E0": 3, "SP1": 3, "I1": 3, "D1": 2, "F1": 2, "T1": 4, "E1": 3, "N1": 2, "P1": 2, "B1": 2, "SC0": 1,
               "G1": 2, "D2": 2, "F2": 2, "SP2": 4, "I2": 3, "E2": 4, "E3": 2, "SC1": 1, "T2": 3}
 
@@ -19,8 +21,8 @@ def simulate_league(ctx, runs: int = 10000, seed: int = 90) -> list[dict]:
         return []
     played = [m for m in ctx.matches if m.get("home_goals") is not None and m["league"] == ctx.league]
     teams = sorted({t for m in played for t in (m["home_team_id"], m["away_team_id"])})
-    if len(teams) < 6:
-        return []
+    if ctx.league not in KUME_DUSME or not (10 <= len(teams) <= TEAM_COUNT.get(ctx.league, 20)):
+        return []  # yalnızca düz lig formatı; takım sayısı beklenenden fazlaysa (yinelenen kimlik) simülasyon yapılmaz
     idx = {t: i for i, t in enumerate(teams)}
     pts = np.zeros(len(teams))
     gd = np.zeros(len(teams))

@@ -905,7 +905,9 @@ class DataPool:
                 if not t:
                     continue  # takım bu çalıştırmada yeni yazılıyor; sonraki çalıştırma da aynı eşlemeyi öğrenir
                 cur = list(t.get("aliases") or [])
-                add = [v for v in vars_ if v not in cur]
+                # ligde KENDİ takım kaydı olan ve adı benzemeyen bir kulüp asla takma ad olarak yazılmaz
+                # (ör. 'trabzonspor' → samsunspor, 'konyaspor' → alanyaspor; 20.10.2026 hatası)
+                add = [v for v in vars_ if v not in cur and not (f"{lg}:{v}" in by_id and not _similar(v, tgt))]
                 if add:
                     rows.append(dict(t, aliases=cur + add))
         if rows:

@@ -38,3 +38,16 @@ def test_seal_chain_is_deterministic_and_verifiable(tmp_path):
     c = canonical(st.select("coupons")[0], COUPON_FIELDS)
     assert row["sha256"] == sha("0" * 64 + sha(c))
     assert write_manifest(st, str(tmp_path))["kok"] == row["sha256"]
+
+
+def test_registry_never_maps_distinct_clubs_with_shared_suffix():
+    from meclis.pool import TeamRegistry, _similar
+
+    for a, b in (("trabzonspor", "samsunspor"), ("konyaspor", "alanyaspor"), ("worthing", "tamworth"),
+                 ("scunthorpeunited", "southendunited"), ("istanbulspor", "vanspor")):
+        assert not _similar(a, b)
+    reg = TeamRegistry()
+    reg.add("T1", "samsunspor", "Samsunspor", aliases=["trabzonspor"])  # zehirli eski takma ad
+    reg.add("T1", "trabzonspor", "Trabzonspor")
+    reg.prune_conflicting()
+    assert reg.resolve("T1", "Trabzonspor") == "trabzonspor"
