@@ -1,0 +1,57 @@
+bsd_id,code,country,cup,name,source,updated_at
+101,B101,İtalya,False,"Serie C, Girone A",bsd,2026-10-20T01:16:06.480642+00:00
+102,B102,İtalya,False,"Serie C, Girone C",bsd,2026-10-20T01:16:06.480642+00:00
+103,B103,İtalya,False,"Serie C, Girone B",bsd,2026-10-20T01:16:06.480642+00:00
+104,B104,Avustralya,False,A-League Men,bsd,2026-10-20T01:16:06.480642+00:00
+105,B105,Fransa,False,Ligue 3,bsd,2026-10-20T01:16:06.480642+00:00
+106,B106,İsveç,False,Superettan,bsd,2026-10-20T01:16:06.480642+00:00
+15,B15,İsviçre,False,Super League,bsd,2026-10-20T01:16:06.480642+00:00
+17,B17,Suudi Arabistan,False,Saudi Pro League,bsd,2026-10-20T01:16:06.480642+00:00
+18,B18,ABD,False,MLS,bsd,2026-10-20T01:16:06.480642+00:00
+19,B19,Meksika,False,Liga MX Apertura,bsd,2026-10-20T01:16:06.480642+00:00
+22,B22,Bulgaristan,False,Parva Liga,bsd,2026-10-20T01:16:06.480642+00:00
+23,B23,Romanya,False,Superliga,bsd,2026-10-20T01:16:06.480642+00:00
+25,B25,Polonya,False,Ekstraklasa,bsd,2026-10-20T01:16:06.480642+00:00
+26,B26,İsveç,False,Allsvenskan,bsd,2026-10-20T01:16:06.480642+00:00
+28,B28,Nijerya,False,Nigeria Premier Football League,bsd,2026-10-20T01:16:06.480642+00:00
+29,B29,Afrika,True,CAF Champions League,bsd,2026-10-20T01:16:06.480642+00:00
+32,B32,Güney Amerika,True,Copa Libertadores,bsd,2026-10-20T01:16:06.480642+00:00
+33,B33,Güney Amerika,True,Copa Sudamericana,bsd,2026-10-20T01:16:06.480642+00:00
+34,B34,Brezilya,False,Brasileirão Serie B,bsd,2026-10-20T01:16:06.480642+00:00
+35,B35,Brezilya,True,Copa do Brasil,bsd,2026-10-20T01:16:06.480642+00:00
+39,B39,İngiltere,True,FA Cup,bsd,2026-10-20T01:16:06.480642+00:00
+40,B40,İngiltere,True,Carabao Cup,bsd,2026-10-20T01:16:06.480642+00:00
+41,B41,İspanya,True,Copa del Rey,bsd,2026-10-20T01:16:06.480642+00:00
+42,B42,İtalya,True,Coppa Italia,bsd,2026-10-20T01:16:06.480642+00:00
+43,B43,Almanya,True,DFB Pokal,bsd,2026-10-20T01:16:06.480642+00:00
+46,B46,Polonya,True,Puchar Polski,bsd,2026-10-20T01:16:06.480642+00:00
+47,B47,Tunus,False,Tunisian Ligue Professionnelle 1,bsd,2026-10-20T01:16:06.480642+00:00
+48,B48,Tunus,True,Coupe de Tunisie,bsd,2026-10-20T01:16:06.480642+00:00
+49,B49,Japonya,False,J1 League,bsd,2026-10-20T01:16:06.480642+00:00
+50,B50,Güney Kore,False,K League 1,bsd,2026-10-20T01:16:06.480642+00:00
+51,B51,Japonya,True,Emperor Cup,bsd,2026-10-20T01:16:06.480642+00:00
+52,B52,Çin,False,Chinese Super League,bsd,2026-10-20T01:16:06.480642+00:00
+53,B53,Fas,False,Botola Pro,bsd,2026-10-20T01:16:06.480642+00:00
+54,B54,Norveç,False,Eliteserien,bsd,2026-10-20T01:16:06.480642+00:00
+55,B55,Finlandiya,False,Veikkausliiga,bsd,2026-10-20T01:16:06.480642+00:00
+56,B56,Finlandiya,True,Suomen Cup,bsd,2026-10-20T01:16:06.480642+00:00
+57,B57,ABD,False,USL Championship,bsd,2026-10-20T01:16:06.480642+00:00
+70,B70,Avustralya,False,NPL Queensland,bsd,2026-10-20T01:16:06.480642+00:00
+80,B80,Kolombiya,False,Categoría Primera A,bsd,2026-10-20T01:16:06.480642+00:00
+81,B81,Kolombiya,True,Copa Colombia,bsd,2026-10-20T01:16:06.480642+00:00
+82,B82,Portekiz,False,Liga 3,bsd,2026-10-20T01:16:06.480642+00:00
+84,B84,Danimarka,False,Danish Superliga,bsd,2026-10-20T01:16:06.480642+00:00
+85,B85,Arjantin,False,Liga Profesional de Fútbol,bsd,2026-10-20T01:16:06.480642+00:00
+88,B88,Portekiz,False,Liga Portugal 2,bsd,2026-10-20T01:16:06.480642+00:00
+9,B9,Brezilya,False,Brasileirão Serie A,bsd,2026-10-20T01:16:06.480642+00:00
+91,B91,İngiltere,False,National League,bsd,2026-10-20T01:16:06.480642+00:00
+92,B92,Portekiz,True,Taça de Portugal,bsd,2026-10-20T01:16:06.480642+00:00
+93,B93,Portekiz,True,Taça da Liga,bsd,2026-10-20T01:16:06.480642+00:00
+95,B95,Portekiz,False,Campeonato de Portugal,bsd,2026-10-20T01:16:06.480642+00:00
+96,B96,Avusturya,False,Austrian Bundesliga,bsd,2026-10-20T01:16:06.480642+00:00
+97,B97,Belçika,False,Challenger Pro League,bsd,2026-10-20T01:16:06.480642+00:00
+98,B98,Angola,False,Girabola,bsd,2026-10-20T01:16:06.480642+00:00
+99,B99,Çekya,False,Czech First League,bsd,2026-10-20T01:16:06.480642+00:00
+,Y4354,Ukraine,False,Ukrainian Premier League,thesportsdb,2026-10-20T01:34:52.736743+00:00
+,Y4672,Slovakia,False,Slovak First Football League,thesportsdb,2026-10-20T01:33:53.353809+00:00
+,Y4693,Azerbaijan,False,Azerbaijani Premier League,thesportsdb,2026-10-20T01:32:28.948956+00:00
