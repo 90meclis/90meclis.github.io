@@ -1,0 +1,56 @@
+{
+ "aciklama": "90 Meclis Kanıt Mührü — her satır: sha256(önceki_mühür + sha256(kanonik kayıt)). Kök, zincirin son mührüdür.",
+ "olusturuldu": "2026-10-21T01:47:49+00:00",
+ "kayit": 6,
+ "kok": "ba3eaab464cb691dcab69f733fc464fbf53ac92cd4973fa6282fe2f52e3f99dd",
+ "muhurler": [
+  {
+   "seq": 1,
+   "ref_table": "predictions",
+   "ref_id": "aefedc56-3daf-475e-b003-f9b5b22a358d",
+   "icerik_sha256": "39445b6d48e9b5c8d95e39253c9fa9511a43895b8e2fde24ce42631b940eb599",
+   "sha256": "778729f3108d8b9a98fe34264153b37978b2ce7899d4d415832a41318dd20c77",
+   "muhurlendi_at": "2026-10-21T01:47:44+00:00"
+  },
+  {
+   "seq": 2,
+   "ref_table": "predictions",
+   "ref_id": "d05614cf-6ea8-4938-a773-75a21997ac5d",
+   "icerik_sha256": "17b4397d90de1872938deb39bcfe713fd4465d01689ea15ac9c0963a4aa656e0",
+   "sha256": "518e1f8473cf750690f760caa040e3f39e78664a4ca8298a40e937a289445827",
+   "muhurlendi_at": "2026-10-21T01:47:44+00:00"
+  },
+  {
+   "seq": 3,
+   "ref_table": "predictions",
+   "ref_id": "17c5259e-5279-4322-92c9-471de7822b22",
+   "icerik_sha256": "840c2374d98d9670983291cdc0e66fb17c74885ae17e76c059bcdaecfda15e08",
+   "sha256": "7d134f2922d157234f2c3de61e1242f0ec3ed7cff2df5da002cecc9c4efae370",
+   "muhurlendi_at": "2026-10-21T01:47:44+00:00"
+  },
+  {
+   "seq": 4,
+   "ref_table": "coupons",
+   "ref_id": "23985b10-feaf-4d59-9dda-69caf99db67a",
+   "icerik_sha256": "a09ada26702c9c1dd38dd6175b53833a7069c569fd3b15c65529f4f9511712df",
+   "sha256": "f0134b112ac531fe64eed888b6cefd6568910d37f80c4d8fd3f1b30a90d16f44",
+   "muhurlendi_at": "2026-10-21T01:47:44+00:00"
+  },
+  {
+   "seq": 5,
+   "ref_table": "predictions",
+   "ref_id": "3841d24c-2133-4bd0-ac80-5f7f7539011e",
+   "icerik_sha256": "f4140019a2673b5c5f932b0e61efb32cb614a67fcfaf8db0ae1f8bf134028181",
+   "sha256": "fe5dd049154ba45f0d7fce4a6e9a21ddab2e287cd878de377afa2ca930a3b0d7",
+   "muhurlendi_at": "2026-10-21T01:47:44+00:00"
+  },
+  {
+   "seq": 6,
+   "ref_table": "predictions",
+   "ref_id": "c95437e5-3a2b-45a9-a955-cee6664464eb",
+   "icerik_sha256": "6a75534d5691d32d6eccd0993f173f1785f7d074c0121ac9ec9eaa959fd850fa",
+   "sha256": "ba3eaab464cb691dcab69f733fc464fbf53ac92cd4973fa6282fe2f52e3f99dd",
+   "muhurlendi_at": "2026-10-21T01:47:44+00:00"
+  }
+ ]
+}
