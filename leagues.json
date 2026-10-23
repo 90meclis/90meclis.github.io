@@ -567,6 +567,15 @@
   "updated_at": "2026-10-22T01:32:18.713122+00:00"
  },
  {
+  "code": "Y4671",
+  "name": "Serbian Super Liga",
+  "country": "Serbia",
+  "bsd_id": null,
+  "cup": false,
+  "source": "thesportsdb",
+  "updated_at": "2026-10-22T02:26:27.811798+00:00"
+ },
+ {
   "code": "Y4672",
   "name": "Slovak First Football League",
   "country": "Slovakia",
@@ -601,5 +610,14 @@
   "cup": false,
   "source": "thesportsdb",
   "updated_at": "2026-10-20T01:32:28.948956+00:00"
+ },
+ {
+  "code": "Y4964",
+  "name": "Gibraltarian National League",
+  "country": "Gibraltar",
+  "bsd_id": null,
+  "cup": false,
+  "source": "thesportsdb",
+  "updated_at": "2026-10-22T02:28:43.196351+00:00"
  }
 ]
