@@ -477,6 +477,15 @@
   "updated_at": "2026-10-20T01:16:06.480642+00:00"
  },
  {
+  "code": "Y4340",
+  "name": "Danish Superliga",
+  "country": "Denmark",
+  "bsd_id": null,
+  "cup": false,
+  "source": "thesportsdb",
+  "updated_at": "2026-10-24T04:01:41.526104+00:00"
+ },
+ {
   "code": "Y4354",
   "name": "Ukrainian Premier League",
   "country": "Ukraine",
@@ -484,6 +493,15 @@
   "cup": false,
   "source": "thesportsdb",
   "updated_at": "2026-10-20T01:34:52.736743+00:00"
+ },
+ {
+  "code": "Y4617",
+  "name": "Albanian Superliga",
+  "country": "Albania",
+  "bsd_id": null,
+  "cup": false,
+  "source": "thesportsdb",
+  "updated_at": "2026-10-24T04:01:22.241491+00:00"
  },
  {
   "code": "Y4618",
@@ -520,6 +538,15 @@
   "cup": false,
   "source": "thesportsdb",
   "updated_at": "2026-10-21T04:10:33.804963+00:00"
+ },
+ {
+  "code": "Y4636",
+  "name": "Finnish Veikkausliiga",
+  "country": "Finland",
+  "bsd_id": null,
+  "cup": false,
+  "source": "thesportsdb",
+  "updated_at": "2026-10-24T04:01:51.291499+00:00"
  },
  {
   "code": "Y4638",

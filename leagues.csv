@@ -52,11 +52,14 @@ bsd_id,code,country,cup,name,source,updated_at
 97,B97,Belçika,False,Challenger Pro League,bsd,2026-10-20T01:16:06.480642+00:00
 98,B98,Angola,False,Girabola,bsd,2026-10-20T01:16:06.480642+00:00
 99,B99,Çekya,False,Czech First League,bsd,2026-10-20T01:16:06.480642+00:00
+,Y4340,Denmark,False,Danish Superliga,thesportsdb,2026-10-24T04:01:41.526104+00:00
 ,Y4354,Ukraine,False,Ukrainian Premier League,thesportsdb,2026-10-20T01:34:52.736743+00:00
+,Y4617,Albania,False,Albanian Superliga,thesportsdb,2026-10-24T04:01:22.241491+00:00
 ,Y4618,Andorra,False,Andorran 1a Divisió,thesportsdb,2026-10-22T01:28:38.597432+00:00
 ,Y4619,Armenia,False,Armenian Premier League,thesportsdb,2026-10-22T01:31:27.265743+00:00
 ,Y4629,Croatia,False,Croatian First Football League,thesportsdb,2026-10-22T01:28:06.092574+00:00
 ,Y4630,Cyprus,False,Cypriot First Division,thesportsdb,2026-10-21T04:10:33.804963+00:00
+,Y4636,Finland,False,Finnish Veikkausliiga,thesportsdb,2026-10-24T04:01:51.291499+00:00
 ,Y4638,Georgia,False,Georgian Erovnuli Liga,thesportsdb,2026-10-22T01:28:47.99133+00:00
 ,Y4644,Israel,False,Israeli Premier League,thesportsdb,2026-10-22T01:28:29.15627+00:00
 ,Y4649,Kazakhstan,False,Kazakhstan Premier League,thesportsdb,2026-10-21T04:12:59.253952+00:00
