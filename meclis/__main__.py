@@ -54,15 +54,15 @@ def main(argv=None) -> int:
     #   gundem      : haber taraması
     #   gecmis      : gece ağır işleri (sezon doldurma, yerel lig, geri test, simülasyon) — kaldığı yerden devam eder
     STEPS = {"sabah": ["yenile", "gundem", "kadro", "bot", "sonuclandir"],
-             "gunici": ["yenile", "kadro", "bot", "sonuclandir"],
-             "yayin": ["yenile", "kadro", "bot"],
+             "gunici": ["yenile", "kadro", "bot", "kadro_s", "sonuclandir"],
+             "yayin": ["yenile", "kadro", "bot", "kadro_s"],
              "gecmis": ["gecmis", "yerel", "sezon", "geritest", "simulasyon", "muhur"],
              "analiz": ["analiz"]}
     steps = list(STEPS.get(a.komut, [a.komut]))
     if a.komut == "yenile" and a.gecmis:
         steps = ["yenile_s"]
     # adım başına zaman bütçesi (saniye) — aşılırsa adım kesilir, sonraki adımlar yine çalışır
-    BUDGET = {"kesif": 180, "yenile": 600, "yenile_s": 1800, "kadro": 600, "bot": 1500, "gundem": 600, "gecmis": 2400,
+    BUDGET = {"kesif": 180, "yenile": 600, "yenile_s": 1800, "kadro": 600, "kadro_s": 600, "bot": 1500, "gundem": 1200, "gecmis": 2400,
               "yerel": 900, "sezon": 1500, "geritest": 600, "simulasyon": 900, "muhur": 300, "sonuclandir": 1200,
               "analiz": 2400, "yedek": 600}
     is_adi = a.komut
@@ -84,7 +84,7 @@ def main(argv=None) -> int:
         ok, msg = True, "tamam"
         try:
             fn()
-        except Exception as e:  # bir adımın düşmesi diğerlerini durdurmaz
+        except (Exception, _StepTimeout) as e:  # bir adımın düşmesi diğerlerini durdurmaz
             import traceback
 
             ok, msg = False, f"{type(e).__name__}: {e}"[:400]
@@ -132,12 +132,18 @@ def main(argv=None) -> int:
 
     def kadro():
         hours = a.saat if a.komut == "kadro" else 48
-        sq = pool.news.refresh_squads(force=a.zorla, max_teams=400 if a.komut == "kadro" else 80)
-        out_logs.append(f"Kadro: {sq['due']}/{sq['teams']} takım yenilendi (Wikipedia {sq['wikipedia']}, BSD {sq['bsd']}), "
-                        f"{sq['players']} oyuncu")
         tn = pool.news.run_upcoming(hours_ahead=hours)
         out_logs.append(f"Takım haberleri: {tn['matches']} maç, {tn['injury_known']} maçta eksik listesi, "
                         f"ilk 11: {tn['lineups_confirmed']} resmî / {tn['lineups_predicted']} tahmini taraf")
+        out_logs.extend(pool.log)
+        pool.log.clear()
+        if a.komut == "kadro":
+            kadro_s()
+
+    def kadro_s():  # kadro önbelleği (Wikipedia + BSD); yayından SONRA, kalan süreyle
+        sq = pool.news.refresh_squads(force=a.zorla, max_teams=400 if a.komut == "kadro" else 80)
+        out_logs.append(f"Kadro: {sq['due']}/{sq['teams']} takım yenilendi (Wikipedia {sq['wikipedia']}, BSD {sq['bsd']}), "
+                        f"{sq['players']} oyuncu")
         out_logs.extend(pool.log)
         pool.log.clear()
 
@@ -232,7 +238,7 @@ def main(argv=None) -> int:
             if not st["source"].startswith(("injuries:", "gecmis:", "api-football:tarih:")):
                 print(f"  {st['source']}: {'OK' if st['ok'] else 'SORUN'} — {st['message']} ({st['updated_at']})")
 
-    FN = {"yenile": yenile, "yenile_s": yenile, "gundem": gundem, "kadro": kadro, "gecmis": gecmis, "yerel": yerel,
+    FN = {"kadro_s": kadro_s, "yenile": yenile, "yenile_s": yenile, "gundem": gundem, "kadro": kadro, "gecmis": gecmis, "yerel": yerel,
           "geritest": geritest, "bot": bot, "sezon": sezon, "simulasyon": simulasyon, "muhur": muhur, "yedek": yedek,
           "analiz": analiz, "sonuclandir": sonuclandir, "durum": durum}
     if not a.ligler and not s.demo_mode and any(x in steps for x in ("yenile", "yenile_s", "gecmis", "bot")):
@@ -250,7 +256,7 @@ def main(argv=None) -> int:
     return 1 if set(state["failed"]) & {"bot", "sonuclandir", "analiz"} else 0
 
 
-class _StepTimeout(Exception):
+class _StepTimeout(BaseException):  # BaseException: kaynak kodundaki geniş 'except Exception' blokları yutmasın
     pass
 
 

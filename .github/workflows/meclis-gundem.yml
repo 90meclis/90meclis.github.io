@@ -19,5 +19,5 @@ jobs:
     secrets: inherit
     with:
       komut: gundem
-      sure: 20
+      sure: 25
 
