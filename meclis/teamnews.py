@@ -495,13 +495,38 @@ class TeamNews:
 
 
 # ---------------------------------------------------------------------- Meclis tahmini ilk 11
+_IDX: dict = {}
+_IDX_LOCK = __import__("threading").Lock()
+
+
+def _team_match_index(store) -> dict:
+    """Takım → son 80 gün + önümüzdeki 10 günün maçları; çalışma başına BİR kez okunur (her maç için yüzlerce satırlık
+    tekrar sorgu yayın işini dakikalarca uzatıyordu)."""
+    from datetime import timedelta as _td
+
+    key = (id(store), now_utc().strftime("%Y-%m-%dT%H"))
+    with _IDX_LOCK:
+        if _IDX.get("key") != key:
+            lo, hi = to_iso(now_utc() - _td(days=80)), to_iso(now_utc() + _td(days=10))
+            rows = store.select("matches", [("kickoff_at", "gte", lo), ("kickoff_at", "lt", hi)])
+            idx: dict = {}
+            for m in rows:
+                slim = {"id": m["id"], "kickoff_at": m["kickoff_at"], "home_team_id": m["home_team_id"],
+                        "away_team_id": m["away_team_id"]}
+                for t in (m["home_team_id"], m["away_team_id"]):
+                    idx.setdefault(t, []).append(slim)
+            _IDX.clear()
+            _IDX.update(key=key, idx=idx)
+        return _IDX["idx"]
+
+
 def recent_xis(store, team_id: str, before_iso: str, n: int = 5) -> list[list[str]]:
     """Takımın son n maçındaki RESMÎ ilk 11'leri (en yeni önce)."""
     from datetime import timedelta as _td
 
-    lo = to_iso(parse_dt(before_iso) - _td(days=70))
-    ms = [m for m in store.select("matches", [("kickoff_at", "gte", lo), ("kickoff_at", "lt", before_iso)])
-          if team_id in (m["home_team_id"], m["away_team_id"])]
+    b = parse_dt(before_iso)
+    lo = b - _td(days=70)
+    ms = [m for m in _team_match_index(store).get(team_id, []) if lo <= parse_dt(m["kickoff_at"]) < b]
     ms = sorted(ms, key=lambda m: m["kickoff_at"], reverse=True)[:12]
     if not ms:
         return []

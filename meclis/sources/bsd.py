@@ -144,6 +144,10 @@ def parse_squad(data: dict) -> list[dict]:
     return out
 
 
+class BsdThrottle:
+    until = 0.0
+
+
 class BSD:
     def __init__(self, key: str | None, max_calls: int = 1200):
         self.key = key
@@ -162,8 +166,17 @@ class BSD:
             raise SourceError("BSD_API_KEY tanımlı değil.")
         if self.calls >= self.max_calls:
             raise SourceError(f"BSD çalışma başı istek tavanı doldu ({self.max_calls}; günlük kota 7.500)")
+        import time as _time
+
+        if _time.monotonic() < BsdThrottle.until:
+            raise SourceError("BSD istek limiti (429) — devre kesici: birkaç dakika denenmiyor")
         self.calls += 1
-        r = get(f"{BASE}{path}", params=params, headers={"Authorization": f"Token {self.key}"})
+        try:
+            r = get(f"{BASE}{path}", params=params, headers={"Authorization": f"Token {self.key}"})
+        except SourceError as e:
+            if "429" in str(e):
+                BsdThrottle.until = _time.monotonic() + 300
+            raise
         if r.status_code in (401, 403):
             raise SourceError(f"BSD yetki hatası (HTTP {r.status_code}) — BSD_API_KEY geçersiz olabilir")
         if r.status_code == 404:

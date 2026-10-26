@@ -32,6 +32,8 @@ def get(url: str, *, params: dict | None = None, headers: dict | None = None, ti
             return r
         except (requests.RequestException, SourceError) as e:
             last = e
+            if "429" in str(e):  # istek limiti: yeniden denemek kotayı daha da yakar ve işi bekletir
+                break
             if attempt < retries:
                 time.sleep(1.5 * (attempt + 1))
     raise SourceError(f"{url} erişilemedi: {last}")
