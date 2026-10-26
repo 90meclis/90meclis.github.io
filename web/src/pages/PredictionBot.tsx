@@ -17,15 +17,12 @@ import type { BotAnalysis, BotBultenRow } from "../lib/data";
 
 type Verdict = { kind: "secim" | "deger" | "pas" | "bekliyor"; text: string };
 
-/** Bir sonraki tarama: iş akışı her 2 saatte bir (UTC tek saatler :15) ve 08:00 TSİ'de çalışır. */
+/** Bir sonraki tarama: yayın işi her saat :20'de (UTC/TSİ dakikası aynı) başlar, ~10 dakikada biter. */
 function nextScan(now = new Date()): string {
-  const d = new Date(now);
-  for (let i = 0; i < 26; i++) {
-    const t = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), d.getUTCHours() + i, 15));
-    const h = t.getUTCHours();
-    if (t > now && ((h % 2 === 1 && h <= 21) || h === 5)) return time(new Date(t.getTime() + 25 * 60e3).toISOString());
-  }
-  return "";
+  const t = new Date(now);
+  t.setUTCMinutes(20, 0, 0);
+  if (t <= now) t.setUTCHours(t.getUTCHours() + 1);
+  return time(new Date(t.getTime() + 12 * 60e3).toISOString());
 }
 
 function verdictOf(a: BotAnalysis | undefined, rows: ScanRow[], pub: Prediction[], saved: BotBultenRow[], ns: string): Verdict {
@@ -71,7 +68,7 @@ export default function PredictionBot() {
   const [day, setDay] = useState(today);
   const [lg, setLg] = useState("");
   const [grp, setGrp] = useState("Tümü");
-  const [onlyValue, setOnlyValue] = useState(false);
+  const [vf, setVf] = useState<"" | "deger" | "secim" | "pas" | "kontrol">("");
   const [q, setQ] = useState("");
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const ns = nextScan();
@@ -102,7 +99,7 @@ export default function PredictionBot() {
   const scans = useMemo(() => new Map(all.map((x) => [x.m.id, x.rows])), [all]);
   const finds: Find[] = useMemo(() => d.data && d2.data?.stat ? huntFinds(d.data.matches, d2.data.stat, api.slugOf, scans) : [], [d.data, d2.data, scans]);
   const leagues = [...new Set(all.map((x) => x.m.league))].sort((a, b) => league(a).order - league(b).order);
-  const list = all.filter(({ m, v }) => (!lg || m.league === lg) && (!onlyValue || v.kind === "deger" || v.kind === "secim") &&
+  const list = all.filter(({ m, v, rows }) => (!lg || m.league === lg) && (!vf || (vf === "kontrol" ? rows.some((r) => r.check && r.odds) : v.kind === vf)) &&
     (!q || `${m.home_name} ${m.away_name}`.toLocaleLowerCase("tr-TR").includes(q.toLocaleLowerCase("tr-TR"))));
   const groups = grp === "Tümü" ? undefined : [grp];
   const own = all.filter((x) => x.own);
@@ -128,6 +125,14 @@ export default function PredictionBot() {
     return { m, big, agree: mod?.pModel != null && mod.pMarket != null ? mod.pModel > mod.pMarket : null };
   }).filter((x): x is NonNullable<typeof x> => !!x).sort((a, b) => a.big.d - b.big.d).slice(0, 8);
   const days = [0, 1, 2].map((i) => addDays(today, i));
+  const kpi = {
+    mac: all.length, analiz: all.filter((x) => x.a).length,
+    pazar: all.reduce((n, x) => n + x.rows.filter((r) => r.pModel != null).length, 0),
+    oranli: all.reduce((n, x) => n + x.rows.filter((r) => r.odds && r.pModel != null).length, 0),
+    deger: all.filter((x) => x.v.kind === "deger").length, secim: picks.length,
+    pas: all.filter((x) => x.v.kind === "pas").length,
+    kontrol: all.filter((x) => x.rows.some((r) => r.check && r.odds)).length,
+  };
   const top = vals[0];
   const sent: string[] = d.data ? [
     `${dateLong(day + "T12:00:00+03:00").split(" ").slice(0, 2).join(" ")} bülteninde ${all.length} maç var; ${own.length} tanesinde kendi modelimle karar verecek kadar veri topladım.`,
@@ -141,10 +146,24 @@ export default function PredictionBot() {
 
   return (
     <div className="ortak">
-      <header className="ortak-hero">
-        <p className="kicker">Meclis'in yapay zekâ analisti</p>
+      <header className="ortak-desk">
+        <div className="desk-top">
+          <span className="desk-live" aria-hidden="true" />
+          <span className="desk-kicker">Ortak · analist masası · canlı</span>
+        </div>
         <h1>Ortak</h1>
-        <p className="lead">Bütün maçları, bütün pazarları kendi modeliyle fiyatlar ve piyasayla karşılaştırır. Değer gördüğünü söyler, görmediği maçı nedeniyle geçer.</p>
+        <p className="lead">Meclis'in yapay zekâ analisti. Bültendeki bütün maçları ve bütün pazarları kendi modeliyle fiyatlar, piyasayla yan yana koyar; değer gördüğünü söyler, görmediğini nedeniyle geçer. Buradaki her şey keşif içindir; yayımlanan kararlar <Link to="/tahmin-arsivi">Meclis Defteri</Link>'nde.</p>
+        {d.data && all.length > 0 && (
+          <div className="desk-kpi">
+            <div><b>{kpi.analiz}/{kpi.mac}</b><span>maç analiz</span></div>
+            <div><b>{kpi.pazar}</b><span>pazar fiyatlandı</span></div>
+            <div><b>{kpi.oranli}</b><span>piyasayla kıyas</span></div>
+            <div className="hot"><b>{kpi.deger + kpi.secim}</b><span>değer / karar</span></div>
+            <div><b>{kpi.pas}</b><span>pas</span></div>
+            {kpi.kontrol > 0 && <div className="chk"><b>{kpi.kontrol}</b><span>veri kontrol</span></div>}
+          </div>
+        )}
+        <p className="desk-next">Sonraki tarama ≈ {ns} TSİ</p>
       </header>
       <Chips label="Bülten günü" value={day} onChange={(x) => { setDay(x); setOpen({}); }} options={days}
         render={(x) => x === today ? "Bugün" : x === days[1] ? "Yarın" : dateLong(x + "T12:00:00+03:00").split(" ").slice(0, 2).join(" ")} />
@@ -224,7 +243,11 @@ export default function PredictionBot() {
             <div className="filters wb-filters">
               <label><span>Lig</span><select value={lg} onChange={(e) => setLg(e.target.value)}><option value="">Bütün ligler ({all.length})</option>{leagues.map((x) => <option key={x} value={x}>{league(x).name} ({all.filter((y) => y.m.league === x).length})</option>)}</select></label>
               <label className="grow"><span>Takım</span><input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Takım ara" /></label>
-              <label className="toggle"><input type="checkbox" checked={onlyValue} onChange={(e) => setOnlyValue(e.target.checked)} /> Yalnızca değer ve karar</label>
+            </div>
+            <div className="seg desk-seg" role="tablist" aria-label="Ortak'ın kararı">
+              {([["", `Tümü ${all.length}`], ["deger", `Değer ${kpi.deger}`], ["secim", `Karar ${kpi.secim}`], ["pas", `Pas ${kpi.pas}`], ["kontrol", `Veri kontrol ${kpi.kontrol}`]] as const).map(([k, l]) => (
+                <button key={k} role="tab" aria-selected={vf === k} className={vf === k ? "on" : ""} onClick={() => setVf(k)}>{l}</button>
+              ))}
             </div>
             <div className="chips scroll" role="radiogroup" aria-label="Pazar">
               {["Tümü", ...RADAR_GROUPS].map((g) => <button key={g} type="button" role="radio" aria-checked={grp === g} className={`chip ${grp === g ? "on" : ""}`} onClick={() => setGrp(g)}>{g}</button>)}

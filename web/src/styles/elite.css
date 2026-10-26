@@ -304,3 +304,25 @@
 .sys-pulse { display: flex; align-items: center; gap: 6px; margin: 4px 0; }
 .sys-pulse .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--win); box-shadow: 0 0 0 3px rgba(43, 217, 107, 0.15); }
 .sys-pulse .dot.warn { background: var(--wait); box-shadow: 0 0 0 3px rgba(255, 181, 71, 0.15); }
+
+/* Ortak = canlı analist masası: camgöbeği, ızgaralı terminal dili (Defter'in altın editoryal dilinden ayrı) */
+.ortak-desk { position: relative; margin: 8px 0 14px; padding: 20px 18px 16px; border: 1px solid rgba(69, 208, 255, 0.28); border-radius: var(--r); overflow: hidden;
+  background: linear-gradient(rgba(69, 208, 255, 0.05) 1px, transparent 1px) 0 0 / 100% 22px,
+              linear-gradient(90deg, rgba(69, 208, 255, 0.05) 1px, transparent 1px) 0 0 / 22px 100%,
+              radial-gradient(120% 80% at 100% 0%, rgba(69, 208, 255, 0.14), transparent 60%), var(--card); }
+.desk-top { display: flex; align-items: center; gap: 8px; }
+.desk-live { width: 8px; height: 8px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 0 0 rgba(69, 208, 255, 0.6); animation: deskPulse 2s infinite; }
+@keyframes deskPulse { 0% { box-shadow: 0 0 0 0 rgba(69, 208, 255, 0.55); } 70% { box-shadow: 0 0 0 8px rgba(69, 208, 255, 0); } 100% { box-shadow: 0 0 0 0 rgba(69, 208, 255, 0); } }
+@media (prefers-reduced-motion: reduce) { .desk-live { animation: none; } }
+.desk-kicker { font-size: 12px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--cyan); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.ortak-desk h1 { margin: 6px 0 8px; font-family: var(--display); font-size: 40px; text-transform: uppercase; }
+.ortak-desk .lead { margin: 0; color: var(--muted); line-height: 1.55; }
+.ortak-desk .lead a { color: var(--gold); font-weight: 600; }
+.desk-kpi { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 14px; }
+.desk-kpi div { padding: 9px 8px; border: 1px solid rgba(69, 208, 255, 0.18); border-radius: var(--r-sm); background: rgba(10, 14, 20, 0.7); }
+.desk-kpi b { display: block; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 18px; color: var(--text); font-variant-numeric: tabular-nums; }
+.desk-kpi span { font-size: 11px; color: var(--muted); }
+.desk-kpi .hot b { color: var(--lime); } .desk-kpi .chk b { color: var(--wait); }
+.desk-next { margin: 10px 0 0; font-size: 12px; color: var(--dim); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.desk-seg { margin: 8px 0 12px; overflow-x: auto; white-space: nowrap; }
+.desk-seg button { font-variant-numeric: tabular-nums; }

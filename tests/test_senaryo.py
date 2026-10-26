@@ -28,10 +28,16 @@ def test_seal_chain_is_deterministic_and_verifiable(tmp_path):
     from meclis.muhur import COUPON_FIELDS, canonical, seal_all, sha, write_manifest
     from meclis.store import SQLiteStore
 
+    from datetime import timedelta
+
+    from meclis.timeutil import now_utc
+
+    # sabit tarih kullanılmaz: kupon kaydı ilk maç başlamadan önce olmalı (tetikleyici), yoksa test takvime bağlı düşer
+    ko = (now_utc() + timedelta(days=2)).replace(microsecond=0)
     st = SQLiteStore(":memory:")
-    st.insert("coupons", [{"id": "c1", "created_at": "2026-10-20T06:00:00+00:00", "coupon_date": "2026-10-20",
-                           "tag": "gunun_karari", "total_odds": 2.5, "legs_count": 2,
-                           "first_kickoff_at": "2026-10-20T16:45:00+00:00", "stake": 1, "status": "bekliyor"}])
+    st.insert("coupons", [{"id": "c1", "created_at": (ko - timedelta(hours=10)).isoformat(),
+                           "coupon_date": ko.date().isoformat(), "tag": "gunun_karari", "total_odds": 2.5,
+                           "legs_count": 2, "first_kickoff_at": ko.isoformat(), "stake": 1, "status": "bekliyor"}])
     r = seal_all(st)
     assert r["yeni"] == 1 and seal_all(st)["yeni"] == 0
     row = st.select("kanit_muhru")[0]
