@@ -285,3 +285,19 @@
 /* CLS: canlı kayıt şeridi yüklenmeden önce yerini ayırır */
 .trust-strip { min-height: 147px; }
 @media (min-width: 900px) { .trust-strip { min-height: 128px; } }
+
+/* Arşiv = Meclis Defteri: editoryal, altın çizgili defter dili (Ortak'ın canlı masa dilinden ayrı) */
+.ledger-head { position: relative; margin: 8px 0 18px; padding: 22px 18px 18px; border: 1px solid rgba(255, 204, 77, 0.28); border-radius: var(--r);
+  background: linear-gradient(180deg, rgba(255, 204, 77, 0.07), rgba(255, 204, 77, 0) 70%), var(--card);
+  box-shadow: inset 4px 0 0 var(--gold); }
+.ledger-head .ledger-kicker { display: block; font-size: 12px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold); }
+.ledger-head h1 { margin: 6px 0 8px; font-family: var(--display); font-size: 38px; letter-spacing: 0.01em; text-transform: uppercase; }
+.ledger-head p { margin: 0; color: var(--muted); line-height: 1.55; }
+.ledger-head p b { color: var(--text); }
+.ledger-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 16px 0 12px; }
+.ledger-stats div { padding: 10px 8px; border: 1px solid var(--line-2); border-radius: var(--r-sm); background: var(--bg-2); text-align: center; }
+.ledger-stats b { display: block; font-family: var(--display); font-size: 26px; line-height: 1; font-variant-numeric: tabular-nums; }
+.ledger-stats span { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+.ledger-stats .w b { color: var(--win); } .ledger-stats .l b { color: var(--loss); } .ledger-stats .p b { color: var(--wait); }
+.ledger-head .ledger-note { font-size: 13px; }
+.ledger-head .ledger-note a { color: var(--gold); font-weight: 600; }

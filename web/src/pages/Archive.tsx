@@ -8,7 +8,7 @@ import { matchPath } from "../lib/match";
 import { usePageMeta, ROUTES } from "../lib/seo";
 import { CouponCard, CouponHero } from "../components/CouponCard";
 import { PickCard } from "../components/PickCard";
-import { Empty, Gate, PageHead, StatusPill, TagPill } from "../components/ui";
+import { Empty, Gate, StatusPill, TagPill } from "../components/ui";
 import type { PredStatus } from "../lib/types";
 
 const PAGE = 40;
@@ -63,11 +63,33 @@ export default function Archive() {
   const daySingles = preds.filter((p) => p.tag === "meclis_gorusu" && trDay(p.kickoff_at) === day && !gkMatches.has(p.match_id))
     .sort((a, b) => a.kickoff_at.localeCompare(b.kickoff_at));
 
+  const ledger = useMemo(() => {
+    const items = [
+      ...preds.filter((p) => p.tag === "meclis_gorusu").map((p) => p.status as string),
+      ...(d.data?.coupons ?? []).map((c) => c.status as string),
+    ];
+    return {
+      total: items.length,
+      won: items.filter((x) => x === "kazandi").length,
+      lost: items.filter((x) => x === "kaybetti").length,
+      pending: items.filter((x) => x === "bekliyor").length,
+    };
+  }, [preds, d.data]);
+
   return (
     <>
-      <PageHead kicker="Masanın kararları · değiştirilemez defter" title="Tahmin Arşivi">
-        Her karar maç başlamadan önce kilitlenir. Kayıt anı sunucu saatiyle damgalanır; seçim, oran ve olasılık sonradan değiştirilemez, hiçbir kayıt silinemez.
-      </PageHead>
+      <header className="ledger-head">
+        <span className="ledger-kicker">Meclis Defteri · yayımlanan kararlar</span>
+        <h1>Tahmin Arşivi</h1>
+        <p>Burada yalnızca Meclis'in yayımladığı kararlar durur: <b>Günün Kararı</b> kuponu, <b>Meclis Görüşleri</b> ve <b>Karar Birliği</b>. Hepsi Ortak'ın analiz ettiği bütün bültenden, en güvenilen değerli seçimlerden süzülür; maçtan en az 3 saat önce kilitlenir, mühürlenir ve kazansın kaybetsin hiç silinmez.</p>
+        <div className="ledger-stats">
+          <div><b>{ledger.total}</b><span>karar</span></div>
+          <div className="w"><b>{ledger.won}</b><span>kazandı</span></div>
+          <div className="l"><b>{ledger.lost}</b><span>kaybetti</span></div>
+          <div className="p"><b>{ledger.pending}</b><span>bekliyor</span></div>
+        </div>
+        <p className="ledger-note">Kayıt 27 Ekim 2026'da başladı · <Link to="/ortak">Bütün bültenin analizi Ortak'ta →</Link></p>
+      </header>
       <div className="seg" role="tablist" aria-label="Arşiv görünümü">
         {([["masa", "Masa"], ["kayit", "Tekliler"], ["kupon", "Kuponlar"]] as const).map(([k, l]) => (
           <button key={k} role="tab" aria-selected={view === k} className={view === k ? "on" : ""} onClick={() => setView(k)}>{l}</button>
@@ -92,7 +114,7 @@ export default function Archive() {
               )}
             </div>
             {gk.length ? gk.map((c) => <CouponHero key={c.id} c={c} legs={legsOf(c.id)} />) : (
-              <div className="coupon-hero empty"><span className="kicker">Günün Kararı</span><p className="muted">Bu gün için Günün Kararı yok.</p></div>
+              <div className="coupon-hero empty"><span className="kicker">Günün Kararı</span><p className="muted">{day >= today ? "Günün Kararı, değer gören seçimler netleştiğinde maçtan en az 3 saat önce burada kilitlenir. Değer yoksa Meclis oynamaz." : "Bu gün Günün Kararı çıkmadı: kurallara uyan değerli seçim yoktu."}</p></div>
             )}
             <h3 className="sub">Meclis Görüşleri <span className="muted">· {daySingles.length} tekli</span></h3>
             {daySingles.length ? <div className="picks grid">{daySingles.map((p) => <PickCard key={p.id} p={p} />)}</div>
