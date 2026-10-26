@@ -457,20 +457,40 @@ class TeamNews:
         ms = self.pool.matches_between(to_iso(now - timedelta(hours=2)), to_iso(now + timedelta(hours=hours_ahead)),
                                        leagues)
         ms = [m for m in ms if m.get("status") in ("planlandi", "basladi", None)]
+        ms = sorted(ms, key=lambda m: m["kickoff_at"])  # en yakın maç önce (süre biterse yakınlar tamamdır)
         out = {"matches": len(ms), "injury_known": 0, "injury_rows": 0, "lineups_confirmed": 0, "lineups_predicted": 0}
-        for m in ms:
+
+        def one(m):
+            r = {"injury_known": 0, "injury_rows": 0, "lineups_confirmed": 0, "lineups_predicted": 0}
             try:
                 rows, known = self.injuries(m)
-                out["injury_known"] += 1 if known else 0
-                out["injury_rows"] += len(rows)
+                r["injury_known"] = 1 if known else 0
+                r["injury_rows"] = len(rows)
             except Exception as e:
                 self.pool.log.append(f"⚠️ eksikler {m['id']}: {e}")
             try:
                 lus = self.lineups(m)
-                out["lineups_confirmed"] += sum(1 for x in lus if is_confirmed(x))
-                out["lineups_predicted"] += sum(1 for x in lus if not is_confirmed(x))
+                r["lineups_confirmed"] = sum(1 for x in lus if is_confirmed(x))
+                r["lineups_predicted"] = sum(1 for x in lus if not is_confirmed(x))
             except Exception as e:
                 self.pool.log.append(f"⚠️ ilk 11 {m['id']}: {e}")
+            return r
+
+        from concurrent.futures import ThreadPoolExecutor
+
+        workers = 1 if getattr(self.store, "kind", "") == "sqlite" else 6
+        if workers == 1:
+            results = map(one, ms)
+        else:
+            ex = ThreadPoolExecutor(max_workers=workers)
+            results = ex.map(one, ms)
+        try:
+            for r in results:
+                for k, v in r.items():
+                    out[k] += v
+        finally:
+            if workers > 1:
+                ex.shutdown(wait=False, cancel_futures=True)  # süre aşımında bekleyen işler bırakılır
         return out
 
 
