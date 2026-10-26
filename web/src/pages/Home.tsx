@@ -149,7 +149,7 @@ export default function Home() {
   const featured = (nd?.matches ?? []).filter((m) => {
     const a = nd?.an[m.id];
     return a && (a.basis ?? "").startsWith("model") && a.ready && (a.markets ?? []).some((x) => x.market === "1X2");
-  }).slice(0, 6);
+  }).sort((a, b) => league(a.league).order - league(b.league).order || a.kickoff_at.localeCompare(b.kickoff_at)).slice(0, 6);
   // Önce Ortak'ın gerçekten seçtikleri; seçim yoksa değer eşiğini geçenler
   // Vitrinde aşırı uç değerler (>%40, çoğunlukla veri/oran eşleme hatası) gösterilmez; Ortak sayfasında hepsi durur
   const valueRows = (nd?.scan ?? []).filter((r) => r.deger && r.odds && (r.edge ?? 0) >= 0.03 && (r.edge ?? 0) <= 0.4 && !gkMatchIds.has(r.match_id));
@@ -190,7 +190,7 @@ export default function Home() {
               <div><small>İsabet</small><b>{T.hit !== null ? <CountUp to={T.hit * 100} suffix="" prefix="%" /> : "—"}</b><span>{settledN} sonuçlanan</span></div>
               <div><small>ROI</small><b className={(T.roi ?? 0) > 0 ? "pos" : (T.roi ?? 0) < 0 ? "neg" : ""}>{T.roi !== null ? `${signed(T.roi * 100, 0)}%` : "—"}</b><span>{T.priced} piyasa oranlı</span></div>
               {clv && clv.n > 0 && <div><small>CLV</small><b className={clv.mean > 0 ? "pos" : "neg"}>{signed(clv.mean * 100, 1)}%</b><span>{clv.n} kapanışla ölçüldü</span></div>}
-              {settledN < 30 && <p className="ts-note">Örneklem yeni ({settledN} sonuç). Rakamlar her sonuçla güncellenir, hiçbiri silinmez. <Link to="/guven-panosu">Güven Panosu →</Link></p>}
+              {settledN < 30 && <p className="ts-note">{settledN === 0 ? "Kayıt 27 Ekim 2026'da başladı. İsabet, ROI ve kapanış oranı farkı ilk sonuçlarla burada." : `Örneklem yeni (${settledN} sonuç). Rakamlar her sonuçla güncellenir, hiçbiri silinmez.`} <Link to="/guven-panosu">Güven Panosu →</Link></p>}
             </>
           )}
         </div>
@@ -200,7 +200,12 @@ export default function Home() {
         <section id="gunun-karari" className="hg-gk">
           <Gate loading={book.loading} error={book.error} rows={3}>
             {gk ? <GkHero gk={gk} legs={gkLegs} live={!!gkLive} /> : (
-              <Empty title="Bugünün kuponu henüz masada değil" icon="◆">Meclis'in ana tercihlerinden oluşan günün kuponu burada açılır.</Empty>
+              <div className="coupon-hero empty gk-wait">
+                <span className="kicker">Günün Kararı</span>
+                <h2>Masa hazırlanıyor</h2>
+                <p className="muted">Meclis'in ana tercihlerinden oluşan günün kuponu, seçimler netleştiğinde burada açılır ve kilitlenir.</p>
+                <Link to={O.to} className="more">Bütün bülten şu an {O.label}'ın masasında →</Link>
+              </div>
             )}
           </Gate>
         </section>

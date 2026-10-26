@@ -97,8 +97,9 @@ export default function Lab() {
               ))}
             </div>
             <label className="lg-select"><span className="sr-only">Bütün ligler</span>
-              <select value={lg} onChange={(e) => set({ lig: e.target.value, takim: null, rakip: null })}>
-                {leagues.map((c) => <option key={c} value={c}>{league(c).flag} {league(c).name}{league(c).country ? ` · ${league(c).country}` : ""}</option>)}
+              <select value={POPULAR.includes(lg) ? "" : lg} onChange={(e) => e.target.value && set({ lig: e.target.value, takim: null, rakip: null })}>
+                <option value="">Diğer ligler ({leagues.length}) ▾</option>
+                {leagues.filter((c) => !POPULAR.includes(c)).map((c) => <option key={c} value={c}>{league(c).flag} {league(c).name}{league(c).country ? ` · ${league(c).country}` : ""}</option>)}
               </select>
             </label>
           </div>
@@ -110,14 +111,14 @@ export default function Lab() {
         {gor === "seri" ? <Hunter {...ctl} /> : lg ? <LeagueLab gor={gor} {...ctl} /> : null}
       </Gate>
 
-      <Card title="Nasıl okunur?" className="how lab-how">
+      <details className="lab-how-d"><summary>Nasıl okunur?</summary>
         <ul className="steps">
           <li><b>Yaptığı</b>: takımın kendi değeri (attığı gol, kullandığı korner…). <b>Rakibe verdiği</b>: rakibinin o maçta ona karşı yaptığı. <b>Maç toplamı</b>: ikisinin toplamı; bahis pazarlarındaki "toplam" budur.</li>
           <li><b>Çizgi</b>: yeşil çubuk çizginin üstünde kaldı, gri altında. "Son 10 maçın 8'inde 9,5 üst" = 10 maçın 8'inde toplam 10 ya da daha fazla.</li>
           <li><b>Seri ≠ değer.</b> Bir seri piyasa tarafından zaten fiyatlanmış olabilir. Seri Avcısı bu yüzden her seriyi Ortak'ın oran taramasıyla karşılaştırır: oran adil değerin altındaysa "seri var, değer yok" yazar.</li>
           <li>Yalnızca <b>bu sezonun</b> maçları. Avrupa kupa maçları ayrı işaretlenir (🇪🇺) ve "Avrupa / Lig" seçimiyle ayrıştırılır. Kaynakta olmayan değer "–" görünür, tahmin edilmez.</li>
         </ul>
-      </Card>
+      </details>
     </div>
   );
 }
