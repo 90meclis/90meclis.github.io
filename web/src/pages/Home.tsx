@@ -263,7 +263,7 @@ export default function Home() {
       </section>
 
       <div className="grid-2 block">
-        <section className="panel">
+        {recent.length > 0 && <section className="panel">
           <div className="sec-head"><h2>Son sonuçlar</h2><Link to="/guven-panosu" className="more">Bütün kayıt →</Link></div>
           {recent.length ? (
             <ul className="res-list">
@@ -273,7 +273,7 @@ export default function Home() {
             </ul>
           ) : <p className="muted small">İlk sonuçlar geldiğinde, kazanan da kaybeden de burada.</p>}
           <p className="muted tiny">Kayıplar silinmez, gizlenmez. Kâr yalnızca gerçek piyasa oranıyla, 1 birim sabit hesaplanır.</p>
-        </section>
+        </section>}
         <section className="panel">
           <div className="sec-head"><h2>Gündem</h2><Link to="/gundem-masasi" className="more">Tüm gündem →</Link></div>
           <Gate loading={newsQ.loading} error={newsQ.error} rows={3}>

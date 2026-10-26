@@ -198,9 +198,10 @@ export default function Trust() {
     <>
       <PageHead kicker="Herkese açık kayıt" title="Güven Panosu">
         Tahminler iyi mi? Cevabı burada, kayıplar dahil. İsabet, kâr/zarar, kapanış oranına karşı performans (CLV) ve kalibrasyon; hepsi kilitli kayıttan, 1 birim sabit stake ile.
+        <span className="muted tiny" style={{ display: "block", marginTop: 6 }}>Kayıt 27 Ekim 2026'da başladı.</span>
       </PageHead>
       <Gate loading={d.loading} error={d.error} rows={5}>
-        {bets.length === 0 ? <Empty title="Henüz kayıt yok" icon="◈">İlk kararlar maçtan önce deftere düştüğünde burada görünecek.</Empty> : (
+        {bets.length === 0 ? <Empty title="Kayıt 27 Ekim 2026'da başladı" icon="◈">İlk kararlar sonuçlandığında isabet, kâr/zarar ve CLV burada görünecek.</Empty> : (
           <>
             <Glance T={T} S={S} clv={clvAll} cal={cal} bt={bt.data ? bt.data.map(asBt) : null} settled={T.won + T.lost} />
             <div className="kpis">
