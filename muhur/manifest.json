@@ -1,8 +1,8 @@
 {
  "aciklama": "90 Meclis Kanıt Mührü — her satır: sha256(önceki_mühür + sha256(kanonik kayıt)). Kök, zincirin son mührüdür.",
- "olusturuldu": "2026-10-25T01:38:47+00:00",
- "kayit": 7,
- "kok": "324d5da338f320ef91210bb4a4e6ede8c1874767964c2ab1a764fc059a66455f",
+ "olusturuldu": "2026-10-26T01:50:18+00:00",
+ "kayit": 15,
+ "kok": "b398765e8a6ff40a282474381c2110ff40cb46cfeb0debd3367bfad4ccff5387",
  "muhurler": [
   {
    "seq": 1,
@@ -59,6 +59,70 @@
    "icerik_sha256": "d12b66c87544fc37f47f76861729e2fd9eb0ae4257d64b7d22092051d374b5d2",
    "sha256": "324d5da338f320ef91210bb4a4e6ede8c1874767964c2ab1a764fc059a66455f",
    "muhurlendi_at": "2026-10-24T01:51:39+00:00"
+  },
+  {
+   "seq": 8,
+   "ref_table": "predictions",
+   "ref_id": "986e0e5f-1f3a-4498-ab7f-463466c8c805",
+   "icerik_sha256": "87599982cb0fd83cd07c3014f15d232effa2dc757d449d67b3bbcabe2d5de96a",
+   "sha256": "f2e6268daca15bcf124a37121e6a53738e9a985075e04eeeae3faab78fbc772b",
+   "muhurlendi_at": "2026-10-26T01:50:13+00:00"
+  },
+  {
+   "seq": 9,
+   "ref_table": "predictions",
+   "ref_id": "e98464a7-532f-4ad3-9a40-21616640dee1",
+   "icerik_sha256": "278de4130e358c835f37de6e24dc0a3fa421e1a5e386ed0246cebdf4df40a413",
+   "sha256": "e951c93fe4cacba82bf9b4f0f91c5fc6b4f4f3f05bd6df84b0bc22e7080cc846",
+   "muhurlendi_at": "2026-10-26T01:50:13+00:00"
+  },
+  {
+   "seq": 10,
+   "ref_table": "predictions",
+   "ref_id": "d10dc347-f790-4f52-8a35-2cd415e67935",
+   "icerik_sha256": "0b7ce7b3053afdd5c1b5006319f486955542acc85054a83772179db2d5a78652",
+   "sha256": "14438a31a1e395e96ca989053cb18b95caa6d1f6c6c595034e2da3dd6c2a7bc4",
+   "muhurlendi_at": "2026-10-26T01:50:13+00:00"
+  },
+  {
+   "seq": 11,
+   "ref_table": "predictions",
+   "ref_id": "bc524b2d-1787-4aeb-8a20-f757d55225f3",
+   "icerik_sha256": "68c15175b6c35e69f8564ba0e2c20ef89992ae51e9207ffc8c3e4c2b183cb177",
+   "sha256": "1b2680dfc9bdb2e421cc664d0497589ba08b818faf268f5e05471bfb00b778c1",
+   "muhurlendi_at": "2026-10-26T01:50:13+00:00"
+  },
+  {
+   "seq": 12,
+   "ref_table": "predictions",
+   "ref_id": "933dd314-662d-4cb5-b318-e3a181f910e4",
+   "icerik_sha256": "14e461c08a73d3da1c6f5424ed23cc34b1a2e7d61e85a6a6e8192a067a19bf92",
+   "sha256": "9e0a99c7d28ffade49ba12fd81d190112cd959efc48bdc76e411a17dc7a2fb40",
+   "muhurlendi_at": "2026-10-26T01:50:13+00:00"
+  },
+  {
+   "seq": 13,
+   "ref_table": "coupons",
+   "ref_id": "258ecd70-0828-452a-a3d7-b4906aa77f54",
+   "icerik_sha256": "d45e213a139431da3493d5a15c5c2825f80d11a4b8a2b489e205ba1a215c0e50",
+   "sha256": "7972e1a972eb7e51a5b9da36e26fcb854f283f2eb0261a016e877f2c473e99b9",
+   "muhurlendi_at": "2026-10-26T01:50:13+00:00"
+  },
+  {
+   "seq": 14,
+   "ref_table": "predictions",
+   "ref_id": "4a73a9f1-128d-405b-ab36-2c596b39ce5a",
+   "icerik_sha256": "c50bcd822e8bb7c548e554a829929f230619e7562c03c475e50a2b6165f371df",
+   "sha256": "7d535fce8e65845cac1c0b394228086145f58d7b9150f24e8a0738ceea451a70",
+   "muhurlendi_at": "2026-10-26T01:50:13+00:00"
+  },
+  {
+   "seq": 15,
+   "ref_table": "predictions",
+   "ref_id": "39b77f5c-3d2c-4e0e-be22-79cb97dcb638",
+   "icerik_sha256": "3e0aacc92e2d5b44be9685666d2365f2fab37a337009cb355025613d94d35f2c",
+   "sha256": "b398765e8a6ff40a282474381c2110ff40cb46cfeb0debd3367bfad4ccff5387",
+   "muhurlendi_at": "2026-10-26T01:50:13+00:00"
   }
  ]
 }
