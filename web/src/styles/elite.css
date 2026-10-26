@@ -301,3 +301,6 @@
 .ledger-stats .w b { color: var(--win); } .ledger-stats .l b { color: var(--loss); } .ledger-stats .p b { color: var(--wait); }
 .ledger-head .ledger-note { font-size: 13px; }
 .ledger-head .ledger-note a { color: var(--gold); font-weight: 600; }
+.sys-pulse { display: flex; align-items: center; gap: 6px; margin: 4px 0; }
+.sys-pulse .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--win); box-shadow: 0 0 0 3px rgba(43, 217, 107, 0.15); }
+.sys-pulse .dot.warn { background: var(--wait); box-shadow: 0 0 0 3px rgba(255, 181, 71, 0.15); }

@@ -436,3 +436,10 @@ export const sealsFull = () =>
   all<SealRow>(() => db().from("v_kanit_muhru").select("*").order("seq")).catch(() => [] as SealRow[]);
 /** Mühür doğrulaması için süzgeçsiz tahmin listesi (yayım süzgeci uygulanmaz; mühür her kaydı kapsar). */
 export const allPredictionsRaw = () => all<Prediction>(() => db().from("predictions").select("*").order("kickoff_at", { ascending: false }));
+
+/** Otomatik işlerin son başarılı çalışması (v_sistem_durumu) — alt bilgide sessiz sağlık işareti. */
+export async function systemStatus(): Promise<{ is_adi: string; son_basari: string | null; gecikti: boolean }[]> {
+  const { data, error } = await db().from("v_sistem_durumu").select("is_adi,son_basari,gecikti");
+  if (error) return [];
+  return (data ?? []) as { is_adi: string; son_basari: string | null; gecikti: boolean }[];
+}

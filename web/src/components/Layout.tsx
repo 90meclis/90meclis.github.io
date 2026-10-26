@@ -5,6 +5,7 @@ import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { Logo } from "./Logo";
 import { Disclaimer } from "./ui";
 import { NAV } from "../lib/nav";
+import { systemStatus } from "../lib/data";
 
 
 export function Layout() {
@@ -59,9 +60,24 @@ export function Layout() {
             <SealNavLink />
           </nav>
           <Disclaimer />
+          <SystemPulse />
           <p className="muted tiny">Saatler Türkiye saatiyle (TSİ) gösterilir. Veriler açık kaynaklardan derlenir; haberlerin hakları yayıncılarına aittir. © {new Date().getFullYear()} 90 Meclis</p>
         </div>
       </footer>
     </div>
   );
+}
+
+
+function SystemPulse() {
+  const [st, setSt] = useState<{ ok: boolean; at: string | null } | null>(null);
+  useEffect(() => {
+    systemStatus().then((rows) => {
+      const y = rows.find((r) => r.is_adi === "yayin");
+      if (y) setSt({ ok: !rows.some((r) => r.gecikti), at: y.son_basari });
+    }).catch(() => undefined);
+  }, []);
+  if (!st || !st.at) return null;
+  const t = new Date(st.at).toLocaleString("tr-TR", { timeZone: "Europe/Istanbul", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+  return <p className="muted tiny sys-pulse"><span className={st.ok ? "dot ok" : "dot warn"} aria-hidden="true" /> Bülten son güncelleme: {t} TSİ{st.ok ? "" : " · bazı işler gecikmeli"}</p>;
 }
