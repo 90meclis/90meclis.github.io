@@ -1,0 +1,38 @@
+name: 90 Meclis · Sağlık denetimi + canlı tutma
+
+on:
+  schedule:
+    - cron: "10 6,18 * * *"   # TSİ 09:10 ve 21:10
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+  actions: write
+
+jobs:
+  denetim:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+    steps:
+      - name: Zamanlanmış işleri etkin tut (GitHub'ın 60 gün hareketsizlik kapatmasına karşı)
+        run: |
+          for w in meclis-yayin.yml meclis-sonuc.yml meclis-gundem.yml meclis-gece.yml meclis-saglik.yml pages.yml; do
+            gh api -X PUT "repos/$REPO/actions/workflows/$w/enable" >/dev/null 2>&1 || true
+          done
+      - name: Son başarılı çalışmalar (v_sistem_durumu) — gecikme varsa issue
+        run: |
+          R=$(curl -sf "$SUPABASE_URL/rest/v1/v_sistem_durumu?select=is_adi,gecikti,son_basari" -H "apikey: $SUPABASE_KEY" -H "Authorization: Bearer $SUPABASE_KEY")
+          echo "$R"
+          GEC=$(echo "$R" | jq -r '[.[] | select(.gecikti) | .is_adi] | join(", ")')
+          if [ -z "$GEC" ]; then echo "Tüm işler zamanında."; exit 0; fi
+          gh label create otomatik-izleme --color B60205 -d "Zamanlanmış iş hataları" -R "$REPO" 2>/dev/null || true
+          T="Sağlık denetimi: geciken işler"
+          N=$(gh issue list -R "$REPO" -l otomatik-izleme -s open --search "in:title \"$T\"" --json number -q '.[0].number')
+          B="$(date -u '+%F %H:%M') UTC — son başarılı çalışması geciken işler: $GEC"
+          if [ -n "$N" ]; then gh issue comment "$N" -R "$REPO" -b "$B"; else gh issue create -R "$REPO" -t "$T" -l otomatik-izleme -b "$B"; fi

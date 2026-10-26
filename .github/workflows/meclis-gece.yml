@@ -1,0 +1,24 @@
+name: 90 Meclis · Gece (sezon verisi, yerel lig, geri test, simülasyon, mühür, yedek)
+
+on:
+  schedule:
+    - cron: "40 0 * * *"  # TSİ 03:40
+  workflow_dispatch:
+
+concurrency:
+  group: meclis-gece
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  is:
+    uses: ./.github/workflows/_meclis-is.yml
+    secrets: inherit
+    with:
+      komut: gecmis
+      sure: 150
+      muhur_commit: true
+      yedek: true

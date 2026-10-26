@@ -25,7 +25,7 @@ from .store import get_store
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="python -m meclis", description="90 Meclis komut satırı")
     ap.add_argument("komut", choices=["yenile", "gundem", "bot", "sonuclandir", "sabah", "durum", "kadro",
-                                        "gecmis", "analiz", "sezon", "yedek", "gunici", "yerel", "geritest", "muhur", "simulasyon"])
+                                        "gecmis", "analiz", "sezon", "yedek", "gunici", "yayin", "yerel", "geritest", "muhur", "simulasyon"])
     ap.add_argument("--zorla", action="store_true", help="kadro: 7 günlük önbelleği yok say")
     ap.add_argument("--saat", type=float, default=168, help="kadro: kaç saat sonrasına kadarki maçlar (varsayılan 168 = 7 gün)")
     ap.add_argument("--gecmis", action="store_true", help="geçmiş sezon verisini de çek")
@@ -47,109 +47,145 @@ def main(argv=None) -> int:
     from .settlement import run_settlement
 
     pool = DataPool(store, s)
-    out_logs: list[str] = []
-    STEPS = {"sabah": {"yenile_s", "gundem", "kadro", "yerel", "bot", "sezon", "sonuclandir"},
-             "gunici": {"yenile", "kadro", "yerel", "bot", "sonuclandir"}, "gecmis": {"gecmis", "yerel", "sezon", "geritest", "simulasyon", "muhur"},
-             "analiz": {"yerel"}}
-    steps = set(STEPS.get(a.komut, {a.komut}))
+    out_logs = _LiveLog()
+    # İŞ DÜZENİ (her biri ayrı iş akışı, ayrı zaman bütçesi — biri yavaşlarsa yayın beklemez):
+    #   yayin       : fikstür/oran (bugün+yarın+2 gün) → eksik/ilk 11 (48 saat) → analiz + seçim + kilit → mühür
+    #   sonuclandir : biten maçlar, kapanış oranı (CLV)
+    #   gundem      : haber taraması
+    #   gecmis      : gece ağır işleri (sezon doldurma, yerel lig, geri test, simülasyon) — kaldığı yerden devam eder
+    STEPS = {"sabah": ["yenile", "gundem", "kadro", "bot", "sonuclandir"],
+             "gunici": ["yenile", "kadro", "bot", "sonuclandir"],
+             "yayin": ["yenile", "kadro", "bot"],
+             "gecmis": ["gecmis", "yerel", "sezon", "geritest", "simulasyon", "muhur"],
+             "analiz": ["analiz"]}
+    steps = list(STEPS.get(a.komut, [a.komut]))
     if a.komut == "yenile" and a.gecmis:
-        steps = {"yenile_s"}
-    if a.komut == "gunici" and not s.demo_mode:
-        # Kaçırılan / geç kalan zamanlanmış işlerin telafisi: son başarılı çalışması eskiyse bu çalışmada yapılır.
-        for step, hours in (("gundem", 26), ("sezon", 30), ("gecmis", 30), ("yedek", 30)):
-            if _overdue(store, step, hours):
-                steps.add(step)
-                out_logs.append(f"ℹ️ telafi: '{step}' son {hours} saatte çalışmamış — bu çalışmada yapılıyor")
-    if not a.ligler:
+        steps = ["yenile_s"]
+    # adım başına zaman bütçesi (saniye) — aşılırsa adım kesilir, sonraki adımlar yine çalışır
+    BUDGET = {"kesif": 180, "yenile": 600, "yenile_s": 1800, "kadro": 600, "bot": 1500, "gundem": 600, "gecmis": 2400,
+              "yerel": 900, "sezon": 1500, "geritest": 600, "simulasyon": 900, "muhur": 300, "sonuclandir": 1200,
+              "analiz": 2400, "yedek": 600}
+    is_adi = a.komut
+    state = {"failed": []}
+
+    def run(step, fn):
+        import signal
+        import time as _t
+
+        t0 = _t.monotonic()
+        budget = int(BUDGET.get(step, 900) * float(__import__("os").environ.get("MECLIS_BUTCE_CARPAN", "1")))
+        print(f"▶ {step} (bütçe {budget} sn)", flush=True)
+
+        def _alarm(*_):
+            raise _StepTimeout(f"{step}: {budget} sn bütçe aşıldı")
+
+        old = signal.signal(signal.SIGALRM, _alarm)
+        signal.alarm(budget)
+        ok, msg = True, "tamam"
+        try:
+            fn()
+        except Exception as e:  # bir adımın düşmesi diğerlerini durdurmaz
+            import traceback
+
+            ok, msg = False, f"{type(e).__name__}: {e}"[:400]
+            out_logs.append(f"⚠️ {step} başarısız: {msg}")
+            traceback.print_exc()
+            state["failed"].append(step)
+        finally:
+            signal.alarm(0)
+            signal.signal(signal.SIGALRM, old)
+        dt = _t.monotonic() - t0
+        print(f"■ {step}: {'OK' if ok else 'HATA'} {dt:.0f} sn", flush=True)
+        try:
+            store.set_source_status(f"is:{is_adi}:{step}", ok, f"{dt:.0f} sn — {msg}")
+            if ok:
+                _done(store, step)
+        except Exception:
+            pass
+
+    if s.demo_mode:
+        steps = [x for x in steps if x in ("bot", "sonuclandir", "durum", "analiz")]
+
+    def kesif():
         from .leagues import discover
 
         new = discover(store, s, pool.bsd)
         pool.bsd._leagues = None  # lig eşlemesi yeni liglerle yeniden kurulsun
         if new:
             out_logs.append(f"ℹ️ ligler: çekirdek {len(s.leagues) - len(new)} + kaynaklardan keşfedilen {len(new)} lig")
-    if steps & {"yenile", "yenile_s"} and not s.demo_mode:
+
+    def yenile():
         back = 3
         if a.geri is not None:
             from .analysis import season_start
             from .timeutil import now_utc
 
             back = a.geri if a.geri > 0 else (now_utc().date() - season_start().date()).days + 1
-            pool.bsd.max_calls = max(pool.bsd.max_calls, 5000)  # sezon taraması: BSD günlük kota 7.500
-        r = pool.refresh(days_back=back, history="yenile_s" in steps or a.geri is not None)
-        out_logs += r["log"] + [f"Havuz: {r['records']} kaynak kaydı → {r['matches']} birleşik maç"]
+            pool.bsd.max_calls = max(pool.bsd.max_calls, 5000)
+        ahead = 7 if a.komut in ("gecmis", "yenile") else 3  # yayın işi: bugün + 2 gün (hız)
+        r = pool.refresh(days_back=back, days_ahead=ahead, history="yenile_s" in steps or a.geri is not None)
+        out_logs.extend(r["log"] + [f"Havuz: {r['records']} kaynak kaydı → {r['matches']} birleşik maç"])
         pool.log.clear()
-    if "gundem" in steps and not s.demo_mode:
-        try:  # haber taraması düşerse kadro / bot / sonuçlandırma adımları yine çalışsın
-            out_logs += scan_news(store, s)["log"]
-            _done(store, "gundem")
-        except Exception as e:
-            out_logs.append(f"⚠️ gündem taraması başarısız: {e}")
-    if "kadro" in steps and not s.demo_mode:
-        sq = pool.news.refresh_squads(force=a.zorla)
+
+    def gundem():
+        out_logs.extend(scan_news(store, s)["log"])
+
+    def kadro():
+        hours = a.saat if a.komut == "kadro" else 48
+        sq = pool.news.refresh_squads(force=a.zorla, max_teams=400 if a.komut == "kadro" else 80)
         out_logs.append(f"Kadro: {sq['due']}/{sq['teams']} takım yenilendi (Wikipedia {sq['wikipedia']}, BSD {sq['bsd']}), "
-                        f"{sq['players']} oyuncu, {sq['with_stats']} oyuncuda geçmiş istatistik"
-                        + (f"; kadrosu bulunamayan: {', '.join(sq['failed'][:8])}" if sq["failed"] else ""))
-        tn = pool.news.run_upcoming(hours_ahead=a.saat)
+                        f"{sq['players']} oyuncu")
+        tn = pool.news.run_upcoming(hours_ahead=hours)
         out_logs.append(f"Takım haberleri: {tn['matches']} maç, {tn['injury_known']} maçta eksik listesi, "
-                        f"{tn['injury_rows']} eksik kaydı, ilk 11: {tn['lineups_confirmed']} resmî / "
-                        f"{tn['lineups_predicted']} tahmini taraf")
-        out_logs += pool.log
+                        f"ilk 11: {tn['lineups_confirmed']} resmî / {tn['lineups_predicted']} tahmini taraf")
+        out_logs.extend(pool.log)
         pool.log.clear()
-    if "gecmis" in steps and not s.demo_mode:
-        from .backfill import Backfill
+
+    def gecmis():
         from .analysis import season_start
+        from .backfill import Backfill
         from .timeutil import now_utc
 
-        # gece: bu sezonun oynanmış bütün maçları (BSD lig listeleri + football-data.co.uk sezon CSV'leri) —
-        # havuzda olan istatistik/hakem/stadyum yeniden istenmez, yalnızca boşluk dolar
         pool.bsd.max_calls = max(pool.bsd.max_calls, 3000)
         pool.refresh(days_back=(now_utc().date() - season_start().date()).days + 1, days_ahead=7, history=True)
+        out_logs.extend(Backfill(pool).run()["log"])
 
-        out_logs += Backfill(pool).run()["log"]
-        _done(store, "gecmis")
-    if "yerel" in steps and not s.demo_mode:
-        # Avrupa kupası takımlarının yerel ligi (bizim lig değilse TheSportsDB'den bu sezonun bütün haftaları)
+    def yerel():
         from .domestic import DomesticTrack
 
-        try:
-            r = DomesticTrack(store, s, s.api_football_key,
-                              max_apif=25 if a.komut == "gunici" else 40).run(hours=60)
-            out_logs += r["log"] + [f"ℹ️ yerel lig: {len(r['resolved'])} takım çözüldü, çözülemeyen: "
-                                    f"{', '.join(r['missing']) or 'yok'} ({r['apif_calls']} API-Football isteği)"]
-        except Exception as e:
-            out_logs.append(f"⚠️ yerel lig izi: {e}")
-    if "geritest" in steps and not s.demo_mode:  # model geri testi → model_backtest (pazar başına kalibrasyon)
+        r = DomesticTrack(store, s, s.api_football_key, max_apif=40).run(hours=60)
+        out_logs.extend(r["log"] + [f"ℹ️ yerel lig: {len(r['resolved'])} takım çözüldü, çözülemeyen: "
+                                    f"{', '.join(r['missing']) or 'yok'} ({r['apif_calls']} API-Football isteği)"])
+
+    def geritest():
         from .backtest import run_backtest
 
-        try:
-            r = run_backtest(store)
-            out_logs.append(f"ℹ️ geri test: {r['rows']} tahmin; " + "; ".join(
-                f"{x['market']}: n={x['n']} LL model {x['ll_model']} / piyasa {x['ll_market']} / harman {x['ll_blend']} "
-                f"(w*={x['w_opt']}), değer ROI {x['roi_value']}" for x in r["markets"]))
-        except Exception as e:
-            out_logs.append(f"⚠️ geri test: {e}")
-    if "bot" in steps:
+        r = run_backtest(store)
+        out_logs.append(f"ℹ️ geri test: {r['rows']} tahmin; " + "; ".join(
+            f"{x['market']}: n={x['n']} LL model {x['ll_model']} / piyasa {x['ll_market']} (w*={x['w_opt']})"
+            for x in r["markets"]))
+
+    def bot():
         r = Bot(store, s, pool).run(record=not a.kuru)
-        out_logs += r["log"]
-    if "sezon" in steps and not s.demo_mode:
+        out_logs.extend(r["log"])
+
+    def sezon():
+        from .gapstats import GapStats
         from .season import SeasonFill
 
-        cap = {"sabah": 400, "gunici": 300}.get(a.komut, 1500)  # BSD günlük kota 7.500
+        cap = 1500
         pool.bsd.max_calls = max(pool.bsd.max_calls, pool.bsd.calls + cap)
-        out_logs += SeasonFill(pool, max_calls=cap).run()["log"]
-        from .gapstats import GapStats
-
-        try:  # BSD'nin vermediği istatistikler: Highlightly / Big Balls (anahtar varsa, günlük bütçeyle)
-            out_logs += GapStats(pool).run()["log"]
+        out_logs.extend(SeasonFill(pool, max_calls=cap).run()["log"])
+        try:
+            out_logs.extend(GapStats(pool).run()["log"])
         except Exception as e:
             out_logs.append(f"⚠️ ek istatistik: {e}")
-        _done(store, "sezon")
-    if "simulasyon" in steps and not s.demo_mode:  # sezon simülasyonu (10.000 koşu) → sezon_simulasyonu
-        from .bot import Bot as _B
+
+    def simulasyon():
         from .config import LEAGUES
         from .simulasyon import simulate_league
 
-        b = _B(store, s, pool)
+        b = Bot(store, s, pool)
         n_sim = 0
         for lg in s.leagues:
             if LEAGUES.get(lg) and LEAGUES[lg].cup:
@@ -162,53 +198,76 @@ def main(argv=None) -> int:
             except Exception as e:
                 out_logs.append(f"⚠️ simülasyon {lg}: {e}")
         out_logs.append(f"ℹ️ sezon simülasyonu: {n_sim} lig × 10.000 koşu")
-    if "muhur" in steps or "bot" in steps:  # Kanıt Mührü + paylaşım taslakları (yalnızca taslak; paylaşılmaz)
+
+    def muhur():
+        from datetime import timedelta as _td
+
         from .muhur import seal_all, write_manifest
+        from .paylasim import build_drafts
+        from .timeutil import now_utc as _now
 
-        try:
-            r = seal_all(store)
-            out_logs.append(f"ℹ️ Kanıt Mührü: {r['yeni']} yeni mühür, toplam {r['toplam']}, kök {str(r['kok'])[:16]}…")
-            if a.komut in ("muhur", "gecmis"):
-                out_logs.append(f"ℹ️ mühür manifestosu: {write_manifest(store, a.cikti or 'muhur')['kayit']} kayıt")
-            from datetime import timedelta as _td
+        r = seal_all(store)
+        out_logs.append(f"ℹ️ Kanıt Mührü: {r['yeni']} yeni mühür, toplam {r['toplam']}, kök {str(r['kok'])[:16]}…")
+        if a.komut in ("muhur", "gecmis"):
+            out_logs.append(f"ℹ️ mühür manifestosu: {write_manifest(store, a.cikti or 'muhur')['kayit']} kayıt")
+        lo = _now() - _td(hours=6)
+        out_logs.append(f"ℹ️ paylaşım taslağı: {build_drafts(store, lo.isoformat(), (lo + _td(hours=48)).isoformat())}")
 
-            from .paylasim import build_drafts
-            from .timeutil import now_utc as _now
+    def yedek():
+        from .backup import export_all
 
-            lo = _now() - _td(hours=6)
-            out_logs.append(f"ℹ️ paylaşım taslağı: {build_drafts(store, lo.isoformat(), (lo + _td(hours=48)).isoformat())}")
-        except Exception as e:
-            out_logs.append(f"⚠️ Kanıt Mührü: {e}")
-    if "yedek" in steps:
-        if a.komut == "gunici":  # telafi: yedeği iş akışının 'backups' adımı yazar (bayrak dosyası)
-            open("/tmp/meclis_yedek_gerekli", "w").write("1")
-        else:
-            from .backup import export_all
+        out_logs.extend(export_all(store, a.cikti or "yedek")["log"])
 
-            out_logs += export_all(store, a.cikti or "yedek")["log"]
-            _done(store, "yedek")
-    if a.komut == "analiz":  # tüm maçların analizini yenile; tahmin/kupon yazmaz
+    def analiz():
         r = Bot(store, s, pool).run(record=not a.kuru, publish=False)
-        out_logs += r["log"]
-    if "sonuclandir" in steps:
+        out_logs.extend(r["log"])
+
+    def sonuclandir():
         if a.komut in ("sonuclandir", "gunici") and not s.demo_mode:
-            pool.refresh(days_back=5, days_ahead=0, history=True)
-        out_logs += run_settlement(store, pool)["log"]
-    if a.komut == "durum":
+            pool.refresh(days_back=7, days_ahead=0, history=True)
+        out_logs.extend(run_settlement(store, pool)["log"])
+
+    def durum():
         for st in store.select("source_status", order="source"):
             if not st["source"].startswith(("injuries:", "gecmis:", "api-football:tarih:")):
                 print(f"  {st['source']}: {'OK' if st['ok'] else 'SORUN'} — {st['message']} ({st['updated_at']})")
-        print(f"  maç: {len(store.select('matches'))}, tahmin: {len(store.select('predictions'))}, "
-              f"oyuncu: {len(store.select('players'))}, sakat/cezalı: {len(store.select('injuries'))}, "
-              f"ilk 11: {len(store.select('lineups'))}")
-        from .coverage import format_coverage, upcoming_coverage
 
-        print("  Önümüzdeki 7 günün kapsamı (maç sayısı / ilgili alanı dolu maç sayısı):")
-        for line in format_coverage(upcoming_coverage(store, s.leagues)):
-            print("   ", line)
-    for line in out_logs:
-        print(line)
-    return 0
+    FN = {"yenile": yenile, "yenile_s": yenile, "gundem": gundem, "kadro": kadro, "gecmis": gecmis, "yerel": yerel,
+          "geritest": geritest, "bot": bot, "sezon": sezon, "simulasyon": simulasyon, "muhur": muhur, "yedek": yedek,
+          "analiz": analiz, "sonuclandir": sonuclandir, "durum": durum}
+    if not a.ligler and not s.demo_mode and any(x in steps for x in ("yenile", "yenile_s", "gecmis", "bot")):
+        run("kesif", kesif)
+    for step in steps:
+        run(step, FN[step])
+        if step == "bot":  # yayımlanan kayıtlar hemen mühürlenir
+            run("muhur", muhur)
+    try:
+        store.set_source_status(f"is:{is_adi}", not state["failed"],
+                                "başarısız adımlar: " + ", ".join(state["failed"]) if state["failed"] else "tamam")
+    except Exception:
+        pass
+    # kritik adım (bot / sonuclandir) düştüyse iş akışı kırmızı olsun → otomatik GitHub issue
+    return 1 if set(state["failed"]) & {"bot", "sonuclandir", "analiz"} else 0
+
+
+class _StepTimeout(Exception):
+    pass
+
+
+class _LiveLog(list):
+    """Günlük satırlarını anında yazar (iş akışı kesilse bile nerede kaldığı görünür)."""
+
+    def append(self, x):
+        print(x, flush=True)
+        super().append(x)
+
+    def extend(self, xs):
+        for x in xs:
+            self.append(x)
+
+    def __iadd__(self, xs):
+        self.extend(xs)
+        return self
 
 
 def _overdue(store, step: str, hours: float) -> bool:

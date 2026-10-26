@@ -177,8 +177,10 @@ class TeamNews:
             chk = ext0.get("squad_checked")
             # yeni bir kaynak devreye girdiyse (ör. BSD anahtarı sonradan eklendi) 7 günlük önbellek beklenmez
             have = set(ext0.get("squad_sources") or [])
-            new_src = (bsd is not None and bsd.available and bsd_ids.get(t["id"]) and "bsd" not in have) or \
-                      ("squad_sources" not in ext0)
+            # ...ama aynı gün yeniden denenmez (kaynak düşükken her çalışmada yüzlerce takım beklenmesin)
+            new_src = chk != today.isoformat() and (
+                (bsd is not None and bsd.available and bsd_ids.get(t["id"]) and "bsd" not in have)
+                or ("squad_sources" not in ext0))
             if force or not chk or new_src or \
                     (today - parse_dt(chk + "T00:00:00+00:00").date()).days >= SQUAD_MAX_AGE_DAYS:
                 due.append(t)
@@ -193,10 +195,13 @@ class TeamNews:
         except Exception as e:
             titles = {}
             self._note("wikipedia", False, f"Wikidata→Wikipedia bağlantısı: {e}")
+        bsd_off, wp_err = False, 0  # devre kesici: kaynak limit verirse bu çalışmada bir daha denenmez
         for t in due:
             ext = dict(t.get("ext_ids") or {})
             squad, src = [], []
             try:
+                if wp_err >= 5:
+                    raise RuntimeError("Wikipedia bu çalışmada devre dışı (art arda hata)")
                 hint = ext.get("enwiki") or titles.get(ext.get("wikidata"))
                 wp, title = wikipedia.team_squad(names.display_name(t["name"]), hint)
                 if wp:
@@ -205,8 +210,10 @@ class TeamNews:
                     src.append("wikipedia")
                     stats["wikipedia"] += 1
             except Exception as e:
-                self._note("wikipedia", False, f"{t['name']}: {e}")
-            if bsd is not None and bsd.available and bsd_ids.get(t["id"]):
+                wp_err += 1
+                if wp_err <= 5:
+                    self._note("wikipedia", False, f"{t['name']}: {e}")
+            if bsd is not None and bsd.available and bsd_ids.get(t["id"]) and not bsd_off:
                 try:
                     bs = bsd.squad(bsd_ids[t["id"]])
                     if bs:
@@ -220,8 +227,11 @@ class TeamNews:
                             else:
                                 squad.append(dict(p, _src="bsd"))
                 except Exception as e:
+                    if "429" in str(e) or "tavan" in str(e):
+                        bsd_off = True
                     self._note("bsd", False, f"kadro {t['name']}: {e}")
             ext["squad_sources"] = src
+            ext["squad_checked"] = today.isoformat()
             if not squad:
                 stats["failed"].append(t["name"])
                 ext["squad_checked"] = today.isoformat()

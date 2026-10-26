@@ -38,6 +38,9 @@ def _prediction_row(match: dict, pick: dict, tag: str, rationale: str, coupon_id
     }
 
 
+
+RESMI_BASLANGIC = parse_dt("2026-10-26T21:00:00+00:00")  # 27.10.2026 00:00 TSİ
+
 class Bot:
     def __init__(self, store, settings, pool: DataPool | None = None):
         self.store = store
@@ -308,6 +311,8 @@ class Bot:
     def publishable(self, m: dict, now) -> bool:
         """Yayın penceresi: başlamaya ≥ lead saat var VE (TR saatiyle bugün ya da 12 saatten yakın)."""
         ko = parse_dt(m["kickoff_at"])
+        if ko < RESMI_BASLANGIC:  # resmî kayıt 27 Ekim 2026 00:00 TSİ'de başladı; öncesi deneme dönemi
+            return False
         if ko - now < self.lead():
             return False
         return tr_date(m["kickoff_at"]) <= tr_date(to_iso(now)) or ko - now <= timedelta(hours=self.s.publish_window_hours)
@@ -530,7 +535,11 @@ class Bot:
 
         rows = []
         for lg in self.s.leagues:
-            rows += compute_trends(self.context(lg))
+            try:
+                rows += compute_trends(self.context(lg))
+            except Exception as e:
+                self.log.append(f"⚠️ trend ({lg}): {e}")
+        rows = list({r["id"]: r for r in rows}.values())  # aynı kimlik iki kez gelirse upsert düşmesin
         self.store.upsert("trends", rows)
         return len(rows)
 

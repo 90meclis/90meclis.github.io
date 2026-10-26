@@ -1,0 +1,23 @@
+name: 90 Meclis · Gündem (haberler)
+
+on:
+  schedule:
+    - cron: "5 4,9,14,19 * * *"  # TSİ 07:05, 12:05, 17:05, 22:05
+  workflow_dispatch:
+
+concurrency:
+  group: meclis-gundem
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  is:
+    uses: ./.github/workflows/_meclis-is.yml
+    secrets: inherit
+    with:
+      komut: gundem
+      sure: 20
+

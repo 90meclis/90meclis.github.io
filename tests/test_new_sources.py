@@ -195,7 +195,7 @@ def test_registry_seed_matches_schema_sql():
 
 
 def test_every_key_is_passed_by_workflow_and_documented():
-    wf = (ROOT / ".github" / "workflows" / "meclis.yml").read_text(encoding="utf-8")
+    wf = (ROOT / ".github" / "workflows" / "_meclis-is.yml").read_text(encoding="utf-8")
     env_ex = (ROOT / ".env.example").read_text(encoding="utf-8")
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     for k in SECRET_NAMES:

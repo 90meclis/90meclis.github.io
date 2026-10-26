@@ -1,0 +1,89 @@
+# Ortak çalıştırıcı (yeniden kullanılabilir iş akışı). Zamanlamalar meclis-*.yml dosyalarındadır.
+# Her iş kendi zaman bütçesiyle çalışır; adım hatası diğer adımları durdurmaz (meclis/__main__.py run()).
+# Kritik adım (bot / sonuclandir) düşerse iş kırmızı olur ve "otomatik-izleme" etiketli GitHub issue açılır/güncellenir.
+name: _meclis-is
+
+on:
+  workflow_call:
+    inputs:
+      komut: {type: string, required: true}
+      sure: {type: number, default: 55}
+      muhur_commit: {type: boolean, default: false}
+      yedek: {type: boolean, default: false}
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ inputs.sure }}
+    env:
+      PYTHONUNBUFFERED: "1"
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      FOOTBALL_DATA_TOKEN: ${{ secrets.FOOTBALL_DATA_TOKEN }}
+      API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+      ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+      ODDSPAPI_KEY: ${{ secrets.ODDSPAPI_KEY }}
+      SPORTMONKS_KEY: ${{ secrets.SPORTMONKS_KEY }}
+      FOOTYSTATS_KEY: ${{ secrets.FOOTYSTATS_KEY }}
+      SPORTDEVS_KEY: ${{ secrets.SPORTDEVS_KEY }}
+      THESPORTSDB_KEY: ${{ secrets.THESPORTSDB_KEY }}
+      BSD_API_KEY: ${{ secrets.BSD_API_KEY }}
+      HIGHLIGHTLY_KEY: ${{ secrets.HIGHLIGHTLY_KEY }}
+      BIGBALLS_KEY: ${{ secrets.BIGBALLS_KEY }}
+      NOSYAPI_KEY: ${{ secrets.NOSYAPI_KEY }}
+      PLAYERELO_KEY: ${{ secrets.PLAYERELO_KEY }}
+      LEAGUES: ${{ vars.LEAGUES }}
+      BOT_HORIZON_HOURS: "72"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: python -m meclis ${{ inputs.komut }}
+        id: calis
+        run: python -m meclis "${{ inputs.komut }}"
+      - name: Kanıt Mührü manifestosu → main (herkese açık kanıt + 60 gün hareketsizlik koruması)
+        if: ${{ !cancelled() && inputs.muhur_commit }}
+        run: |
+          python -m meclis muhur --cikti muhur
+          git config user.name "90-meclis-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add muhur/manifest.json
+          if git diff --cached --quiet; then echo "Mühür değişmedi."; exit 0; fi
+          git commit -qm "Kanıt Mührü $(date -u +%F)"
+          for i in 1 2 3; do git pull -q --rebase origin main && git push -q origin HEAD:main && break; sleep 5; done
+      - name: Gece yedeği → backups dalı
+        if: ${{ !cancelled() && inputs.yedek }}
+        run: |
+          python -m meclis yedek --cikti /tmp/yedek
+          git config user.name "90-meclis-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git fetch -q origin backups; then
+            git worktree add -q -B backups /tmp/bk origin/backups
+          else
+            git worktree add -q --detach /tmp/bk
+            cd /tmp/bk && git checkout -q --orphan backups && git rm -rfq . && cd -
+          fi
+          rsync -a --delete --exclude .git /tmp/yedek/ /tmp/bk/
+          cd /tmp/bk
+          git add -A
+          git diff --cached --quiet || git commit -qm "Yedek $(date -u +%F)"
+          git push -q origin backups
+      - name: Hata → GitHub issue (otomatik-izleme)
+        if: ${{ failure() || cancelled() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          KOMUT: ${{ inputs.komut }}
+          URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh label create otomatik-izleme --color B60205 -d "Zamanlanmış iş hataları" 2>/dev/null || true
+          T="Otomatik iş hatası: $KOMUT"
+          N=$(gh issue list -l otomatik-izleme -s open --search "in:title \"$T\"" --json number -q '.[0].number')
+          B="$(date -u '+%F %H:%M') UTC — $KOMUT başarısız/kesildi: $URL"
+          if [ -n "$N" ]; then gh issue comment "$N" -b "$B"; else gh issue create -t "$T" -l otomatik-izleme -b "$B"; fi

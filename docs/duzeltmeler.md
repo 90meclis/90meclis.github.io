@@ -52,3 +52,15 @@ Her maç analiz edilir, yalnızca değer seçimi yayımlanır (t33u). Karar Bekl
 saatler önce yapılır ve kilitlenir (t32u). Gece dahil 2 saatte bir yeniden hesaplama var (t33u). Tahmini 11 var,
 resmî 11 beklenmez (t32u). Maç maç değerler gösterilir (t32u). 21 lig var ve varsayılan seçim hepsi (t29u). Repo
 herkese açık (t25u).
+
+## 2026-10-20 gece kararları (kullanıcı)
+- Avrupa kupası maçları ayrı veri (Avrupa / Lig / Tümü); model ikisini birlikte kullanır.
+- Her takımın iç lig puan durumu ve istatistiği mutlaka olacak (Sabah FK eksikti).
+- Kadrolar formasyona göre doğru dizilir.
+- Kupon başlığı her yerde "Günün Kararı".
+- "Tahmin Botu" → "Ortak" (Meclis'in yapay zekâ analisti); farklı tasarım; bültendeki her maç analiz edilir.
+- Ana ekran, Laboratuvar (3 dokunuşta analiz), Güven Panosu (backtest ayrı): elit tasarım.
+- Senaryolar film senaryosu gibi: başlık, perdeler, kırılma anı, final skoru, pazarlar, canlı sinyaller; gerçek veriye dayalı.
+- Tahmin gücü: kayıp analizi, kalibrasyon, yalnız gerçek yabancı oran, tekli ≥1,50, ≥%3 değer, aşırı değer = hata şüphesi.
+- Rakip analizi: /workspace/90-meclis-rakip-analizi.md.
+- Ölçüt: "Kullanır mıydım, işime yarar mı, analiz yapabilir miyim, tahminleri iyi mi?"

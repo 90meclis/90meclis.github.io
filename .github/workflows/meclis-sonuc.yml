@@ -1,0 +1,23 @@
+name: 90 Meclis · Sonuçlandırma + CLV
+
+on:
+  schedule:
+    - cron: "50 */2 * * *"  # 2 saatte bir :50 UTC (TSİ 02:50, 04:50, … 00:50)
+  workflow_dispatch:
+
+concurrency:
+  group: meclis-sonuc
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  is:
+    uses: ./.github/workflows/_meclis-is.yml
+    secrets: inherit
+    with:
+      komut: sonuclandir
+      sure: 30
+
