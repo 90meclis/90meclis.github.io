@@ -528,7 +528,11 @@ class Bot:
         if workers == 1:
             return dict(one(m) for m in matches)
         with ThreadPoolExecutor(max_workers=workers) as ex:
-            return dict(ex.map(one, matches))
+            out = dict(ex.map(one, matches))
+        retry = [m for m in matches if isinstance(out.get(m["id"]), Exception)]
+        for m in retry:  # geçici bağlantı hatası: aynı çalışmada sıralı ikinci deneme
+            out[m["id"]] = one(m)[1]
+        return out
 
     def update_trends(self) -> int:
         from .lab import compute_trends

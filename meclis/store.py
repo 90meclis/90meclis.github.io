@@ -66,7 +66,7 @@ PRIMARY_KEYS: dict[str, list[str]] = {
 }
 
 
-def _with_retry(fn, tries: int = 4):
+def _with_retry(fn, tries: int = 6):
     """Geçici ağ hatalarında (EAGAIN, bağlantı sıfırlama, HTTP/2 akış hatası) kısa bekleyip yeniden dener."""
     import time
 
@@ -76,7 +76,7 @@ def _with_retry(fn, tries: int = 4):
         except Exception as e:
             msg = str(e).lower()
             transient = any(x in msg for x in ("temporarily unavailable", "errno 11", "reset", "timed out", "timeout",
-                                               "connection", "stream", "remoteprotocol", "502", "503", "504"))
+                                               "connection", "stream", "remoteprotocol", "disconnected", "502", "503", "504"))
             if not transient or i == tries - 1:
                 raise
             time.sleep(0.5 * (2 ** i))
