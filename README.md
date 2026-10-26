@@ -103,11 +103,31 @@ Aynı işlemler arayüzde **Tahmin Botu** sayfasından da yapılabilir (anon ana
 
 ### Zamanlanmış çalışma (GitHub Actions)
 
-`.github/workflows/meclis.yml`:
-- 08:00 TSİ `sabah`, gece dahil her 2 saatte bir `gunici` (yenile + kadro + bot + sonuclandir; kaçırılan gündem /
-  sezon / gece doldurma / yedek adımlarını son başarılı çalışma zamanına bakıp telafi eder), gece `sonuclandir`,
-  03:40 TSİ `gecmis` (bu sezonun eksikleri; API-Football kotası sıfırlandıktan sonra) + yedek;
-  ayrıca **Actions → Run workflow** ile elle.
+Sistem kimseye bağlı olmadan GitHub'ın sunucularında çalışır. Her iş ayrı bir iş akışıdır, kendi zaman
+bütçesi vardır; biri yavaşlarsa ya da düşerse yayın beklemez. Hepsi aynı çalıştırıcıyı kullanır
+(`.github/workflows/_meclis-is.yml` → `python -m meclis <komut>`).
+
+| İş akışı | Saat (TSİ) | Ne yapar | Süre sınırı |
+|---|---|---|---|
+| `meclis-yayin.yml` · **Yayın** | her saat :20 | fikstür + oran (bugün → +3 gün), eksik/ilk 11 (48 saat), bültendeki **her maçın** analizi, Ortak seçimleri, Günün Kararı / Meclis Görüşü / Karar Birliği (başlamadan **≥ 3 saat önce** kilit), Kanıt Mührü | 55 dk |
+| `meclis-sonuc.yml` · **Sonuçlandırma** | 2 saatte bir :50 (02:50, 04:50 … 00:50) | biten maçlar (son 7 gün — kaçırılan çalışmayı telafi eder), kâr/zarar, kapanış oranı (CLV) | 30 dk |
+| `meclis-gundem.yml` · **Gündem** | 07:05, 12:05, 17:05, 22:05 | haber taraması, tekilleştirme, maçlara bağlama | 20 dk |
+| `meclis-gece.yml` · **Gece** | 03:40 | bu sezonun eksik verisi (kaldığı yerden), Avrupa takımlarının yerel ligi, sezon istatistikleri, geri test, sezon simülasyonu, mühür manifestosu → `main`, yedek → `backups` dalı | 150 dk |
+| `meclis-saglik.yml` · **Sağlık** | 09:10, 21:10 | zamanlanmış işleri etkin tutar (60 gün kuralı), `v_sistem_durumu` görünümünde geciken iş varsa issue açar | 10 dk |
+| `pages.yml` · **Site** | `web/` değişince + 08:45 | siteyi derler (maç SEO sayfaları dahil) | — |
+
+**Kendi kendini denetleme:** her adım (`kesif`, `yenile`, `kadro`, `bot`, `muhur`, `sonuclandir` …) kendi süre
+bütçesiyle çalışır, hata verirse yalnızca o adım atlanır. Sonuç `source_status` tablosuna `is:<iş>:<adım>`
+olarak yazılır; `v_sistem_durumu` her işin son başarılı çalışmasını ve gecikip gecikmediğini gösterir.
+Kritik adım (`bot`, `sonuclandir`) düşerse ya da iş zaman aşımına uğrarsa **"otomatik-izleme" etiketli GitHub
+issue** açılır (aynı iş için açık issue varsa yorum eklenir). Başka hiçbir yere mesaj gönderilmez.
+Kaynak limit verirse (BSD 429, Wikipedia maxlag) o kaynak o çalışmada devre dışı kalır; aynı takım aynı gün
+yeniden denenmez. Seçimler hiçbir zaman başlama − 3 saatten sonra geriye dönük yayımlanmaz.
+Elle çalıştırma: **Actions → iş akışı → Run workflow**.
+
+**Resmî kayıt 27 Ekim 2026 00:00 TSİ'de başladı.** Öncesi deneme dönemidir; o kayıtlar `deneme_yedek_*`
+tablolarında saklanır, sitede ve istatistiklerde yer almaz. Eski mühür manifestosu `muhur/arsiv/` altındadır.
+
 - Repo → Settings → Secrets and variables → Actions → **Secrets**: `SUPABASE_URL`,
   `SUPABASE_SERVICE_ROLE_KEY` ve yukarıdaki tablodaki tüm veri anahtarları (`API_FOOTBALL_KEY`,
   `FOOTBALL_DATA_TOKEN`, `ODDS_API_KEY`, `ODDSPAPI_KEY`, `SPORTMONKS_KEY`, `FOOTYSTATS_KEY`, `SPORTDEVS_KEY`,
@@ -209,4 +229,4 @@ tahmini ilk 11, piyasa oranından gol beklentisi, altı sayfanın açılışı (
 2. **Advanced settings → Secrets** alanına yalnızca şu ikisini yazın (bkz. `.streamlit/secrets.toml.example`):
    `SUPABASE_URL` ve `SUPABASE_KEY` (anon / publishable anahtar — service_role değil).
 3. Uygulama yerel dosyaya ihtiyaç duymaz; veriyi Supabase'den okur. Veri toplama, kadro/eksik/ilk 11 güncellemesi
-   ve tahmin defteri GitHub Actions'taki zamanlanmış iş (`.github/workflows/meclis.yml`) tarafından yapılır.
+   ve tahmin defteri GitHub Actions'taki zamanlanmış işler (`.github/workflows/meclis-*.yml`) tarafından yapılır.
