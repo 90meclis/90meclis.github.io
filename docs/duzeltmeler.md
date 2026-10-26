@@ -64,3 +64,9 @@ herkese açık (t25u).
 - Tahmin gücü: kayıp analizi, kalibrasyon, yalnız gerçek yabancı oran, tekli ≥1,50, ≥%3 değer, aşırı değer = hata şüphesi.
 - Rakip analizi: /workspace/90-meclis-rakip-analizi.md.
 - Ölçüt: "Kullanır mıydım, işime yarar mı, analiz yapabilir miyim, tahminleri iyi mi?"
+
+## 26–27 Ekim 2026 — otonom çalışma ve resmî başlangıç
+- Resmî kayıt 27.10.2026 00:00 TSİ'de başladı. Deneme dönemi kayıtları (14 tahmin, 2 kupon, 519 bot seçimi, 15 mühür) `deneme_yedek_*` tablolarında; canlı tablolarda yok. `meclis/bot.py` RESMI_BASLANGIC öncesi maça asla yayın yapmaz. Eski mühür manifestosu `muhur/arsiv/`.
+- Tek parça `meclis.yml` kaldırıldı → `meclis-yayin` (saatlik), `meclis-sonuc` (2 saatte bir), `meclis-gundem` (4×/gün), `meclis-gece` (03:40 TSİ), `meclis-saglik` (09:10/21:10 TSİ). Adım başına süre bütçesi; hata → "otomatik-izleme" issue. Ayrıntı README.
+- Zaman aşımının kökü: kadro adımı BSD 429 / Wikipedia maxlag yüzünden her çalışmada yüzlerce takımı yeniden deniyordu (+ her maç için 70 günlük maç listesinin yeniden okunması). Devre kesici + günlük deneme + takım dizini önbelleği.
+- Arşiv = "Meclis Defteri" (altın, editoryal; yalnız yayımlanan kararlar). Ortak = bütün bültenin canlı analiz masası.
