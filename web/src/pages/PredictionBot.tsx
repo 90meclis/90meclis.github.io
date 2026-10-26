@@ -111,7 +111,9 @@ export default function PredictionBot() {
   const radar = own.map((x) => ({ x, cells: RADAR_GROUPS.map((g) => {
     const rs = x.rows.filter((r) => r.group === g && r.pModel != null && r.odds && !r.wild);
     if (!rs.length) return null;
-    return Math.max(...rs.map((r) => r.edge ?? -1));
+    // yeşil yalnızca Ortak'ın bütün kurallarını geçen değer (oran bandı, olasılık, ayrışma); diğerleri en fazla "ılık"
+    const ok = rs.filter((r) => r.value);
+    return ok.length ? Math.max(...ok.map((r) => r.edge ?? 0)) : Math.min(EDGE_MIN - 0.001, Math.max(...rs.map((r) => r.edge ?? -1)));
   }) })).filter((r) => r.cells.some((c) => c != null)).sort((a, b) => Math.max(...b.cells.map((c) => c ?? -1)) - Math.max(...a.cells.map((c) => c ?? -1))).slice(0, 14);
   const radarCols = RADAR_GROUPS.filter((_, i) => radar.some((r) => r.cells[i] != null));
   const moves = (d2.data?.moves ?? []).map((mv) => {
@@ -192,7 +194,7 @@ export default function PredictionBot() {
                     </Link>
                   ))}
                 </div>
-                <p className="muted tiny">Yeşil: piyasaya karşı +%{EDGE_MIN * 100} ve üstü değer (sayı = yüzde). Gri: fiyat var, değer yok. Koyu: o pazarda oran yok.</p>
+                <p className="muted tiny">Yeşil: Ortak'ın bütün kurallarını geçen değer (sayı = yüzde). Gri: fiyat var, kurallara uyan değer yok. Koyu: o pazarda oran yok.</p>
               </Card>
             )}
 
