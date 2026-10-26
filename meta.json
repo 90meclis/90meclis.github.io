@@ -1,10 +1,10 @@
 {
- "exported_at": "2026-10-25T01:39:08+00:00",
+ "exported_at": "2026-10-26T01:50:38+00:00",
  "counts": {
-  "predictions": 6,
-  "coupons": 1,
-  "matches": 15460,
-  "odds_snapshots": 1915,
+  "predictions": 13,
+  "coupons": 2,
+  "matches": 15512,
+  "odds_snapshots": 2398,
   "leagues": 72
  }
 }

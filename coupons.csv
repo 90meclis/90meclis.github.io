@@ -1,2 +1,3 @@
 coupon_date,created_at,first_kickoff_at,id,joint_probability,legs_count,model_version,note,odds_source,profit,settled_at,settlement_note,stake,status,tag,total_odds
 2026-10-19,2026-10-19T17:51:18.459655+00:00,2026-10-19T18:45:00+00:00,23985b10-feaf-4d59-9dda-69caf99db67a,0.5159,2,meclis-dc-1.0,EV +0.199,piyasa,-1,2026-10-19T22:43:25+00:00,,1,kaybetti,gunun_karari,2.324
+2026-10-25,2026-10-25T07:10:27.187508+00:00,2026-10-25T14:00:00+00:00,258ecd70-0828-452a-a3d7-b4906aa77f54,0.1382,2,meclis-dc-1.0,,piyasa,-1,2026-10-25T23:48:50+00:00,,1,kaybetti,karar_birligi,8.237
