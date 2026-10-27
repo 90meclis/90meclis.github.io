@@ -676,8 +676,12 @@ class DataPool:
         for m in ms:
             eid = (m.get("ext_ids") or {}).get("bsd")
             if eid:
+                srcs = m.get("sources") or {}
+                fet = srcs.get("_fetched") or {}
+                bsd_keys = [k for k, v in (srcs.get("odds") or {}).items() if str(v).startswith("bsd")]
+                odds_at = max((fet.get(f"odds.{k}") or "" for k in bsd_keys), default="") or None
                 out[eid] = {"referee": m.get("referee"), "venue": m.get("venue"), "city": m.get("city"),
-                            "stats": m["id"] in with_stats}
+                            "stats": m["id"] in with_stats, "odds_at": odds_at}
         return out
 
     def _collect_extra(self, recs: list[dict], today, days_back: int, days_ahead: int, history: bool) -> None:

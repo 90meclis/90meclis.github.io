@@ -41,6 +41,17 @@ def league_code(country: str | None, name: str | None) -> str | None:
     return None
 
 
+def odds_due(kickoff_iso: str, odds_at: str | None, now=None) -> bool:
+    """BSD konsensüs oranı 4 saatte bir güncellenir: daha sık sormak kotayı yakar (saatlik iş 300+ istek atıyordu).
+    Maça ≤ 12 saat: 2 saatte bir; uzak: 4 saatte bir; hiç oran gelmemişse 4 saatte bir (≤ 6 saat kala her saat)."""
+    now = now or now_utc()
+    h = (parse_dt(kickoff_iso) - now).total_seconds() / 3600
+    if not odds_at:
+        return h <= 6 or now.hour % 4 == 0
+    age = (now - parse_dt(odds_at)).total_seconds() / 3600
+    return age >= (2 if h <= 12 else 4) - 0.25
+
+
 def parse_events(results: list[dict], league_map: dict[int, str]) -> list[dict]:
     out = []
     for e in results or []:
@@ -251,7 +262,8 @@ class BSD:
         kn = (getattr(self, "_known", None) or {}).get(eid) or {}
         try:
             if rec["status"] in ("planlandi", "basladi"):
-                if parse_dt(rec["kickoff_at"]) <= getattr(self, "_odds_until", parse_dt(rec["kickoff_at"])):
+                if parse_dt(rec["kickoff_at"]) <= getattr(self, "_odds_until", parse_dt(rec["kickoff_at"])) \
+                        and odds_due(rec["kickoff_at"], kn.get("odds_at")):
                     odds = parse_odds(self._get(f"/events/{eid}/odds/"))
                     if odds:
                         rec["odds"] = odds

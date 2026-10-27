@@ -460,3 +460,15 @@ def test_rescheduled_match_keeps_existing_id():
             "kickoff_at": "2026-10-30T19:30:00+00:00", "status": "planlandi"}]
     out = merge_records(rec, existing=ex)
     assert len(out) == 1 and out[0]["id"] == "E3:2026-10-27:a:b" and out[0]["status"] == "planlandi"
+
+
+def test_bsd_odds_cadence():
+    from datetime import datetime, timezone
+
+    from meclis.sources.bsd import odds_due
+
+    now = datetime(2026, 10, 28, 9, 20, tzinfo=timezone.utc)
+    far = "2026-10-30T19:00:00+00:00"
+    assert not odds_due(far, "2026-10-28T08:20:00+00:00", now)  # 1 saat önce alındı, maç uzak
+    assert odds_due(far, "2026-10-28T05:00:00+00:00", now)
+    assert odds_due("2026-10-28T14:00:00+00:00", "2026-10-28T07:00:00+00:00", now)  # yakın maç, 2+ saat

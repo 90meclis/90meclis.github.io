@@ -209,7 +209,7 @@ def analyze_match(match: dict, ctx: LeagueContext, settings, injuries: list[dict
             # bile kupa maçlarının çoğu 20 puanlık model–piyasa ayrışma sınırını aşıyordu).
             wm = 0.85 if euro else (0.55 if min(nh_cur, na_cur) < THIN_CURRENT else 0.40)
             lh0, la0 = blend((lh0, la0), mkt, wm)
-            basis += f" + piyasa oranı (ağırlık {wm:.2f}" + ("; Avrupa kupası" if euro else
+            basis += f" + piyasa oranı (ağırlık {wm:.2f}" + (("; Avrupa kupası" if match["league"] in ("CL", "EL", "ECL") else "; kupa: farklı lig seviyeleri") if euro else
                                                               "; bu sezon verisi az" if wm == 0.55 else "") + ")"
             payload["market_weight"] = wm
             if min(nh_cur, na_cur) < THIN_CURRENT:

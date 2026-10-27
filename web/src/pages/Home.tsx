@@ -150,11 +150,11 @@ export default function Home() {
     const a = nd?.an[m.id];
     return a && (a.basis ?? "").startsWith("model") && a.ready && (a.markets ?? []).some((x) => x.market === "1X2");
   }).sort((a, b) => league(a.league).order - league(b.league).order || a.kickoff_at.localeCompare(b.kickoff_at)).slice(0, 6);
-  // Önce Ortak'ın gerçekten seçtikleri; seçim yoksa değer eşiğini geçenler
-  // Vitrinde aşırı uç değerler (>%40, çoğunlukla veri/oran eşleme hatası) gösterilmez; Ortak sayfasında hepsi durur
-  const valueRows = (nd?.scan ?? []).filter((r) => r.deger && r.odds && (r.edge ?? 0) >= 0.03 && (r.edge ?? 0) <= 0.4 && !gkMatchIds.has(r.match_id));
-  const chosen = valueRows.filter((r) => r.secildi);
-  const picks = (chosen.length ? chosen : valueRows).sort((a, b) => (b.edge ?? 0) - (a.edge ?? 0));
+  // İsabet önceliği: Ortak'ın en olası (kalibre) seçimleri; oran ≥ 1.50, veri kontrolü (aşırı ayrışma) hariç
+  const pk = (r: ScanRow) => r.p_kal ?? r.p_model ?? 0;
+  const candRows = (nd?.scan ?? []).filter((r) => r.deger && r.odds && r.odds >= 1.5 && Math.abs(r.edge ?? 0) <= 0.4 && !gkMatchIds.has(r.match_id));
+  const chosen = candRows.filter((r) => r.secildi);
+  const picks = (chosen.length ? chosen : candRows).sort((a, b) => pk(b) - pk(a));
   const picksAreChoices = chosen.length > 0;
   const pickRows = [...new Map(picks.map((r) => [r.match_id, r])).values()].slice(0, 4);
   const mById = new Map((nd?.matches ?? []).map((m) => [m.id, m]));
@@ -214,7 +214,7 @@ export default function Home() {
           <div className="sec-head"><h2>{O.label} ne görüyor?</h2><Link to={O.to} className="more">Bütün tarama →</Link></div>
           <Gate loading={next.loading} error={next.error} rows={3}>
             {pickRows.length ? (<>
-              <p className="muted tiny op-cap">{picksAreChoices ? "Ortak'ın bu bültende seçtikleri: model olasılığı piyasa oranının ima ettiğinden yüksek." : "Değer eşiğini (%3) geçen seçimler."}</p>
+              <p className="muted tiny op-cap">{picksAreChoices ? "Ortak'ın bu bültende seçtikleri: oranı en az 1.50 olan pazarlar içinde tutma olasılığı en yüksek olanlar (model + marjsız piyasa)." : "Tutma olasılığı en yüksek adaylar (oran ≥ 1.50)."}</p>
               <ul className="ortak-list">
                 {pickRows.map((r) => {
                   const m = mById.get(r.match_id);
@@ -223,12 +223,12 @@ export default function Home() {
                     <li key={r.match_id}><Link to={matchPath(m.id)}>
                       <span className="muted tiny">{league(m.league).flag} {time(m.kickoff_at)} · {m.home_name} – {m.away_name}</span>
                       <b>{pickLabel(r.market, r.selection, r.line, m.home_name, m.away_name)}</b>
-                      <span className="op-nums"><span>oran <b>{num(r.odds)}</b></span><span>model <b>%{Math.round((r.p_model ?? 0) * 100)}</b></span><span className="pos">değer <b>+%{num((r.edge ?? 0) * 100, 1)}</b></span></span>
+                      <span className="op-nums"><span>olasılık <b>%{Math.round(pk(r) * 100)}</b></span><span>oran <b>{num(r.odds)}</b></span><span className={(r.edge ?? 0) >= 0 ? "pos" : "muted"}>değer <b>{signed((r.edge ?? 0) * 100, 1)}%</b></span></span>
                     </Link></li>
                   );
                 })}
               </ul>
-            </>) : <p className="muted small">Ortak bu bültende henüz %3'ü aşan bir değer görmüyor. Değer yoksa oynamamak da bir karardır.</p>}
+            </>) : <p className="muted small">Ortak bu bültende oranı 1.50 ve üzeri olup tutma olasılığı %50'yi geçen seçim görmüyor. Bülten tazelendikçe burası güncellenir.</p>}
           </Gate>
           {huntTop.length > 0 && (
             <div className="hunt-mini">
@@ -252,13 +252,13 @@ export default function Home() {
             <div className="fx-grid">
               {featured.map((m) => {
                 const mk = Object.fromEntries((nd!.an[m.id]?.markets ?? []).filter((x) => x.market === "1X2").map((x) => [x.selection, x.probability]));
-                const val = (nd!.scan ?? []).filter((r) => r.match_id === m.id && r.deger && r.odds && (r.edge ?? 0) >= 0.03 && (r.edge ?? 0) <= 0.4).sort((a, b) => (b.edge ?? 0) - (a.edge ?? 0))[0];
+                const val = (nd!.scan ?? []).filter((r) => r.match_id === m.id && r.deger && r.odds && r.odds >= 1.5 && Math.abs(r.edge ?? 0) <= 0.4).sort((a, b) => pk(b) - pk(a))[0];
                 return (
                   <Link key={m.id} to={matchPath(m.id)} className="fx">
                     <span className="fx-top"><span>{league(m.league).flag} {league(m.league).name}{UEFA.has(m.league) && <i className="cupb">{m.league}</i>}</span><span>{dayLabel(trDay(m.kickoff_at)).top} {time(m.kickoff_at)}</span></span>
                     <span className="fx-teams"><b>{m.home_name}</b><b>{m.away_name}</b></span>
                     <WinBar p1={mk["1"] ?? 0} px={mk["X"] ?? 0} p2={mk["2"] ?? 0} />
-                    <span className="fx-foot">{gkMatchIds.has(m.id) ? <span className="vbadge v-gk">◆ Günün Kararı'nda</span> : val ? <span className="vbadge v-yes">Değer: {pickLabel(val.market, val.selection, val.line, m.home_name, m.away_name)} · {num(val.odds)}</span> : <span className="muted tiny">Model olasılığı · ev / X / dep</span>}</span>
+                    <span className="fx-foot">{gkMatchIds.has(m.id) ? <span className="vbadge v-gk">◆ Günün Kararı'nda</span> : val ? <span className="vbadge v-yes">En olası: {pickLabel(val.market, val.selection, val.line, m.home_name, m.away_name)} · %{Math.round(pk(val) * 100)} · {num(val.odds)}</span> : <span className="muted tiny">Model olasılığı · ev / X / dep</span>}</span>
                   </Link>
                 );
               })}

@@ -162,11 +162,11 @@ export async function bulletinRows(maxFixtures?: number): Promise<{ fixtures: Fi
   return { fixtures: fx, rows: await clean(rows) };
 }
 
-export interface ScanRow { match_id: string; market: string; selection: string; line: number | null; p_model: number | null; odds: number | null; edge: number | null; deger: boolean | null; secildi: boolean | null }
+export interface ScanRow { match_id: string; market: string; selection: string; line: number | null; p_model: number | null; p_kal?: number | null; odds: number | null; edge: number | null; deger: boolean | null; secildi: boolean | null }
 export async function scanFor(ids: string[]): Promise<ScanRow[]> {
   const parts: string[][] = [];
   for (let i = 0; i < ids.length; i += 60) parts.push(ids.slice(i, i + 60));
-  const res = await Promise.all(parts.map((part) => paged<ScanRow>(() => db().from("v_bot_tarama").select("match_id,market,selection,line,p_model,odds,edge,deger,secildi").in("match_id", part))
+  const res = await Promise.all(parts.map((part) => paged<ScanRow>(() => db().from("v_bot_tarama").select("match_id,market,selection,line,p_model,p_kal,odds,edge,deger,secildi").in("match_id", part))
     .catch(() => [] as ScanRow[]))); // görünüm yoksa değer bayrağı gösterilmez
   return res.flat();
 }
