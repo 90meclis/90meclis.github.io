@@ -439,3 +439,24 @@ def test_coupon_gate_waits_until_previous_day_18_tsi():
 
     g = coupon_gate(date(2026, 10, 29))
     assert g.astimezone(timezone.utc) == datetime(2026, 10, 28, 15, 0, tzinfo=timezone.utc)
+
+
+def test_registry_prefix_alias_unique_only():
+    from meclis.pool import TeamRegistry
+
+    r = TeamRegistry()
+    for k in ("tranmererovers", "bristolcity", "bristolrovers", "barnet"):
+        r.add("E3", k, k)
+    assert r.resolve("E3", "Tranmere") == "tranmererovers"
+    assert r.resolve("E3", "Bristol") == "bristol"  # iki aday: eşleşmez, yeni anahtar
+
+
+def test_rescheduled_match_keeps_existing_id():
+    from meclis.pool import merge_records
+
+    ex = [{"id": "E3:2026-10-27:a:b", "league": "E3", "home_team_id": "E3:aaaaa", "away_team_id": "E3:bbbbb",
+           "home_name": "Aaaaa", "away_name": "Bbbbb", "kickoff_at": "2026-10-27T00:00:00+00:00", "status": "ertelendi"}]
+    rec = [{"source": "bsd", "league": "E3", "home_name": "Aaaaa", "away_name": "Bbbbb",
+            "kickoff_at": "2026-10-30T19:30:00+00:00", "status": "planlandi"}]
+    out = merge_records(rec, existing=ex)
+    assert len(out) == 1 and out[0]["id"] == "E3:2026-10-27:a:b" and out[0]["status"] == "planlandi"

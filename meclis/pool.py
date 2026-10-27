@@ -28,6 +28,11 @@ TSDB_DAY_LEAGUES = {"T1", "E0", "SP1", "I1", "D1", "F1"}
 STATUS_RANK = {"planlandi": 1, "basladi": 2, "ertelendi": 3, "iptal": 3, "bitti": 4}
 
 
+# Kulübü değiştirmeyen ekler. 'united' / 'city' BİLEREK yok: Dundee ≠ Dundee United, Bristol City ≠ Bristol.
+_CLUB_TAILS = {"rovers", "athletic", "alexandra", "stanley", "thistle", "county", "wanderers", "argyle", "orient",
+               "albion", "fc", "afc", "cf", "sc", "calcio", "fk", "sk"}
+
+
 class TeamRegistry:
     """Lig bazında takım anahtarlarını tutar; farklı yazımları aynı takıma bağlar."""
 
@@ -61,25 +66,56 @@ class TeamRegistry:
             k = self.alias[league][k]
         return k
 
+    def _prefix_unique(self, league: str, k: str) -> str | None:
+        """Kısa/uzun yazım: 'tranmere' ~ 'tranmererovers', 'crewe' ~ 'crewealexandra'. Kısa ad ≥ 5 harf, uzun adın
+        BAŞI olmalı ve ligde bu şartı sağlayan TEK takım bulunmalı (ör. 'bristol' → city/rovers ikisi de var: eşleşmez)."""
+        if len(k) < 5:
+            return None
+        def tail_ok(short, long_):  # kalan parça yalnızca kulüp eki olabilir ('dundee' ≠ 'dundeeunited', 'tokyo' ≠ 'tokyoverdy')
+            return long_.startswith(short) and long_[len(short):] in _CLUB_TAILS
+
+        hits = [kk for kk in self.keys.get(league, {}) if kk != k and len(kk) >= 5 and (tail_ok(k, kk) or tail_ok(kk, k))]
+        if len(hits) != 1:
+            return None
+        short, long_ = sorted((k, hits[0]), key=len)
+        if (short, long_) in _DISTINCT or (long_, short) in _DISTINCT:
+            return None
+        # ikinci uzun aday yok: 'tranmere' ararken ligde başka 'tranmere…' takımı da olmamalı
+        return hits[0]
+
     def lookup(self, league: str, name: str) -> str | None:
         """resolve() gibi ama bilinmeyen adı EKLEMEZ (yalnızca boşluk dolduran kaynaklar için)."""
         k = self._alias(league, names.canonical_key(name))
         known = self.keys.get(league, {})
         if k in known:
             return k
-        for kk in known:
-            if names.same_team(k, kk):
-                return kk
-        return None
+        hits = [kk for kk in known if names.same_team(k, kk)]
+        if len([kk for kk in known if kk != k and kk.startswith(k)]) > 1:
+            hits = hits + ["_belirsiz"]  # 'bristol' hem bristolcity hem bristolrovers'ın başı
+        if len(hits) == 1:
+            return hits[0]
+        if len(hits) > 1:  # belirsiz ('bristol' → city mi rovers mı?): eşleme yapılmaz
+            return None
+        return self._prefix_unique(league, k)
 
     def resolve(self, league: str, name: str) -> str:
         k = self._alias(league, names.canonical_key(name))
         known = self.keys.setdefault(league, {})
         if k in known:
             return k
-        for kk in known:
-            if names.same_team(k, kk):
-                return kk
+        hits = [kk for kk in known if names.same_team(k, kk)]
+        if len([kk for kk in known if kk != k and kk.startswith(k)]) > 1:
+            hits = hits + ["_belirsiz"]  # 'bristol' hem bristolcity hem bristolrovers'ın başı
+        if len(hits) == 1:
+            return hits[0]
+        if len(hits) > 1:  # belirsiz ('bristol' → city mi rovers mı?): eşleme yapılmaz
+            known.setdefault(k, names.display_name(name))
+            return k
+        pk = self._prefix_unique(league, k)
+        if pk:
+            self.alias.setdefault(league, {})[k] = pk
+            self.learned.setdefault(league, {})[k] = pk
+            return pk
         known[k] = names.display_name(name)
         return k
 
@@ -302,11 +338,19 @@ def merge_records(records: list[dict], registry: TeamRegistry | None = None,
         ko = parse_dt(m["kickoff_at"])
         hk, ak = m["home_team_id"].split(":", 1)[1], m["away_team_id"].split(":", 1)[1]
         prev = None
-        for e in ex_index.get(_bucket_key(m["league"], hk, ak), []):
+        cands = ex_index.get(_bucket_key(m["league"], hk, ak), [])
+        for e in cands:
             if abs((parse_dt(e["kickoff_at"]) - ko).total_seconds()) <= 36 * 3600:
                 prev = e
                 break
+        if prev is None:  # erteleme / saat düzeltmesi: aynı eşleşmenin oynanmamış kaydı ±10 gün içindeyse aynı maçtır
+            near = [e for e in cands if e.get("status") != "bitti"
+                    and abs((parse_dt(e["kickoff_at"]) - ko).total_seconds()) <= 10 * 86400]
+            if near:
+                prev = min(near, key=lambda e: abs((parse_dt(e["kickoff_at"]) - ko).total_seconds()))
+                m["sources"]["_ertelendi_once"] = prev["kickoff_at"]
         if prev:
+            ex_index[_bucket_key(m["league"], hk, ak)] = [e for e in cands if e is not prev]  # bir kayıt iki kez eşlenmesin
             m["id"] = prev["id"]
             for f in SCALARS:
                 if m.get(f) is None and prev.get(f) is not None:
@@ -315,8 +359,9 @@ def merge_records(records: list[dict], registry: TeamRegistry | None = None,
                 m["ext_ids"].setdefault(k, v)
             for k, v in (prev.get("odds") or {}).items():
                 m["odds"].setdefault(k, v)
-            if STATUS_RANK.get(prev.get("status"), 0) > STATUS_RANK.get(m["status"], 0):
-                m["status"] = prev["status"]
+            if "_ertelendi_once" not in m["sources"] and \
+                    STATUS_RANK.get(prev.get("status"), 0) > STATUS_RANK.get(m["status"], 0):
+                m["status"] = prev["status"]  # yeni tarihli kayıt: eski 'ertelendi' durumu taşınmaz
             for f, v in (prev.get("sources") or {}).items():
                 if f not in m["sources"]:
                     m["sources"][f] = v
