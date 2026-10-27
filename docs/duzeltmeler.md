@@ -76,3 +76,7 @@ herkese açık (t25u).
 - Yeni kural (PICK_MODE=isabet, varsayılan): maç başına, oranı ≥ 1.50 olan pazarlar arasında KALİBRE OLASILIĞI en yüksek seçim (model + marjsız piyasa harmanı). Olasılık ≥ %50; Meclis Görüşü için ≥ %52, günde en fazla 8 tekli. Günün Kararı: en güvenilen 2–3 maç, toplam oran 2.30–4.00, beklenen değer şartı yok. Değer artık bilgi amaçlı. Veri kontrol (aşırı ayrışma) seçilmez, kadro belirsizliği güveni düşürür, ≥ 3 saat önce kilit.
 - Geri test (bu sezon, 2.311 pazar satırı, açılış oranı): kalibre olasılık bantları isabetle örtüşüyor — 1X2 %50–55 → %53, %55–60 → %57; 2.5 gol %50–55 → %54, %55–60 → %60.
 - Yayın penceresi 30 saat: ertesi günün bülteni bir önceki akşam yayımlanabilir (Günün Kararı bütün günün maçlarından kurulur).
+
+## 27 Ekim 2026 (akşam) — ürün ayrılığı ve kupon kapısı (kullanıcı kararı)
+- Bir maç günde en fazla bir yayımlanan üründe: Günün Kararı → Karar Birliği → Meclis Görüşleri sırasıyla; sonraki ürün öncekilerin maçını kullanamaz. Karar Birliği artık tekli görüşlerden kurulmuyor: GK'den sonra kalan havuzda olasılığı ≥ %52 olan ve modelle marjsız piyasanın ≤ 6 puan içinde hemfikir olduğu en güvenilen 2–3 maç.
+- Kupon kapısı: D gününün kuponları en erken D-1 18:00 TSİ'de (bütün gün 30 saatlik penceredeyken) kurulur. Tekliler kapıdan önce yalnızca kapı açılmadan kilitlenecek maçlar için yayımlanır; böylece kuponların havuzu bölünmez. Yayımlanmış/kilitli kayıtlara dokunulmadı (27–29 Ekim'de mevcut KB/tekli çakışmaları olduğu gibi kalır).

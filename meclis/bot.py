@@ -451,37 +451,47 @@ class Bot:
             if bp and bp.get("kind") in ("değer", "isabet") and bp.get("odds") and self.publishable(m, now):
                 by_day.setdefault(tr_date(m["kickoff_at"]), []).append((m, a, bp))
         recorded, created = 0, []
+        isabet = getattr(self.s, "pick_mode", "isabet") == "isabet"
         for day, items in sorted(by_day.items()):
             dstr = day.isoformat()
             lo, hi = (to_iso(x) for x in _tr_day_bounds(day))
             day_preds = self.store.select("predictions", [("kickoff_at", "gte", lo), ("kickoff_at", "lt", hi)])
-            singles_ids = {p["match_id"] for p in day_preds if p["tag"] == "meclis_gorusu"}
-            gk_ids = {p["match_id"] for p in day_preds if p["tag"] == "gunun_karari"}
+            used = {p["match_id"] for p in day_preds}  # bir maç günde en fazla bir üründe (GK / KB / Görüş)
+            singles_n = len({p["match_id"] for p in day_preds if p["tag"] == "meclis_gorusu"})
             mmap = {m["id"]: m for m, _, _ in items}
-            # 1) Günün Kararı — ana kupon: en değerli/güvenilen 2-3 maç, toplam oran 2.30–4.00
-            if not self.store.select("coupons", [("coupon_date", "eq", dstr), ("tag", "eq", "gunun_karari")], limit=1):
-                cands = [dict(bp, match_id=m["id"]) for m, a, bp in items
-                         if m["id"] not in singles_ids and m["id"] not in gk_ids]
-                isabet = getattr(self.s, "pick_mode", "isabet") == "isabet"
+            gate = coupon_gate(day)  # kuponlar: bütün TR günü pencereye girdiğinde (önceki gün 18:00 TSİ)
+            gate_open = now >= gate
+            # 1) Günün Kararı — en güvenilen 2-3 maç, toplam oran 2.30–4.00
+            if gate_open and not self.store.select("coupons", [("coupon_date", "eq", dstr), ("tag", "eq", "gunun_karari")], limit=1):
+                cands = [dict(bp, match_id=m["id"]) for m, a, bp in items if m["id"] not in used]
                 c = build_daily_coupon(cands, self.s.coupon_min_odds, self.s.coupon_max_odds,
                                        -1.0 if isabet else self.s.coupon_min_ev, rank="confidence")
                 if c:
                     created += self._insert_coupon("gunun_karari", dstr, c, mmap, "piyasa")
-                    gk_ids |= {l["match_id"] for l in c["legs"]}
+                    used |= {l["match_id"] for l in c["legs"]}
                 else:
                     self.log.append(f"Günün Kararı ({dstr}): {self.s.coupon_min_odds:.2f}-{self.s.coupon_max_odds:.2f} "
-                                    "bandında değerli kombinasyon kurulamadı — kupon yok.")
-            # 2) Meclis Görüşü — tekliler; Günün Kararı'ndaki maç o gün tekli olarak yayımlanmaz
-            isabet = getattr(self.s, "pick_mode", "isabet") == "isabet"
+                                    "bandında kombinasyon kurulamadı — kupon yok.")
+            # 2) Karar Birliği — GK'den sonra kalan havuzdan, model ile piyasanın birlikte en güçlü gördüğü 2-3 maç
+            if gate_open and not self.store.select("coupons", [("coupon_date", "eq", dstr), ("tag", "eq", "karar_birligi")], limit=1):
+                pool = [dict(bp, match_id=m["id"]) for m, a, bp in items
+                        if m["id"] not in used and bp.get("probability", 0) >= self.s.single_min_prob
+                        and _agrees(bp)]
+                c = build_consensus(pool, min_singles=2)
+                if c:
+                    created += self._insert_coupon("karar_birligi", dstr, c, mmap, c["odds_source"])
+                    used |= {l["match_id"] for l in c["legs"]}
+            # 3) Meclis Görüşü — tekliler. Kapı açılmadan yalnızca kapıdan önce kilitlenecek maçlar (havuz bölünmesin)
             for m, a, bp in sorted(items, key=lambda x: -(x[2].get("confidence") or 0)):
-                if m["id"] in gk_ids or m["id"] in singles_ids:
+                if m["id"] in used:
+                    continue
+                if not gate_open and parse_dt(m["kickoff_at"]) - self.lead() > gate:
                     continue
                 if isabet:
-                    if bp.get("probability", 0) < self.s.single_min_prob or \
-                            len(singles_ids) >= self.s.singles_max_per_day:
+                    if bp.get("probability", 0) < self.s.single_min_prob or singles_n >= self.s.singles_max_per_day:
                         continue  # Ortak'ta kalır, Defter'e alınmaz
                 elif (bp.get("confidence") or 0) < self.s.single_min_trust:
-                    continue  # bot bülteninde kalır, arşive alınmaz
+                    continue
                 lab = pick_label(bp["market"], bp["selection"], bp.get("line"), m["home_name"], m["away_name"])
                 why = (f"{lab}: olasılık %{bp['probability'] * 100:.1f} (kalibre: model + marjsız piyasa), oran {bp['odds']:.2f}, değer "
                        f"{bp['edge'] * 100:+.1f}%; λ {a['lambdas']['home']:.2f}-{a['lambdas']['away']:.2f}; "
@@ -496,27 +506,18 @@ class Bot:
                     self.log.append(f"⚠️ kayıt reddedildi ({m['home_name']} – {m['away_name']}): {e}")
                     continue
                 recorded += 1
-                singles_ids.add(m["id"])
+                singles_n += 1
+                used.add(m["id"])
                 self.log.append(f"📝 Meclis Görüşü: {m['home_name']} – {m['away_name']} → {lab}")
-            # bot bülteni satırlarını kilitle (arşive giren maç artık yeniden hesaplanmaz)
-            for mid, st in [(x, "gunun_karari") for x in gk_ids] + [(x, "meclis_gorusu") for x in singles_ids]:
+            # yayımlanan maçların bot satırlarını kilitle
+            tags = {p["match_id"]: p["tag"] for p in self.store.select("predictions", [("kickoff_at", "gte", lo), ("kickoff_at", "lt", hi)])}
+            for mid in used & set(mmap):
                 try:
-                    self.store.update("bot_picks", {"status": st, "locked_at": to_iso(now)}, [("id", "eq", mid)])
+                    self.store.update("bot_picks", {"status": tags.get(mid, "meclis_gorusu"), "locked_at": to_iso(now)}, [("id", "eq", mid)])
                 except Exception:
                     pass
                 self.store.upsert("analysis_queue", [{"match_id": mid, "status": "tamamlandi", "note": "yayımlandı",
                                                       "last_attempt_at": to_iso(now)}])
-            # 3) Karar Birliği — 5+ Meclis Görüşü varsa en güvenilen 2-3'ten kombinasyon (değişmedi)
-            if not self.store.select("coupons", [("coupon_date", "eq", dstr), ("tag", "eq", "karar_birligi")], limit=1):
-                singles = self.store.select("predictions", [("tag", "eq", "meclis_gorusu"), ("kickoff_at", "gte", lo),
-                                                            ("kickoff_at", "lt", hi)])
-                future = [x for x in singles if parse_dt(x["kickoff_at"]) > now + self.lead()]
-                if len(singles) >= self.s.consensus_min_singles:
-                    c = build_consensus(future, min_singles=2)
-                    if c:
-                        for leg in c["legs"]:
-                            mmap.setdefault(leg["match_id"], self.store.get("matches", id=leg["match_id"]))
-                        created += self._insert_coupon("karar_birligi", dstr, c, mmap, c["odds_source"])
         return recorded, created
 
     def _analyze_all(self, matches: list[dict], now, fetch_extras: bool) -> dict:
@@ -596,6 +597,22 @@ class Bot:
             return []
         self.log.append(f"🎫 {tag} {dstr}: {len(c['legs'])} maç, toplam oran {c['total_odds']:.2f}")
         return [cid]
+
+
+def coupon_gate(day):
+    """Gün D'nin kuponları en erken D-1 18:00 TSİ'de kurulur (bütün gün 30 saatlik pencerede)."""
+    from datetime import datetime
+
+    return datetime(day.year, day.month, day.day, tzinfo=TR) - timedelta(hours=6)
+
+
+def _agrees(bp: dict) -> bool:
+    """Karar Birliği: model ile marjsız piyasa aynı yönde (fark ≤ 6 puan); piyasa yoksa model tek başına yetmez."""
+    cal = bp.get("calibration") or {}
+    pm, pk = bp.get("probability_model") or cal.get("p_model"), cal.get("p_piyasa")
+    if pm is None or pk is None:
+        return bool(bp.get("odds"))
+    return abs(float(pm) - float(pk)) <= 0.06
 
 
 def _tr_day_bounds(day):

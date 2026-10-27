@@ -81,7 +81,7 @@ export default function Archive() {
       <header className="ledger-head">
         <span className="ledger-kicker">Meclis Defteri · yayımlanan kararlar</span>
         <h1>Tahmin Arşivi</h1>
-        <p>Burada yalnızca Meclis'in yayımladığı kararlar durur: <b>Günün Kararı</b> kuponu, <b>Meclis Görüşleri</b> ve <b>Karar Birliği</b>. Hepsi Ortak'ın analiz ettiği bütün bültenden, en güvenilen değerli seçimlerden süzülür; maçtan en az 3 saat önce kilitlenir, mühürlenir ve kazansın kaybetsin hiç silinmez.</p>
+        <p>Burada yalnızca Meclis'in yayımladığı kararlar durur: <b>Günün Kararı</b> kuponu, <b>Meclis Görüşleri</b> ve <b>Karar Birliği</b>. Hepsi Ortak'ın analiz ettiği bütün bültenden, tutma olasılığı en yüksek seçimlerden süzülür; bir maç günde yalnızca bir üründe yer alır. Kuponlar bir önceki gün 18:00'de (TSİ) bütün gün masadayken kurulur; her karar maçtan en az 3 saat önce kilitlenir, mühürlenir ve kazansın kaybetsin hiç silinmez.</p>
         <div className="ledger-stats">
           <div><b>{ledger.total}</b><span>karar</span></div>
           <div className="w"><b>{ledger.won}</b><span>kazandı</span></div>

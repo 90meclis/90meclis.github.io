@@ -322,7 +322,7 @@ def test_bot_bulletin_vs_archive_no_overlap():
     ko = to_iso(now + timedelta(hours=4))  # yayın penceresinde (≥3 saat önce)
     analyses, rows = [], []
     for i, (odds, edge) in enumerate([(1.70, 0.12), (1.80, 0.10), (1.65, 0.09), (2.10, 0.08), (1.90, 0.07),
-                                      (2.20, 0.06), (1.75, 0.05)]):
+                                      (2.20, 0.06), (1.75, 0.05), (1.60, 0.04), (1.55, 0.04), (1.58, 0.03)]):
         m = {"id": f"m{i}", "kickoff_at": ko, "league": "T1", "home_name": f"Ev{i}", "away_name": f"Dep{i}"}
         st.upsert("matches", [dict(m, status="planlandi", home_team_id=f"h{i}", away_team_id=f"a{i}")])
         p = (1 + edge) / odds
@@ -337,7 +337,8 @@ def test_bot_bulletin_vs_archive_no_overlap():
     preds = st.select("predictions", [])
     gk = {p["match_id"] for p in preds if p["tag"] == "gunun_karari"}
     mg = {p["match_id"] for p in preds if p["tag"] == "meclis_gorusu"}
-    assert 2 <= len(gk) <= 3 and mg and not (gk & mg)  # aynı gün aynı maç iki yerde yok
+    kb = {p["match_id"] for p in preds if p["tag"] == "karar_birligi"}
+    assert 2 <= len(gk) <= 3 and mg and not (gk & mg) and not (kb & (gk | mg))  # bir maç günde tek üründe
     assert all(p.get("bot_pick_id") == p["match_id"] for p in preds if p["tag"] != "karar_birligi")
     c = [x for x in st.select("coupons", []) if x["tag"] == "gunun_karari"][0]
     assert 2.30 <= c["total_odds"] <= 4.00
@@ -347,7 +348,7 @@ def test_bot_bulletin_vs_archive_no_overlap():
     st.upsert("bot_picks", [dict(rows[int(locked["id"][1:])], market="OU_GOALS", status="aday", locked_at=None)])
     assert st.get("bot_picks", id=locked["id"])["market"] == "1X2"
     # ham bülten: arşive girmeyenler dahil hepsi
-    assert len(st.select("bot_picks", [])) == 7
+    assert len(st.select("bot_picks", [])) == 10
 
 
 def test_api_football_odds_parser_and_attach():
@@ -429,3 +430,12 @@ def test_rank_picks_blocks_absurd_edge_and_uses_backtest_weight():
            "cal_params": {"1X2": {"w": 0.1, "roi": 0.02}}}
     r2 = rank_picks(pl2, SimpleNamespace(value_edge_min=0.03, pick_mode="deger"), True)
     assert r2 and r2[0]["calibration"]["kaynak"] == "geri test" and r2[0]["calibration"]["w"] == 0.1
+
+
+def test_coupon_gate_waits_until_previous_day_18_tsi():
+    from datetime import date, datetime, timezone
+
+    from meclis.bot import coupon_gate
+
+    g = coupon_gate(date(2026, 10, 29))
+    assert g.astimezone(timezone.utc) == datetime(2026, 10, 28, 15, 0, tzinfo=timezone.utc)
