@@ -101,9 +101,11 @@ def lines_around(mean: float, n: int = 3) -> list[float]:
     return [max(0.5, start + i) for i in range(n)]
 
 
-def count_markets(model: CountModel, home: str, away: str) -> tuple[list[dict], dict]:
+def count_markets(model: CountModel, home: str, away: str, mult: float = 1.0) -> tuple[list[dict], dict]:
+    """mult: dış etken çarpanı (ör. kartta hakem)."""
     market = STATS[model.stat][0]
     eh, ea = model.expected(home, away)
+    eh, ea = eh * mult, ea * mult
     total = eh + ea
     r = model.dispersion_r(total)
     out = []

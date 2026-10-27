@@ -336,6 +336,14 @@ class Bot:
             önce Günün Kararı (2-3 maç, 2.30–4.00), sonra Meclis Görüşü tekliler (Günün Kararı'ndaki maçlar o gün
             tekli olarak yayımlanmaz), 5+ Meclis Görüşü varsa Karar Birliği. Her içerik satırı bot_pick_id taşır."""
         now = now or now_utc()
+        try:  # motorun öğrendiği topluluk ağırlığı (Dixon-Coles ↔ Elo) analizden ÖNCE uygulanır
+            from .motor import latest as _motor0
+
+            _ew = (_motor0(self.store) or {}).get("elo_w")
+            if _ew is not None:
+                self.s.elo_weight = float(_ew)
+        except Exception:
+            pass
         matches = self.candidates(now)
         self.log.append(f"Bülten: {len(matches)} maç ({len(self.s.leagues)} lig; {self.s.horizon_hours:.0f} saat; "
                         f"yayın: başlamadan ≥ {self.s.publish_lead_hours:g} saat önce)")

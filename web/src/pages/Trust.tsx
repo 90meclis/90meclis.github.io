@@ -185,9 +185,9 @@ const pctOr = (x: number | null | undefined) => (x == null ? "—" : `%${Math.ro
 
 /** Motorun örneklem dışı geri testi ile yayımlanan seçimlerin canlı sonuçları, aynı bant/pazar kırılımında. */
 function MotorVsLive({ m, preds }: { m: Motor; preds: Prediction[] }) {
-  const bands = m.geritest.bantlar.filter((b) => b.n > 0);
+  const bands = m.geritest.bantlar.filter((b) => b.n >= 20);
   const inBand = (p: Prediction, lo: number, hi: number) => (p.probability ?? 0) >= lo && (p.probability ?? 0) < hi;
-  const groups = m.geritest.pazarlar.filter((g) => g.n > 0);
+  const groups = m.geritest.pazarlar.filter((g) => g.n >= 20);
   const t = m.geritest.toplam;
   return (
     <Card title="Geri test ↔ canlı" aside={<span className="muted small">Bant ve pazar bazında · tekliler + kupon ayakları</span>}>

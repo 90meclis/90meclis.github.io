@@ -45,3 +45,16 @@ def test_live_pairing_and_no_settlement():
            "canli": False, "bitti": False, "durum": None, "dakika": None}]
     assert pair(m, ev)["hg"] == 1
     assert pair({**m, "home_name": "Fleetwood"}, ev) is None
+
+
+def test_referee_factor_shrinks():
+    from meclis.analysis import LeagueContext
+
+    ctx = LeagueContext("E0", [], {})
+    ctx.league_cards = 4.0
+    ctx.referee_cards = {"Sert Hakem": (4, 7.0), "Az Maç": (1, 10.0)}
+    f, info = ctx.referee_factor("Sert Hakem")
+    assert 1.0 < f <= 1.30 and info["mac"] == 4
+    f2, _ = ctx.referee_factor("Az Maç")
+    assert f2 < f  # tek maç: lig ortalamasına daha çok çekilir
+    assert ctx.referee_factor(None) == (1.0, None)

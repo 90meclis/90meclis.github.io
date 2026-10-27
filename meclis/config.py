@@ -110,6 +110,7 @@ TSDB_TO_LEAGUE = {lg.tsdb_id: lg.code for lg in LEAGUES.values() if lg.tsdb_id}
 @dataclass
 class Settings:
     supabase_url: str | None = None
+    elo_weight: float | None = None  # motorun öğrendiği Dixon-Coles↔Elo ağırlığı (yoksa BLEND_WEIGHT)
     supabase_key: str | None = None
     football_data_token: str | None = None
     api_football_key: str | None = None

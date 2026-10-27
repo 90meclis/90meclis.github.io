@@ -37,6 +37,8 @@ class LeagueContext:
     count_models: dict[str, CountModel | None] = field(default_factory=dict)
     error: str | None = None
     n_current: dict[str, int] = field(default_factory=dict)  # takım başına bu sezon oynanmış maç
+    referee_cards: dict[str, tuple[int, float]] = field(default_factory=dict)  # hakem → (maç, maç başı kart)
+    league_cards: float | None = None
 
     @classmethod
     def build(cls, league: str, matches: list[dict], stats: dict[str, dict],
@@ -84,7 +86,34 @@ class LeagueContext:
                 crow.append({"home": m["home_team_id"], "away": m["away_team_id"], "h": hv, "a": av,
                              "days_ago": (now - parse_dt(m["kickoff_at"])).total_seconds() / 86400, "weight": wt(m)})
             ctx.count_models[stat] = fit_count_model(crow, stat)
+        # Hakem etkisi (kart): ligde bu sezon hakemin maç başı kart ortalaması
+        tot, n_all, by_ref = 0.0, 0, {}
+        for m in matches:
+            st = stats.get(m["id"]) or {}
+            hv, av = _stat_value(st.get("home") or {}, "cards"), _stat_value(st.get("away") or {}, "cards")
+            if hv is None or av is None:
+                continue
+            tot += hv + av
+            n_all += 1
+            ref = (m.get("referee") or "").strip()
+            if ref:
+                n0, s0_ = by_ref.get(ref, (0, 0.0))
+                by_ref[ref] = (n0 + 1, s0_ + hv + av)
+        if n_all >= 30:
+            ctx.league_cards = tot / n_all
+            ctx.referee_cards = {r: (n, sm / n) for r, (n, sm) in by_ref.items()}
         return ctx
+
+    def referee_factor(self, name: str | None) -> tuple[float, dict | None]:
+        """Kart beklentisi çarpanı: hakem ortalaması lig ortalamasına büzülür (k=8 maç); 0.75–1.30 aralığı."""
+        if not name or not self.league_cards or name.strip() not in self.referee_cards:
+            return 1.0, None
+        n, avg = self.referee_cards[name.strip()]
+        k = 8
+        shrunk = (n * avg + k * self.league_cards) / (n + k)
+        f = max(0.75, min(1.30, shrunk / self.league_cards))
+        return f, {"hakem": name, "mac": n, "mac_basi_kart": round(avg, 2), "lig_ort": round(self.league_cards, 2),
+                   "carpan": round(f, 3)}
 
     def team_matches(self, team_id: str, n: int | None = None) -> list[dict]:
         ms = [m for m in self.matches if team_id in (m["home_team_id"], m["away_team_id"])
@@ -198,7 +227,8 @@ def analyze_match(match: dict, ctx: LeagueContext, settings, injuries: list[dict
     if gm is not None:
         dc = gm.lambdas(hid, aid)
         el = ctx.elo_model.lambdas(hid, aid) if ctx.elo_model else None
-        lh0, la0 = blend(dc, el)
+        ew = float(getattr(settings, "elo_weight", None) or BLEND_WEIGHT)  # motorun öğrendiği topluluk ağırlığı
+        lh0, la0 = blend(dc, el, ew)
         basis = "model (güncel sezon ağırlıklı Dixon-Coles" + (" + Elo)" if el else ")")
         from .config import LEAGUES
 
@@ -241,7 +271,7 @@ def analyze_match(match: dict, ctx: LeagueContext, settings, injuries: list[dict
                           "ht_ratio": round(gm.ht_ratio if gm else 0.44, 3),
                           "dc_home": round(dc[0], 3) if dc else None, "dc_away": round(dc[1], 3) if dc else None,
                           "market_home": round(mkt[0], 3) if mkt else None, "market_away": round(mkt[1], 3) if mkt else None,
-                          "elo_weight": BLEND_WEIGHT if el else 0.0}
+                          "elo_weight": float(getattr(settings, "elo_weight", None) or BLEND_WEIGHT) if el else 0.0}
     if el and ctx.elo_model:
         payload["elo"] = {"home": round(ctx.elo_model.ratings[hid]), "away": round(ctx.elo_model.ratings[aid]),
                           "source": ctx.elo_model.source}
@@ -256,7 +286,10 @@ def analyze_match(match: dict, ctx: LeagueContext, settings, injuries: list[dict
         if nh < 1 or na < 1:
             postponed[mk] = f"{label}: takımın bu istatistikte hiç maçı yok ({nh}/{na}) — pazar hesaplanmadı"
             continue
-        cmk, info = count_markets(cm, hid, aid)  # az maçlı takım lig ortalamasına çekilir (büzülme)
+        mult, rinfo = ctx.referee_factor(match.get("referee")) if stat == "cards" else (1.0, None)
+        cmk, info = count_markets(cm, hid, aid, mult)  # az maçlı takım lig ortalamasına çekilir (büzülme)
+        if rinfo:
+            info["hakem"] = rinfo
         markets += cmk
         payload["count_info"][stat] = info
     payload["markets"] = [attach_odds(dict(m), odds) for m in markets]

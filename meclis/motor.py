@@ -22,6 +22,7 @@ import numpy as np
 
 from .analysis import season_start
 from .backtest import _novig, _odds
+from .model.elo import BLEND_WEIGHT, blend, fit_elo
 from .model.goals import fit_dixon_coles, score_matrix
 from .timeutil import now_utc, parse_dt, to_iso
 
@@ -41,7 +42,7 @@ def band_of(p: float) -> str | None:
 
 
 # ----------------------------------------------------------------------------- veri
-def collect(store, min_train: int = 40, ridge: float = 10.0) -> list[dict]:
+def collect(store, min_train: int = 40, ridge: float = 10.0, elo_w: float = 0.0) -> list[dict]:
     """Maç başına: {league, t, sels: [{g, sel, pm, pk, odds, y}]} (örneklem dışı model olasılığı)."""
     s0 = season_start()
     ms = store.select("matches", [("status", "eq", "bitti"), ("kickoff_at", "gte", to_iso(s0))], order="kickoff_at")
@@ -74,20 +75,68 @@ def collect(store, min_train: int = 40, ridge: float = 10.0) -> list[dict]:
                 gm = fit_dixon_coles(rows, ridge=ridge)
             except Exception:
                 continue
+            try:
+                em = fit_elo(rows, burn_in=min(60, max(10, len(rows) // 3)))
+            except Exception:
+                em = None
             for m in test:
                 h, a = m["home_team_id"], m["away_team_id"]
                 if not (gm.has_team(h, 3) and gm.has_team(a, 3)):
                     continue
-                rec = _match_rows(m, gm)
+                dc = gm.lambdas(h, a)
+                el = em.lambdas(h, a) if em else None
+                lh, la = blend(dc, el, elo_w)
+                rec = _match_rows(m, lh, la, gm.rho)
                 if rec:
-                    out.append({"league": lg, "t": m["kickoff_at"], "id": m["id"], "sels": rec})
+                    out.append({"league": lg, "t": m["kickoff_at"], "id": m["id"], "sels": rec,
+                                "_m": m, "_dc": dc, "_el": el, "_rho": gm.rho})
     out.sort(key=lambda r: r["t"])
     return out
 
 
-def _match_rows(m: dict, gm) -> list[dict]:
-    lh, la = gm.lambdas(m["home_team_id"], m["away_team_id"])
-    sm = score_matrix(lh, la, gm.rho)
+ELO_GRID = (0.0, 0.15, 0.30, 0.45, 0.60)
+
+
+def _model_ll(matches: list[dict], ew: float) -> float:
+    """Yalnızca modelin (piyasasız) log-loss'u: 1X2 + 2.5 gol; Elo harman ağırlığı ew ile."""
+    tot, n = 0.0, 0
+    for mt in matches:
+        lh, la = blend(mt["_dc"], mt["_el"], ew)
+        for r in _match_rows(mt["_m"], lh, la, mt["_rho"]):
+            if r["g"] in ("1X2", "OU_GOALS_2.5"):
+                tot += _ll(r["pm"], r["y"])
+                n += 1
+    return tot / n if n else float("inf")
+
+
+def learn_elo(matches: list[dict], current: dict | None) -> tuple[float, dict]:
+    """Topluluk ağırlığı (Dixon-Coles ↔ Elo, gol beklentisi düzeyinde). Eğitim diliminde en iyi ew seçilir; doğrulama
+    diliminde mevcuttan iyi değilse mevcut korunur (öğrenme döngüsü modeli kötüleştiremez)."""
+    cur = float((current or {}).get("w", BLEND_WEIGHT))
+    since = (current or {}).get("fit_until")
+    ms = [m for m in matches if m.get("_dc")]
+    tr = [m for m in ms if since and m["t"] <= since] if since else ms[: int(len(ms) * 0.7)]
+    va = [m for m in ms if m["t"] > since] if since else ms[int(len(ms) * 0.7):]
+    if len(va) < 60 or len(tr) < 150:
+        return cur, {"w": cur, "durum": "yeni veri az — mevcut korundu", "n_dogrula": len(va), "fit_until": since}
+    best = min(ELO_GRID, key=lambda w: _model_ll(tr, w))
+    ll_new, ll_cur = _model_ll(va, best), _model_ll(va, cur)
+    take = ll_new <= ll_cur + 1e-9
+    w = best if take else cur
+    return w, {"w": w, "durum": "benimsendi" if take else "mevcut korundu (yeni daha kötü)", "aday": best,
+               "ll_yeni": round(ll_new, 4), "ll_mevcut": round(ll_cur, 4), "n_ogren": len(tr), "n_dogrula": len(va),
+               "fit_until": ms[-1]["t"] if ms else since}
+
+
+def _rebuild(matches: list[dict], ew: float) -> None:
+    for mt in matches:
+        if mt.get("_dc"):
+            lh, la = blend(mt["_dc"], mt["_el"], ew)
+            mt["sels"] = _match_rows(mt["_m"], lh, la, mt["_rho"])
+
+
+def _match_rows(m: dict, lh: float, la: float, rho: float) -> list[dict]:
+    sm = score_matrix(lh, la, rho)
     g = np.arange(sm.shape[0])
     d = g[:, None] - g[None, :]
     tot = g[:, None] + g[None, :]
@@ -285,6 +334,9 @@ def run(store, log: list | None = None) -> dict:
     if len(matches) < 200:
         log.append(f"ℹ️ motor: yeterli geri test maçı yok ({len(matches)})")
         return prev
+    ew, elo_log = learn_elo(matches, prev.get("topluluk"))
+    _rebuild(matches, ew)
+    log.append(f"ℹ️ motor topluluk: Elo ağırlığı {ew:.2f} ({elo_log['durum']})")
     params, learn_log = learn(matches, prev.get("params"))
     bt = selection_backtest(matches)
     n_by = {g: len(_flat(matches, g)) for g in GROUPS}
@@ -296,9 +348,12 @@ def run(store, log: list | None = None) -> dict:
     hist = (prev.get("gecmis") or [])[-29:] + [{"tarih": now_utc().date().isoformat(), "mac": len(matches),
                                                 "benimsenen": [x["grup"] for x in learn_log if x["durum"] == "benimsendi"],
                                                 "isabet": bt["toplam"].get("isabet"), "n": bt["toplam"].get("n")}]
-    out = {"params": params, "ogrenme": learn_log, "geritest": bt, "derin_pazarlar": deep, "ornek": n_by,
+    for mt in matches:
+        for k in ("_m", "_dc", "_el", "_rho"):
+            mt.pop(k, None)
+    out = {"params": params, "topluluk": elo_log, "elo_w": ew, "ogrenme": learn_log, "geritest": bt, "derin_pazarlar": deep, "ornek": n_by,
            "gecmis": hist, "guncellendi": to_iso(now_utc()),
-           "yontem": "yürüyen pencere Dixon-Coles + marjsız ön maç oranı; w ve izotonik kalibrasyon log-loss ile; "
+           "yontem": "yürüyen pencere Dixon-Coles + Elo (topluluk ağırlığı öğrenilir) + marjsız ön maç oranı; w ve izotonik kalibrasyon log-loss ile; "
                      "son %30 doğrulamada iyileşmeyen parametre benimsenmez; bantlar çapraz uydurmayla örneklem dışı"}
     ts = to_iso(now_utc())
     store.upsert("analyses", [{"match_id": MOTOR_ID, "created_at": ts, "model_version": "meclis-motor-1", "payload": out}])

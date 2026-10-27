@@ -105,7 +105,7 @@ def card(pred: dict, a: dict | None, motor: dict | None) -> dict:
         risk = f"Tutmama olasılığı {pc(1 - p)}: tek maçta sürpriz her zaman masada."
     b = _band_stat(motor, p)
     bant = None
-    if b:
+    if b and b.get("n", 0) >= 30:
         bant = {"bant": b["bant"], "isabet": b.get("isabet"), "n": b["n"],
                 "metin": f"Geri testte {b['bant']} bandındaki seçimler {pc(b['isabet'])} tuttu ({b['n']} seçim, örneklem dışı)."}
     return {"maddeler": bullets[:3], "risk": risk, "bant": bant,
