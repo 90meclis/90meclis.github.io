@@ -1096,6 +1096,72 @@
   }
  },
  {
+  "match_id": "B102:2026-10-26:azpicerno:ussalernitana",
+  "taken_at": "2026-10-26T01:54:28+00:00",
+  "kickoff_at": "2026-10-26T19:30:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 3.28,
+    "2": 2.11,
+    "X": 3.1,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.64,
+    "YOK": 2.09,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.51,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.26
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.91,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.84
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.32,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.1
+   }
+  }
+ },
+ {
+  "match_id": "B102:2026-10-26:azpicerno:ussalernitana",
+  "taken_at": "2026-10-26T05:24:18+00:00",
+  "kickoff_at": "2026-10-26T19:30:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 3.25,
+    "2": 2.11,
+    "X": 3.12,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.64,
+    "YOK": 2.1,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.51,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.26
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.9,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.83
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.32,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.1
+   }
+  }
+ },
+ {
   "match_id": "B102:2026-10-26:crotone:casarano",
   "taken_at": "2026-10-25T13:40:08+00:00",
   "kickoff_at": "2026-10-26T19:30:00+00:00",
@@ -1125,6 +1191,123 @@
     "ALT": 1.33,
     "src": "bsd:konsensüs",
     "ÜST": 2.92
+   }
+  }
+ },
+ {
+  "match_id": "B102:2026-10-26:crotone:casarano",
+  "taken_at": "2026-10-26T01:54:28+00:00",
+  "kickoff_at": "2026-10-26T19:30:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.09,
+    "2": 3.14,
+    "X": 3.3,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.63,
+    "YOK": 2.12,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.69,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.21
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.96,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.78
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.33,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.96
+   }
+  }
+ },
+ {
+  "match_id": "B102:2026-10-26:crotone:casarano",
+  "taken_at": "2026-10-26T05:24:18+00:00",
+  "kickoff_at": "2026-10-26T19:30:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.09,
+    "2": 3.13,
+    "X": 3.27,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.63,
+    "YOK": 2.12,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.69,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.21
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.96,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.78
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.33,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.96
+   }
+  }
+ },
+ {
+  "match_id": "B102:2026-10-26:crotone:casarano",
+  "taken_at": "2026-10-26T09:55:06+00:00",
+  "kickoff_at": "2026-10-26T19:30:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.09,
+    "2": 3.13,
+    "X": 3.27,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.63,
+    "YOK": 2.11,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.69,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.21
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.96,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.78
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.33,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.96
+   }
+  }
+ },
+ {
+  "match_id": "B102:2026-10-27:interu23:scafatese",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T13:30:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.25,
+    "2": 2.8,
+    "X": 3.1,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.67,
+    "YOK": 2.04,
+    "src": "bsd:konsensüs"
    }
   }
  },
@@ -2851,6 +3034,72 @@
     "ALT": 1.38,
     "src": "bsd:konsensüs",
     "ÜST": 2.84
+   }
+  }
+ },
+ {
+  "match_id": "B106:2026-10-26:orebro:falkenbergsff",
+  "taken_at": "2026-10-26T01:54:28+00:00",
+  "kickoff_at": "2026-10-26T18:05:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.4,
+    "2": 2.57,
+    "X": 3.37,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.61,
+    "YOK": 2.18,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.95,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.21
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.01,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.76
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.38,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.85
+   }
+  }
+ },
+ {
+  "match_id": "B106:2026-10-27:landskronabois:varbergsbois",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T18:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.0,
+    "2": 3.1,
+    "X": 3.4,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.6,
+    "YOK": 2.21,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 4.0,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.22
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.1,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.7
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.44,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.62
    }
   }
  },
@@ -4867,6 +5116,72 @@
     "ALT": 1.41,
     "src": "bsd:konsensüs",
     "ÜST": 2.76
+   }
+  }
+ },
+ {
+  "match_id": "B17:2026-10-27:abha:alfaisaly",
+  "taken_at": "2026-10-26T07:59:47+00:00",
+  "kickoff_at": "2026-10-27T12:40:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.05,
+    "2": 3.25,
+    "X": 3.38,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.77,
+    "YOK": 1.9,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.24,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.29
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.82,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.96
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.28,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.27
+   }
+  }
+ },
+ {
+  "match_id": "B17:2026-10-27:abha:alfaisaly",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T12:40:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.05,
+    "2": 3.25,
+    "X": 3.38,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.7,
+    "YOK": 2.01,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.24,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.29
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.82,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.96
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.28,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.27
    }
   }
  },
@@ -8006,6 +8321,39 @@
   }
  },
  {
+  "match_id": "B19:2026-10-26:tijuana:santoslaguna",
+  "taken_at": "2026-10-26T01:54:28+00:00",
+  "kickoff_at": "2026-10-26T03:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.0,
+    "2": 3.33,
+    "X": 3.54,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.55,
+    "YOK": 2.31,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 4.46,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.18
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.24,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.62
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.48,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.52
+   }
+  }
+ },
+ {
   "match_id": "B1:2026-10-23:kvkortrijk:kvmechelen",
   "taken_at": "2026-10-22T13:53:10+00:00",
   "kickoff_at": "2026-10-23T18:45:00+00:00",
@@ -10126,6 +10474,72 @@
   }
  },
  {
+  "match_id": "B22:2026-10-26:cskasofia:ludogorets",
+  "taken_at": "2026-10-26T03:45:09+00:00",
+  "kickoff_at": "2026-10-26T17:30:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.2,
+    "2": 3.0,
+    "X": 3.3,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.71,
+    "YOK": 2.02,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.4,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.3
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.8,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.0
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.29,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.5
+   }
+  }
+ },
+ {
+  "match_id": "B22:2026-10-26:cskasofia:ludogorets",
+  "taken_at": "2026-10-26T05:24:18+00:00",
+  "kickoff_at": "2026-10-26T17:30:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.2,
+    "2": 3.0,
+    "X": 3.3,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.71,
+    "YOK": 2.03,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.4,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.3
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.8,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.0
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.29,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.5
+   }
+  }
+ },
+ {
   "match_id": "B22:2026-10-26:lokomotivplovdiv:slaviasofia",
   "taken_at": "2026-10-25T09:41:39+00:00",
   "kickoff_at": "2026-10-26T15:00:00+00:00",
@@ -10188,6 +10602,237 @@
     "ALT": 1.15,
     "src": "bsd:konsensüs",
     "ÜST": 4.8
+   }
+  }
+ },
+ {
+  "match_id": "B22:2026-10-26:lokomotivplovdiv:slaviasofia",
+  "taken_at": "2026-10-26T03:45:09+00:00",
+  "kickoff_at": "2026-10-26T15:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.03,
+    "2": 3.57,
+    "X": 3.07,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 2.09,
+    "YOK": 1.66,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 2.55,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.46
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.52,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.43
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.15,
+    "src": "bsd:konsensüs",
+    "ÜST": 4.8
+   }
+  }
+ },
+ {
+  "match_id": "B22:2026-10-26:lokomotivplovdiv:slaviasofia",
+  "taken_at": "2026-10-26T05:24:18+00:00",
+  "kickoff_at": "2026-10-26T15:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.28,
+    "2": 3.11,
+    "X": 2.93,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 2.09,
+    "YOK": 1.66,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 2.47,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.49
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.48,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.53
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.15,
+    "src": "bsd:konsensüs",
+    "ÜST": 5.08
+   }
+  }
+ },
+ {
+  "match_id": "B22:2026-10-26:lokomotivplovdiv:slaviasofia",
+  "taken_at": "2026-10-26T09:55:06+00:00",
+  "kickoff_at": "2026-10-26T15:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.28,
+    "2": 3.11,
+    "X": 2.93,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 2.08,
+    "YOK": 1.67,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 2.47,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.49
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.48,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.53
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.15,
+    "src": "bsd:konsensüs",
+    "ÜST": 5.08
+   }
+  }
+ },
+ {
+  "match_id": "B22:2026-10-27:ardakardzhali:levskisofia",
+  "taken_at": "2026-10-26T12:32:46+00:00",
+  "kickoff_at": "2026-10-27T17:30:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 4.64,
+    "2": 1.71,
+    "X": 3.39,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 2.01,
+    "YOK": 1.72,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 2.78,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.38
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.66,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.16
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.2,
+    "src": "bsd:konsensüs",
+    "ÜST": 4.03
+   }
+  }
+ },
+ {
+  "match_id": "B22:2026-10-27:ardakardzhali:levskisofia",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T17:30:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 4.7,
+    "2": 1.7,
+    "X": 3.41,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 2.02,
+    "YOK": 1.71,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 2.89,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.37
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.66,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.14
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.21,
+    "src": "bsd:konsensüs",
+    "ÜST": 4.06
+   }
+  }
+ },
+ {
+  "match_id": "B22:2026-10-27:chernomorevarna:septemvrisofia",
+  "taken_at": "2026-10-26T09:55:06+00:00",
+  "kickoff_at": "2026-10-27T15:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.66,
+    "2": 4.66,
+    "X": 3.59,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 2.01,
+    "YOK": 1.72,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 2.96,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.35
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.69,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.12
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.22,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.82
+   }
+  }
+ },
+ {
+  "match_id": "B22:2026-10-27:chernomorevarna:septemvrisofia",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T15:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.66,
+    "2": 4.71,
+    "X": 3.58,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 2.03,
+    "YOK": 1.7,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.05,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.34
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.69,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.1
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.23,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.84
    }
   }
  },
@@ -11049,6 +11694,72 @@
     "ALT": 1.32,
     "src": "bsd:konsensüs",
     "ÜST": 3.14
+   }
+  }
+ },
+ {
+  "match_id": "B23:2026-10-26:sepsiosksfantugheorghe:universitateacraiova",
+  "taken_at": "2026-10-26T01:54:28+00:00",
+  "kickoff_at": "2026-10-26T18:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 5.61,
+    "2": 1.5,
+    "X": 3.95,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.92,
+    "YOK": 1.79,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.6,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.26
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.92,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.84
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.33,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.14
+   }
+  }
+ },
+ {
+  "match_id": "B23:2026-10-26:sepsiosksfantugheorghe:universitateacraiova",
+  "taken_at": "2026-10-26T05:24:18+00:00",
+  "kickoff_at": "2026-10-26T18:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 5.74,
+    "2": 1.5,
+    "X": 3.98,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.92,
+    "YOK": 1.79,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.6,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.26
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.92,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.84
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.33,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.13
    }
   }
  },
@@ -12897,6 +13608,72 @@
     "ALT": 1.55,
     "src": "bsd:konsensüs",
     "ÜST": 2.37
+   }
+  }
+ },
+ {
+  "match_id": "B26:2026-10-27:aik:elfsborg",
+  "taken_at": "2026-10-26T12:32:46+00:00",
+  "kickoff_at": "2026-10-27T18:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.94,
+    "2": 2.19,
+    "X": 3.51,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.56,
+    "YOK": 2.29,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 4.11,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.2
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.1,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.69
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.4,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.72
+   }
+  }
+ },
+ {
+  "match_id": "B26:2026-10-27:aik:elfsborg",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T18:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.93,
+    "2": 2.19,
+    "X": 3.47,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.58,
+    "YOK": 2.25,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 4.16,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.2
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.09,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.69
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.4,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.76
    }
   }
  },
@@ -15369,6 +16146,39 @@
   }
  },
  {
+  "match_id": "B34:2026-10-26:americamineiro:cuiaba",
+  "taken_at": "2026-10-26T09:55:06+00:00",
+  "kickoff_at": "2026-10-26T22:30:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 3.6,
+    "2": 1.91,
+    "X": 3.25,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.89,
+    "YOK": 1.81,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.0,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.36
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.7,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.1
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.25,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.75
+   }
+  }
+ },
+ {
   "match_id": "B34:2026-10-26:juventude:nautico",
   "taken_at": "2026-10-25T17:39:11+00:00",
   "kickoff_at": "2026-10-26T23:30:00+00:00",
@@ -15431,6 +16241,138 @@
     "ALT": 1.3,
     "src": "bsd:konsensüs",
     "ÜST": 3.33
+   }
+  }
+ },
+ {
+  "match_id": "B34:2026-10-26:juventude:nautico",
+  "taken_at": "2026-10-26T03:45:09+00:00",
+  "kickoff_at": "2026-10-26T23:30:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.48,
+    "2": 5.94,
+    "X": 3.93,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 2.0,
+    "YOK": 1.73,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.44,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.28
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.85,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.92
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.3,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.33
+   }
+  }
+ },
+ {
+  "match_id": "B34:2026-10-26:juventude:nautico",
+  "taken_at": "2026-10-26T09:55:06+00:00",
+  "kickoff_at": "2026-10-26T23:30:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.48,
+    "2": 5.94,
+    "X": 3.93,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 2.01,
+    "YOK": 1.72,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.44,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.28
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.85,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.92
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.3,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.33
+   }
+  }
+ },
+ {
+  "match_id": "B34:2026-10-27:ceara:goias",
+  "taken_at": "2026-10-26T17:47:35+00:00",
+  "kickoff_at": "2026-10-27T23:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.03,
+    "2": 3.39,
+    "X": 3.19,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.86,
+    "YOK": 1.85,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.05,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.34
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.69,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.1
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.23,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.81
+   }
+  }
+ },
+ {
+  "match_id": "B34:2026-10-27:ceara:goias",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T23:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.03,
+    "2": 3.39,
+    "X": 3.19,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.86,
+    "YOK": 1.84,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.05,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.34
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.69,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.1
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.23,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.81
    }
   }
  },
@@ -15754,6 +16696,1281 @@
     "ALT": 1.58,
     "src": "bsd:konsensüs",
     "ÜST": 2.24
+   }
+  }
+ },
+ {
+  "match_id": "B40:2026-10-27:bradfordcity:peterboroughunited",
+  "taken_at": "2026-10-26T15:14:07+00:00",
+  "kickoff_at": "2026-10-27T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.72,
+    "2": 4.51,
+    "X": 3.69,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.78,
+    "YOK": 1.97,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.61,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.25
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.95,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.83
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.36,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.93
+   }
+  }
+ },
+ {
+  "match_id": "B40:2026-10-27:bradfordcity:peterboroughunited",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.72,
+    "2": 4.54,
+    "X": 3.69,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.75,
+    "YOK": 1.99,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.65,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.25
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.95,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.83
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.36,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.96
+   }
+  }
+ },
+ {
+  "match_id": "B40:2026-10-27:fleetwoodtown:arsenal",
+  "taken_at": "2026-10-26T15:14:07+00:00",
+  "kickoff_at": "2026-10-27T20:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 24.03,
+    "2": 1.08,
+    "X": 11.23,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 2.59,
+    "YOK": 1.45,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 6.77,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.08
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 3.14,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.33
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.88,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.87
+   }
+  }
+ },
+ {
+  "match_id": "B40:2026-10-27:fleetwoodtown:arsenal",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T20:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 24.42,
+    "2": 1.07,
+    "X": 11.07,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 2.57,
+    "YOK": 1.46,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 7.03,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.08
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 3.18,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.32
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.89,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.86
+   }
+  }
+ },
+ {
+  "match_id": "B41:2026-10-27:arosa:pontevedra",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T20:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 3.8,
+    "2": 1.68,
+    "X": 3.6,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.73,
+    "YOK": 1.98,
+    "src": "bsd:konsensüs"
+   }
+  }
+ },
+ {
+  "match_id": "B41:2026-10-27:atleticopaso:cordoba",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T20:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 6.0,
+    "2": 1.3,
+    "X": 5.0,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.82,
+    "YOK": 1.87,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 4.5,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.18
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.3,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.6
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.5,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.5
+   }
+  }
+ },
+ {
+  "match_id": "B41:2026-10-27:atleticotordesillas:mirandes",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T19:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 4.2,
+    "2": 1.57,
+    "X": 3.9,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.76,
+    "YOK": 1.95,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.75,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.25
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.05,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.75
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.36,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.0
+   }
+  }
+ },
+ {
+  "match_id": "B41:2026-10-27:calamocha:ceeuropa",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T18:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 3.6,
+    "2": 1.76,
+    "X": 3.6,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.71,
+    "YOK": 2.02,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.75,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.25
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.0,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.8
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.36,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.0
+   }
+  }
+ },
+ {
+  "match_id": "B41:2026-10-27:castellonense:almeria",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T18:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 6.25,
+    "2": 1.3,
+    "X": 5.0,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.88,
+    "YOK": 1.82,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 4.0,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.22
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.1,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.7
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.4,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.75
+   }
+  }
+ },
+ {
+  "match_id": "B41:2026-10-27:cemanresa:uesantandreu",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T19:30:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 3.0,
+    "2": 1.96,
+    "X": 3.6,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.7,
+    "YOK": 2.02,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.75,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.25
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.95,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.85
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.33,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.25
+   }
+  }
+ },
+ {
+  "match_id": "B41:2026-10-27:ciudadlucena:rayomajadahonda",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T19:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 3.0,
+    "2": 1.96,
+    "X": 3.6,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.7,
+    "YOK": 2.03,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.75,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.25
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.95,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.85
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.33,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.25
+   }
+  }
+ },
+ {
+  "match_id": "B41:2026-10-27:cuarte:girona",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T17:30:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 13.0,
+    "2": 1.11,
+    "X": 6.0,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 2.49,
+    "YOK": 1.47,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 5.0,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.17
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.35,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.57
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.53,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.38
+   }
+  }
+ },
+ {
+  "match_id": "B41:2026-10-27:donbenito:extremadura",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T19:30:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 3.0,
+    "2": 1.96,
+    "X": 3.6,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.57,
+    "YOK": 2.25,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 4.5,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.18
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.25,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.61
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.5,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.5
+   }
+  }
+ },
+ {
+  "match_id": "B41:2026-10-27:gimnasticasegoviana:culturalleonesa",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T19:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 3.25,
+    "2": 1.96,
+    "X": 3.25,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.55,
+    "YOK": 2.29,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 4.5,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.18
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.25,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.61
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.5,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.5
+   }
+  }
+ },
+ {
+  "match_id": "B41:2026-10-27:llanera:sdponferradina",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T19:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 4.2,
+    "2": 1.57,
+    "X": 3.9,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.62,
+    "YOK": 2.14,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 5.0,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.17
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.35,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.57
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.53,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.38
+   }
+  }
+ },
+ {
+  "match_id": "B41:2026-10-27:manacor:villarreal",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T20:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 17.0,
+    "2": 1.05,
+    "X": 10.0,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 3.62,
+    "YOK": 1.25,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 10.0,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.06
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 4.0,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.25
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 2.2,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.61
+   }
+  }
+ },
+ {
+  "match_id": "B41:2026-10-27:pinatar:elche",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T18:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 51.0,
+    "2": 1.03,
+    "X": 13.0,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 4.12,
+    "YOK": 1.2,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 7.0,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.1
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 3.4,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.33
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.83,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.83
+   }
+  }
+ },
+ {
+  "match_id": "B41:2026-10-27:recreativohuelva:rayovallecano",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T20:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 8.5,
+    "2": 1.27,
+    "X": 4.33,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.81,
+    "YOK": 1.9,
+    "src": "bsd:konsensüs"
+   }
+  }
+ },
+ {
+  "match_id": "B41:2026-10-27:rsdalcala:laspalmas",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T19:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 6.0,
+    "2": 1.3,
+    "X": 5.0,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.8,
+    "YOK": 1.92,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 4.5,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.18
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.3,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.6
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.5,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.5
+   }
+  }
+ },
+ {
+  "match_id": "B41:2026-10-27:sestaoriver:espanyol",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T18:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 11.0,
+    "2": 1.15,
+    "X": 5.75,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.78,
+    "YOK": 1.93,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 5.5,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.14
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.5,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.5
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.57,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.25
+   }
+  }
+ },
+ {
+  "match_id": "B41:2026-10-27:sportingalcazar:malaga",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T20:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 21.0,
+    "2": 1.03,
+    "X": 13.0,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 2.43,
+    "YOK": 1.5,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 15.0,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.03
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 5.5,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.14
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 3.25,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.33
+   }
+  }
+ },
+ {
+  "match_id": "B41:2026-10-27:tudelano:realzaragoza",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T20:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 4.75,
+    "2": 1.51,
+    "X": 3.8,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 2.04,
+    "YOK": 1.7,
+    "src": "bsd:konsensüs"
+   }
+  }
+ },
+ {
+  "match_id": "B43:2026-10-27:bochum:mainz",
+  "taken_at": "2026-10-26T12:32:46+00:00",
+  "kickoff_at": "2026-10-27T17:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 4.29,
+    "2": 1.67,
+    "X": 3.86,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.57,
+    "YOK": 2.26,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 4.78,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.15
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.34,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.57
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.53,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.32
+   }
+  }
+ },
+ {
+  "match_id": "B43:2026-10-27:bochum:mainz",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T17:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 4.32,
+    "2": 1.68,
+    "X": 3.86,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.57,
+    "YOK": 2.26,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 4.82,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.16
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.34,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.57
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.53,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.35
+   }
+  }
+ },
+ {
+  "match_id": "B43:2026-10-27:dortmund:werderbremen",
+  "taken_at": "2026-10-26T15:14:07+00:00",
+  "kickoff_at": "2026-10-27T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.33,
+    "2": 6.79,
+    "X": 4.94,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.68,
+    "YOK": 2.07,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 5.55,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.12
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.65,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.44
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.66,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.12
+   }
+  }
+ },
+ {
+  "match_id": "B43:2026-10-27:dortmund:werderbremen",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.34,
+    "2": 6.83,
+    "X": 4.94,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.68,
+    "YOK": 2.07,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 5.64,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.12
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.65,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.44
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.67,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.12
+   }
+  }
+ },
+ {
+  "match_id": "B43:2026-10-27:elversberg:darmstadt98",
+  "taken_at": "2026-10-26T15:14:07+00:00",
+  "kickoff_at": "2026-10-27T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.41,
+    "2": 5.95,
+    "X": 4.6,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.67,
+    "YOK": 2.11,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 5.08,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.14
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.48,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.48
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.6,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.23
+   }
+  }
+ },
+ {
+  "match_id": "B43:2026-10-27:elversberg:darmstadt98",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.41,
+    "2": 6.04,
+    "X": 4.6,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.67,
+    "YOK": 2.1,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 5.17,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.14
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.48,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.48
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.6,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.24
+   }
+  }
+ },
+ {
+  "match_id": "B43:2026-10-27:gladbach:karlsruher",
+  "taken_at": "2026-10-26T15:14:07+00:00",
+  "kickoff_at": "2026-10-27T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.31,
+    "2": 7.83,
+    "X": 5.27,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.68,
+    "YOK": 2.06,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 5.83,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.11
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.77,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.4
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.72,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.03
+   }
+  }
+ },
+ {
+  "match_id": "B43:2026-10-27:gladbach:karlsruher",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.34,
+    "2": 7.14,
+    "X": 5.02,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.65,
+    "YOK": 2.13,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 5.88,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.11
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.74,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.41
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.71,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.06
+   }
+  }
+ },
+ {
+  "match_id": "B43:2026-10-27:hamburg:frankfurt",
+  "taken_at": "2026-10-26T12:32:46+00:00",
+  "kickoff_at": "2026-10-27T17:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.76,
+    "2": 2.24,
+    "X": 3.55,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.42,
+    "YOK": 2.62,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 5.25,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.13
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.44,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.5
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.61,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.21
+   }
+  }
+ },
+ {
+  "match_id": "B43:2026-10-27:hamburg:frankfurt",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T17:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.79,
+    "2": 2.24,
+    "X": 3.55,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.42,
+    "YOK": 2.66,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 5.3,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.13
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.44,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.5
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.61,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.23
+   }
+  }
+ },
+ {
+  "match_id": "B43:2026-10-27:koln:unionberlin",
+  "taken_at": "2026-10-26T15:14:07+00:00",
+  "kickoff_at": "2026-10-27T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.78,
+    "2": 3.88,
+    "X": 3.68,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.59,
+    "YOK": 2.23,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 4.36,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.18
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.19,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.64
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.46,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.55
+   }
+  }
+ },
+ {
+  "match_id": "B43:2026-10-27:koln:unionberlin",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.79,
+    "2": 3.89,
+    "X": 3.68,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.58,
+    "YOK": 2.25,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 4.39,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.18
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.19,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.64
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.47,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.55
+   }
+  }
+ },
+ {
+  "match_id": "B43:2026-10-27:rotweissessen:leipzig",
+  "taken_at": "2026-10-26T12:32:46+00:00",
+  "kickoff_at": "2026-10-27T17:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 11.01,
+    "2": 1.18,
+    "X": 6.87,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.76,
+    "YOK": 1.97,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 6.8,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.08
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 3.24,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.31
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.89,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.83
+   }
+  }
+ },
+ {
+  "match_id": "B43:2026-10-27:rotweissessen:leipzig",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T17:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 11.25,
+    "2": 1.18,
+    "X": 7.08,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.8,
+    "YOK": 1.92,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 7.04,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.08
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 3.25,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.31
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.9,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.84
+   }
+  }
+ },
+ {
+  "match_id": "B43:2026-10-27:sgsonnenhofgroaspach:augsburg",
+  "taken_at": "2026-10-26T12:32:46+00:00",
+  "kickoff_at": "2026-10-27T17:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 7.28,
+    "2": 1.32,
+    "X": 5.23,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.67,
+    "YOK": 2.08,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 5.91,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.1
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.78,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.4
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.71,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.05
+   }
+  }
+ },
+ {
+  "match_id": "B43:2026-10-27:sgsonnenhofgroaspach:augsburg",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T17:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 7.55,
+    "2": 1.32,
+    "X": 5.34,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.67,
+    "YOK": 2.07,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 6.02,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.1
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.78,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.4
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.71,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.06
+   }
+  }
+ },
+ {
+  "match_id": "B46:2026-10-27:gornikeczna:gkskatowice",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T11:30:00+00:00",
+  "odds": {
+   "BTTS": {
+    "VAR": 1.66,
+    "YOK": 2.08,
+    "src": "bsd:konsensüs"
+   }
+  }
+ },
+ {
+  "match_id": "B46:2026-10-27:motorlublin:rakowczestochowa",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T16:30:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.3,
+    "2": 2.6,
+    "X": 3.4,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.53,
+    "YOK": 2.31,
+    "src": "bsd:konsensüs"
+   }
+  }
+ },
+ {
+  "match_id": "B46:2026-10-27:olimpiagrudziadz:brukbettermalicanieciecza",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T11:30:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.8,
+    "2": 2.15,
+    "X": 3.4,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.6,
+    "YOK": 2.18,
+    "src": "bsd:konsensüs"
+   }
+  }
+ },
+ {
+  "match_id": "B46:2026-10-27:piastgliwice:gornikzabrze",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T19:30:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.88,
+    "2": 2.1,
+    "X": 3.4,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.65,
+    "YOK": 2.1,
+    "src": "bsd:konsensüs"
    }
   }
  },
@@ -25319,6 +27536,37 @@
   }
  },
  {
+  "match_id": "B80:2026-10-27:cucutadeportivo:rionegroaguilasdoradas",
+  "taken_at": "2026-10-26T17:47:35+00:00",
+  "kickoff_at": "2026-10-27T23:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.5,
+    "2": 2.75,
+    "X": 3.1,
+    "src": "bsd:konsensüs"
+   }
+  }
+ },
+ {
+  "match_id": "B80:2026-10-27:cucutadeportivo:rionegroaguilasdoradas",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T23:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.5,
+    "2": 2.75,
+    "X": 3.1,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.83,
+    "YOK": 1.87,
+    "src": "bsd:konsensüs"
+   }
+  }
+ },
+ {
   "match_id": "B80:2026-10-27:independientesantafe:atleticobucaramanga",
   "taken_at": "2026-10-25T19:36:56+00:00",
   "kickoff_at": "2026-10-27T01:05:00+00:00",
@@ -25381,6 +27629,138 @@
     "ALT": 1.23,
     "src": "bsd:konsensüs",
     "ÜST": 3.86
+   }
+  }
+ },
+ {
+  "match_id": "B80:2026-10-27:independientesantafe:atleticobucaramanga",
+  "taken_at": "2026-10-26T03:45:09+00:00",
+  "kickoff_at": "2026-10-27T01:05:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.88,
+    "2": 3.81,
+    "X": 3.3,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.89,
+    "YOK": 1.82,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.06,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.34
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.69,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.1
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.23,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.86
+   }
+  }
+ },
+ {
+  "match_id": "B80:2026-10-27:independientesantafe:atleticobucaramanga",
+  "taken_at": "2026-10-26T09:55:06+00:00",
+  "kickoff_at": "2026-10-27T01:05:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.88,
+    "2": 3.81,
+    "X": 3.3,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.88,
+    "YOK": 1.83,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.06,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.34
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.69,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.1
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.23,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.86
+   }
+  }
+ },
+ {
+  "match_id": "B80:2026-10-27:independientesantafe:atleticobucaramanga",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T01:05:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.88,
+    "2": 3.87,
+    "X": 3.29,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.88,
+    "YOK": 1.83,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.07,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.34
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.69,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.09
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.23,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.87
+   }
+  }
+ },
+ {
+  "match_id": "B80:2026-10-28:boyacachico:juniorbarranquilla",
+  "taken_at": "2026-10-26T19:49:50+00:00",
+  "kickoff_at": "2026-10-28T01:05:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 3.3,
+    "2": 2.09,
+    "X": 3.26,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.87,
+    "YOK": 1.84,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 2.97,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.35
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.68,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.11
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.22,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.91
    }
   }
  },
@@ -26778,6 +29158,72 @@
   }
  },
  {
+  "match_id": "B84:2026-10-26:kbenhavn:odenseboldklub",
+  "taken_at": "2026-10-26T01:54:28+00:00",
+  "kickoff_at": "2026-10-26T18:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.45,
+    "2": 5.81,
+    "X": 4.51,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.65,
+    "YOK": 2.14,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 5.2,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.14
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.42,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.51
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.57,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.32
+   }
+  }
+ },
+ {
+  "match_id": "B84:2026-10-26:kbenhavn:odenseboldklub",
+  "taken_at": "2026-10-26T05:24:18+00:00",
+  "kickoff_at": "2026-10-26T18:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.45,
+    "2": 5.86,
+    "X": 4.58,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.65,
+    "YOK": 2.14,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 5.22,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.14
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.42,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.52
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.57,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.33
+   }
+  }
+ },
+ {
   "match_id": "B85:2026-10-23:gimnasiayesgrima:atleticoplatense",
   "taken_at": "2026-10-22T15:44:52+00:00",
   "kickoff_at": "2026-10-23T21:30:00+00:00",
@@ -27648,6 +30094,39 @@
   }
  },
  {
+  "match_id": "B85:2026-10-26:atleticounionsantafe:estudianteslaplata",
+  "taken_at": "2026-10-26T09:55:06+00:00",
+  "kickoff_at": "2026-10-26T22:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.5,
+    "2": 2.7,
+    "X": 3.0,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.86,
+    "YOK": 1.85,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.0,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.36
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.61,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.25
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.22,
+    "src": "bsd:konsensüs",
+    "ÜST": 4.0
+   }
+  }
+ },
+ {
   "match_id": "B85:2026-10-26:barracascentral:estudiantesriocuarto",
   "taken_at": "2026-10-24T19:36:40+00:00",
   "kickoff_at": "2026-10-26T00:30:00+00:00",
@@ -27846,6 +30325,72 @@
   }
  },
  {
+  "match_id": "B85:2026-10-27:argentinosjuniors:independienterivadavia",
+  "taken_at": "2026-10-26T16:14:50+00:00",
+  "kickoff_at": "2026-10-27T22:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.1,
+    "2": 3.6,
+    "X": 3.0,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.95,
+    "YOK": 1.8,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.0,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.36
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.61,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.25
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.22,
+    "src": "bsd:konsensüs",
+    "ÜST": 4.0
+   }
+  }
+ },
+ {
+  "match_id": "B85:2026-10-27:argentinosjuniors:independienterivadavia",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T22:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.1,
+    "2": 3.6,
+    "X": 3.0,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.98,
+    "YOK": 1.75,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.0,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.36
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.61,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.25
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.22,
+    "src": "bsd:konsensüs",
+    "ÜST": 4.0
+   }
+  }
+ },
+ {
   "match_id": "B85:2026-10-27:institutocordoba:deportivoriestra",
   "taken_at": "2026-10-25T19:36:56+00:00",
   "kickoff_at": "2026-10-27T00:15:00+00:00",
@@ -27859,6 +30404,72 @@
    "BTTS": {
     "VAR": 2.5,
     "YOK": 1.5,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 2.25,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.57
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.4,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.88
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.12,
+    "src": "bsd:konsensüs",
+    "ÜST": 6.0
+   }
+  }
+ },
+ {
+  "match_id": "B85:2026-10-27:institutocordoba:deportivoriestra",
+  "taken_at": "2026-10-26T03:45:09+00:00",
+  "kickoff_at": "2026-10-27T00:15:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.86,
+    "2": 4.33,
+    "X": 3.0,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 2.45,
+    "YOK": 1.5,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 2.25,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.57
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.4,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.88
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.12,
+    "src": "bsd:konsensüs",
+    "ÜST": 6.0
+   }
+  }
+ },
+ {
+  "match_id": "B85:2026-10-27:institutocordoba:deportivoriestra",
+  "taken_at": "2026-10-26T09:55:06+00:00",
+  "kickoff_at": "2026-10-27T00:15:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.86,
+    "2": 4.33,
+    "X": 3.0,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 2.41,
+    "YOK": 1.51,
     "src": "bsd:konsensüs"
    },
    "OU_GOALS_1.5": {
@@ -28964,6 +31575,72 @@
     "ALT": 1.24,
     "src": "bsd:konsensüs",
     "ÜST": 3.68
+   }
+  }
+ },
+ {
+  "match_id": "B88:2026-10-26:torreense:amarante",
+  "taken_at": "2026-10-26T01:54:28+00:00",
+  "kickoff_at": "2026-10-26T20:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.77,
+    "2": 4.24,
+    "X": 3.37,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.91,
+    "YOK": 1.8,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.17,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.32
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.73,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.04
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.24,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.68
+   }
+  }
+ },
+ {
+  "match_id": "B88:2026-10-26:torreense:amarante",
+  "taken_at": "2026-10-26T05:24:18+00:00",
+  "kickoff_at": "2026-10-26T20:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.76,
+    "2": 4.29,
+    "X": 3.36,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.9,
+    "YOK": 1.8,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.14,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.33
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.72,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.05
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.24,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.74
    }
   }
  },
@@ -30317,6 +32994,618 @@
     "ALT": 1.4,
     "src": "bsd:konsensüs",
     "ÜST": 2.71
+   }
+  }
+ },
+ {
+  "match_id": "B91:2026-10-27:altrincham:kidderminsterharriers",
+  "taken_at": "2026-10-26T15:14:07+00:00",
+  "kickoff_at": "2026-10-27T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.88,
+    "2": 3.59,
+    "X": 3.49,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.63,
+    "YOK": 2.13,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.81,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.22
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.99,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.75
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.36,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.82
+   }
+  }
+ },
+ {
+  "match_id": "B91:2026-10-27:altrincham:kidderminsterharriers",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.88,
+    "2": 3.57,
+    "X": 3.49,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.65,
+    "YOK": 2.1,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.86,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.21
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.99,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.75
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.36,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.83
+   }
+  }
+ },
+ {
+  "match_id": "B91:2026-10-27:bostonunited:gateshead",
+  "taken_at": "2026-10-26T15:14:07+00:00",
+  "kickoff_at": "2026-10-27T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.52,
+    "2": 5.19,
+    "X": 4.05,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.65,
+    "YOK": 2.11,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 4.6,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.16
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.26,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.57
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.5,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.39
+   }
+  }
+ },
+ {
+  "match_id": "B91:2026-10-27:bostonunited:gateshead",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.52,
+    "2": 5.19,
+    "X": 4.06,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.63,
+    "YOK": 2.13,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 4.75,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.15
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.26,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.57
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.5,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.39
+   }
+  }
+ },
+ {
+  "match_id": "B91:2026-10-27:fylde:hartlepoolunited",
+  "taken_at": "2026-10-26T15:14:07+00:00",
+  "kickoff_at": "2026-10-27T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.67,
+    "2": 4.08,
+    "X": 3.95,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.51,
+    "YOK": 2.38,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 5.21,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.13
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.47,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.48
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.59,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.21
+   }
+  }
+ },
+ {
+  "match_id": "B91:2026-10-27:fylde:hartlepoolunited",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.67,
+    "2": 4.08,
+    "X": 3.96,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.51,
+    "YOK": 2.37,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 5.29,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.12
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.47,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.48
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.58,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.22
+   }
+  }
+ },
+ {
+  "match_id": "B91:2026-10-27:halifaxtown:barrow",
+  "taken_at": "2026-10-26T15:14:07+00:00",
+  "kickoff_at": "2026-10-27T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.33,
+    "2": 2.68,
+    "X": 3.4,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.57,
+    "YOK": 2.25,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.98,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.2
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.05,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.7
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.39,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.74
+   }
+  }
+ },
+ {
+  "match_id": "B91:2026-10-27:halifaxtown:barrow",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.33,
+    "2": 2.68,
+    "X": 3.4,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.57,
+    "YOK": 2.23,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.98,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.2
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.05,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.7
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.39,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.74
+   }
+  }
+ },
+ {
+  "match_id": "B91:2026-10-27:hornchurch:yeoviltown",
+  "taken_at": "2026-10-26T15:14:07+00:00",
+  "kickoff_at": "2026-10-27T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.77,
+    "2": 2.27,
+    "X": 3.37,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.62,
+    "YOK": 2.15,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.71,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.23
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.96,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.78
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.34,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.96
+   }
+  }
+ },
+ {
+  "match_id": "B91:2026-10-27:hornchurch:yeoviltown",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.75,
+    "2": 2.29,
+    "X": 3.35,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.62,
+    "YOK": 2.15,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.71,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.23
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.96,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.78
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.34,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.92
+   }
+  }
+ },
+ {
+  "match_id": "B91:2026-10-27:tamworth:scunthorpeunited",
+  "taken_at": "2026-10-26T15:14:07+00:00",
+  "kickoff_at": "2026-10-27T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.15,
+    "2": 2.79,
+    "X": 3.63,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.4,
+    "YOK": 2.76,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 5.65,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.11
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.65,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.42
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.67,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.07
+   }
+  }
+ },
+ {
+  "match_id": "B91:2026-10-27:tamworth:scunthorpeunited",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.15,
+    "2": 2.79,
+    "X": 3.64,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.4,
+    "YOK": 2.71,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 5.87,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.1
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.65,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.42
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.67,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.08
+   }
+  }
+ },
+ {
+  "match_id": "B91:2026-10-27:wealdstone:solihullmoors",
+  "taken_at": "2026-10-26T15:14:07+00:00",
+  "kickoff_at": "2026-10-27T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.15,
+    "2": 2.84,
+    "X": 3.59,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.42,
+    "YOK": 2.66,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 5.11,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.13
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.45,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.49
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.58,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.22
+   }
+  }
+ },
+ {
+  "match_id": "B91:2026-10-27:wealdstone:solihullmoors",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.16,
+    "2": 2.84,
+    "X": 3.6,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.45,
+    "YOK": 2.55,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 5.21,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.12
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.45,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.49
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.58,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.23
+   }
+  }
+ },
+ {
+  "match_id": "B91:2026-10-27:woking:borehamwood",
+  "taken_at": "2026-10-26T15:14:07+00:00",
+  "kickoff_at": "2026-10-27T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 3.97,
+    "2": 1.73,
+    "X": 3.73,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.58,
+    "YOK": 2.24,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 4.5,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.16
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.22,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.59
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.47,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.46
+   }
+  }
+ },
+ {
+  "match_id": "B91:2026-10-27:woking:borehamwood",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 3.97,
+    "2": 1.73,
+    "X": 3.74,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.58,
+    "YOK": 2.22,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 4.58,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.16
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.22,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.59
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.46,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.48
+   }
+  }
+ },
+ {
+  "match_id": "B91:2026-10-27:worthing:southendunited",
+  "taken_at": "2026-10-26T15:14:07+00:00",
+  "kickoff_at": "2026-10-27T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.67,
+    "2": 2.19,
+    "X": 3.76,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.35,
+    "YOK": 2.92,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 6.16,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.09
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.84,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.38
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.77,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.95
+   }
+  }
+ },
+ {
+  "match_id": "B91:2026-10-27:worthing:southendunited",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.66,
+    "2": 2.19,
+    "X": 3.73,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.35,
+    "YOK": 2.89,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 6.16,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.09
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.84,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.38
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.77,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.95
+   }
+  }
+ },
+ {
+  "match_id": "B93:2026-10-27:splisbon:csmaritimo",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T20:15:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.25,
+    "2": 8.0,
+    "X": 5.5,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.77,
+    "YOK": 1.94,
+    "src": "bsd:konsensüs"
    }
   }
  },
@@ -33162,6 +36451,105 @@
    "BTTS": {
     "VAR": 1.69,
     "YOK": 2.06,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.66,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.27
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.91,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.88
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.33,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.23
+   }
+  }
+ },
+ {
+  "match_id": "B9:2026-10-26:coritiba:gremio",
+  "taken_at": "2026-10-26T05:24:18+00:00",
+  "kickoff_at": "2026-10-26T22:30:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.15,
+    "2": 3.2,
+    "X": 3.4,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.69,
+    "YOK": 2.07,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.66,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.27
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.91,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.88
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.33,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.23
+   }
+  }
+ },
+ {
+  "match_id": "B9:2026-10-26:coritiba:gremio",
+  "taken_at": "2026-10-26T06:24:22+00:00",
+  "kickoff_at": "2026-10-26T22:30:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.15,
+    "2": 3.2,
+    "X": 3.4,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.69,
+    "YOK": 2.06,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.66,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.27
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.91,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.88
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.33,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.23
+   }
+  }
+ },
+ {
+  "match_id": "B9:2026-10-26:coritiba:gremio",
+  "taken_at": "2026-10-26T09:55:06+00:00",
+  "kickoff_at": "2026-10-26T22:30:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.15,
+    "2": 3.2,
+    "X": 3.4,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.72,
+    "YOK": 2.01,
     "src": "bsd:konsensüs"
    },
    "OU_GOALS_1.5": {
@@ -71825,6 +75213,636 @@
   }
  },
  {
+  "match_id": "E2:2026-10-27:leicester:wigan",
+  "taken_at": "2026-10-26T15:14:07+00:00",
+  "kickoff_at": "2026-10-27T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.39,
+    "2": 6.45,
+    "X": 4.65,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.66,
+    "YOK": 2.12,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 5.23,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.13
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.5,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.48
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.61,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.23
+   }
+  }
+ },
+ {
+  "match_id": "E2:2026-10-27:leicester:wigan",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.391,
+    "2": 6.854,
+    "X": 4.828,
+    "src": "the-odds-api:ortalama(16 şirket)"
+   },
+   "BTTS": {
+    "VAR": 1.67,
+    "YOK": 2.09,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_3": {
+    "ALT": 2.09,
+    "src": "the-odds-api:ortalama(2 şirket)",
+    "ÜST": 1.66
+   },
+   "1X2_pinnacle": {
+    "1": 1.4,
+    "2": 7.11,
+    "X": 5.15
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 5.42,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.13
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.613,
+    "src": "the-odds-api:ortalama(3 şirket)",
+    "ÜST": 1.453
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.665,
+    "src": "the-odds-api:ortalama(8 şirket)",
+    "ÜST": 2.118
+   },
+   "OU_GOALS_3.25": {
+    "ALT": 1.87,
+    "src": "the-odds-api:ortalama(1 şirket)",
+    "ÜST": 1.98
+   }
+  }
+ },
+ {
+  "match_id": "E2:2026-10-27:leicester:wigan",
+  "taken_at": "2026-10-27T01:25:24+00:00",
+  "kickoff_at": "2026-10-27T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.39,
+    "2": 6.75,
+    "X": 4.71,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.67,
+    "YOK": 2.09,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_3": {
+    "ALT": 2.09,
+    "src": "the-odds-api:ortalama(2 şirket)",
+    "ÜST": 1.66
+   },
+   "1X2_pinnacle": {
+    "1": 1.4,
+    "2": 7.11,
+    "X": 5.15
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 5.42,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.13
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.49,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.48
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.61,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.24
+   },
+   "OU_GOALS_3.25": {
+    "ALT": 1.87,
+    "src": "the-odds-api:ortalama(1 şirket)",
+    "ÜST": 1.98
+   }
+  }
+ },
+ {
+  "match_id": "E2:2026-10-27:luton:doncaster",
+  "taken_at": "2026-10-26T15:14:07+00:00",
+  "kickoff_at": "2026-10-27T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.57,
+    "2": 5.0,
+    "X": 4.22,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.62,
+    "YOK": 2.19,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 5.17,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.14
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.4,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.51
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.58,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.3
+   }
+  }
+ },
+ {
+  "match_id": "E2:2026-10-27:luton:doncaster",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.523,
+    "2": 5.374,
+    "X": 4.411,
+    "src": "the-odds-api:ortalama(14 şirket)"
+   },
+   "BTTS": {
+    "VAR": 1.61,
+    "YOK": 2.17,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_3": {
+    "ALT": 1.983,
+    "src": "the-odds-api:ortalama(3 şirket)",
+    "ÜST": 1.823
+   },
+   "1X2_pinnacle": {
+    "1": 1.55,
+    "2": 5.37,
+    "X": 4.61
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 5.17,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.14
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.45,
+    "src": "the-odds-api:ortalama(1 şirket)",
+    "ÜST": 1.5
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.579,
+    "src": "the-odds-api:ortalama(8 şirket)",
+    "ÜST": 2.244
+   }
+  }
+ },
+ {
+  "match_id": "E2:2026-10-27:luton:doncaster",
+  "taken_at": "2026-10-27T01:25:24+00:00",
+  "kickoff_at": "2026-10-27T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.57,
+    "2": 5.0,
+    "X": 4.22,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.61,
+    "YOK": 2.17,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_3": {
+    "ALT": 1.983,
+    "src": "the-odds-api:ortalama(3 şirket)",
+    "ÜST": 1.823
+   },
+   "1X2_pinnacle": {
+    "1": 1.55,
+    "2": 5.37,
+    "X": 4.61
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 5.17,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.14
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.4,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.51
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.58,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.3
+   }
+  }
+ },
+ {
+  "match_id": "E2:2026-10-27:miltonkeynesdons:bromley",
+  "taken_at": "2026-10-26T15:14:07+00:00",
+  "kickoff_at": "2026-10-27T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.65,
+    "2": 4.56,
+    "X": 3.97,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.59,
+    "YOK": 2.22,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_3": {
+    "ALT": 1.71,
+    "src": "the-odds-api:ortalama(1 şirket)",
+    "ÜST": 2.06
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 4.64,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.16
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.28,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.59
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.49,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.44
+   }
+  }
+ },
+ {
+  "match_id": "E2:2026-10-27:miltonkeynesdons:bromley",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.614,
+    "2": 4.812,
+    "X": 4.116,
+    "src": "the-odds-api:ortalama(14 şirket)"
+   },
+   "BTTS": {
+    "VAR": 1.61,
+    "YOK": 2.19,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_3": {
+    "ALT": 1.797,
+    "src": "the-odds-api:ortalama(3 şirket)",
+    "ÜST": 1.987
+   },
+   "1X2_pinnacle": {
+    "1": 1.62,
+    "2": 4.98,
+    "X": 4.32
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 4.6,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.17
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.245,
+    "src": "the-odds-api:ortalama(8 şirket)",
+    "ÜST": 1.593
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.52,
+    "src": "the-odds-api:ortalama(1 şirket)",
+    "ÜST": 2.3
+   }
+  }
+ },
+ {
+  "match_id": "E2:2026-10-27:miltonkeynesdons:bromley",
+  "taken_at": "2026-10-27T01:25:24+00:00",
+  "kickoff_at": "2026-10-27T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.65,
+    "2": 4.58,
+    "X": 3.99,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.61,
+    "YOK": 2.19,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_3": {
+    "ALT": 1.797,
+    "src": "the-odds-api:ortalama(3 şirket)",
+    "ÜST": 1.987
+   },
+   "1X2_pinnacle": {
+    "1": 1.62,
+    "2": 4.98,
+    "X": 4.32
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 4.6,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.17
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.28,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.59
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.49,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.47
+   }
+  }
+ },
+ {
+  "match_id": "E2:2026-10-27:oxford:stockport",
+  "taken_at": "2026-10-26T15:14:07+00:00",
+  "kickoff_at": "2026-10-27T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 3.28,
+    "2": 1.98,
+    "X": 3.65,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.57,
+    "YOK": 2.3,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 4.12,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.19
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.18,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.65
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.44,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.56
+   }
+  }
+ },
+ {
+  "match_id": "E2:2026-10-27:oxford:stockport",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 3.324,
+    "2": 2.009,
+    "X": 3.649,
+    "src": "the-odds-api:ortalama(16 şirket)"
+   },
+   "BTTS": {
+    "VAR": 1.57,
+    "YOK": 2.27,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_3": {
+    "ALT": 1.7,
+    "src": "the-odds-api:ortalama(1 şirket)",
+    "ÜST": 2.08
+   },
+   "1X2_pinnacle": {
+    "1": 3.37,
+    "2": 2.03,
+    "X": 3.91
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 4.22,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.19
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.144,
+    "src": "the-odds-api:ortalama(11 şirket)",
+    "ÜST": 1.648
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.45,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.58
+   },
+   "OU_GOALS_2.75": {
+    "ALT": 1.895,
+    "src": "the-odds-api:ortalama(2 şirket)",
+    "ÜST": 1.9
+   }
+  }
+ },
+ {
+  "match_id": "E2:2026-10-27:oxford:stockport",
+  "taken_at": "2026-10-27T01:25:24+00:00",
+  "kickoff_at": "2026-10-27T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 3.29,
+    "2": 1.99,
+    "X": 3.67,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.57,
+    "YOK": 2.27,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_3": {
+    "ALT": 1.7,
+    "src": "the-odds-api:ortalama(1 şirket)",
+    "ÜST": 2.08
+   },
+   "1X2_pinnacle": {
+    "1": 3.37,
+    "2": 2.03,
+    "X": 3.91
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 4.22,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.19
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.18,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.65
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.45,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.58
+   },
+   "OU_GOALS_2.75": {
+    "ALT": 1.895,
+    "src": "the-odds-api:ortalama(2 şirket)",
+    "ÜST": 1.9
+   }
+  }
+ },
+ {
+  "match_id": "E2:2026-10-27:sheffieldweds:cambridge",
+  "taken_at": "2026-10-26T15:14:07+00:00",
+  "kickoff_at": "2026-10-27T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.99,
+    "2": 3.33,
+    "X": 3.57,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.56,
+    "YOK": 2.29,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 4.05,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.2
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.16,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.65
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.43,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.58
+   }
+  }
+ },
+ {
+  "match_id": "E2:2026-10-27:sheffieldweds:cambridge",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.004,
+    "2": 3.394,
+    "X": 3.651,
+    "src": "the-odds-api:ortalama(14 şirket)"
+   },
+   "BTTS": {
+    "VAR": 1.56,
+    "YOK": 2.27,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_3": {
+    "ALT": 1.7,
+    "src": "the-odds-api:ortalama(1 şirket)",
+    "ÜST": 2.08
+   },
+   "1X2_pinnacle": {
+    "1": 2.03,
+    "2": 3.44,
+    "X": 3.81
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 4.16,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.2
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.196,
+    "src": "the-odds-api:ortalama(8 şirket)",
+    "ÜST": 1.6
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.44,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.59
+   },
+   "OU_GOALS_2.75": {
+    "ALT": 1.95,
+    "src": "the-odds-api:ortalama(2 şirket)",
+    "ÜST": 1.85
+   }
+  }
+ },
+ {
+  "match_id": "E2:2026-10-27:sheffieldweds:cambridge",
+  "taken_at": "2026-10-27T01:25:24+00:00",
+  "kickoff_at": "2026-10-27T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.0,
+    "2": 3.34,
+    "X": 3.59,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.56,
+    "YOK": 2.27,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_3": {
+    "ALT": 1.7,
+    "src": "the-odds-api:ortalama(1 şirket)",
+    "ÜST": 2.08
+   },
+   "1X2_pinnacle": {
+    "1": 2.03,
+    "2": 3.44,
+    "X": 3.81
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 4.16,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.2
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.16,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.65
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.44,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.59
+   },
+   "OU_GOALS_2.75": {
+    "ALT": 1.95,
+    "src": "the-odds-api:ortalama(2 şirket)",
+    "ÜST": 1.85
+   }
+  }
+ },
+ {
   "match_id": "E3:2026-10-20:barnet:swindontown",
   "taken_at": "2026-10-20T01:51:26+00:00",
   "kickoff_at": "2026-10-20T18:45:00+00:00",
@@ -78775,211 +82793,167 @@
   }
  },
  {
-  "match_id": "ECL:2026-10-22:aarhus:egnatiarrogozhine",
-  "taken_at": "2026-10-21T13:50:30+00:00",
-  "kickoff_at": "2026-10-22T19:00:00+00:00",
+  "match_id": "E3:2026-10-26:walsall:salfordcity",
+  "taken_at": "2026-10-26T05:24:18+00:00",
+  "kickoff_at": "2026-10-26T20:00:00+00:00",
   "odds": {
-   "DC": {
-    "12": 1.2,
-    "1X": 1.14,
-    "X2": 2.415,
-    "src": "api-football:medyan(8)"
-   },
    "1X2": {
-    "1": 1.535,
-    "2": 5.725,
-    "X": 4.175,
-    "src": "api-football:medyan(10)"
+    "1": 3.2,
+    "2": 2.06,
+    "X": 3.51,
+    "src": "bsd:konsensüs"
    },
    "BTTS": {
-    "VAR": 1.8,
-    "YOK": 1.9,
-    "src": "api-football:medyan(7)"
-   },
-   "AH_0.5": {
-    "1": 1.15,
-    "2": 5.5,
-    "src": "api-football:medyan(1)"
-   },
-   "AH_1.5": {
-    "1": 1.02,
-    "2": 10.75,
-    "src": "api-football:medyan(2)"
-   },
-   "AH_-0.5": {
-    "1": 1.525,
-    "2": 2.47,
-    "src": "api-football:medyan(4)"
-   },
-   "AH_-1.5": {
-    "1": 2.5,
-    "2": 1.51,
-    "src": "api-football:medyan(7)"
-   },
-   "AH_-2.5": {
-    "1": 4.55,
-    "2": 1.135,
-    "src": "api-football:medyan(4)"
-   },
-   "AH_-3.5": {
-    "1": 9.5,
-    "2": 1.035,
-    "src": "api-football:medyan(2)"
-   },
-   "SOT_OU_8.5": {
-    "ALT": 2.55,
-    "src": "api-football:medyan(1)",
-    "ÜST": 1.47
-   },
-   "SOT_OU_9.5": {
-    "ALT": 1.93,
-    "src": "api-football:medyan(1)",
-    "ÜST": 1.82
-   },
-   "SOT_OU_10.5": {
-    "ALT": 1.57,
-    "src": "api-football:medyan(1)",
-    "ÜST": 2.32
-   },
-   "CARDS_OU_4.5": {
-    "ALT": 1.65,
-    "src": "api-football:medyan(1)",
-    "ÜST": 2.15
-   },
-   "OU_GOALS_0.5": {
-    "ALT": 12.65,
-    "src": "api-football:medyan(4)",
-    "ÜST": 1.035
+    "VAR": 1.59,
+    "YOK": 2.23,
+    "src": "bsd:konsensüs"
    },
    "OU_GOALS_1.5": {
-    "ALT": 4.0,
-    "src": "api-football:medyan(7)",
-    "ÜST": 1.22
+    "ALT": 4.14,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.2
    },
    "OU_GOALS_2.5": {
-    "ALT": 2.09,
-    "src": "api-football:medyan(8)",
-    "ÜST": 1.73
+    "ALT": 2.07,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.71
    },
    "OU_GOALS_3.5": {
     "ALT": 1.4,
-    "src": "api-football:medyan(7)",
-    "ÜST": 2.75
-   },
-   "OU_GOALS_4.5": {
-    "ALT": 1.14,
-    "src": "api-football:medyan(7)",
-    "ÜST": 5.5
-   },
-   "OU_GOALS_5.5": {
-    "ALT": 1.04,
-    "src": "api-football:medyan(5)",
-    "ÜST": 10.5
-   },
-   "OU_GOALS_6.5": {
-    "ALT": 1.01,
-    "src": "api-football:medyan(3)",
-    "ÜST": 23.0
-   },
-   "CORNERS_OU_6.5": {
-    "ALT": 4.3,
-    "src": "api-football:medyan(3)",
-    "ÜST": 1.15
-   },
-   "CORNERS_OU_7.5": {
-    "ALT": 2.83,
-    "src": "api-football:medyan(3)",
-    "ÜST": 1.33
-   },
-   "CORNERS_OU_8.5": {
-    "ALT": 2.09,
-    "src": "api-football:medyan(4)",
-    "ÜST": 1.64
-   },
-   "CORNERS_OU_9.5": {
-    "ALT": 1.665,
-    "src": "api-football:medyan(4)",
-    "ÜST": 2.08
-   },
-   "CORNERS_OU_10.5": {
-    "ALT": 1.36,
-    "src": "api-football:medyan(3)",
+    "src": "bsd:konsensüs",
     "ÜST": 2.73
+   }
+  }
+ },
+ {
+  "match_id": "E3:2026-10-26:walsall:salfordcity",
+  "taken_at": "2026-10-26T09:55:06+00:00",
+  "kickoff_at": "2026-10-26T20:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 3.2,
+    "2": 2.06,
+    "X": 3.51,
+    "src": "bsd:konsensüs"
    },
-   "CORNERS_OU_11.5": {
-    "ALT": 1.19,
-    "src": "api-football:medyan(3)",
-    "ÜST": 3.78
+   "BTTS": {
+    "VAR": 1.6,
+    "YOK": 2.22,
+    "src": "bsd:konsensüs"
    },
-   "CORNERS_OU_12.5": {
-    "ALT": 1.09,
-    "src": "api-football:medyan(2)",
-    "ÜST": 5.4
+   "OU_GOALS_1.5": {
+    "ALT": 4.14,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.2
    },
-   "HT_OU_GOALS_0.5": {
-    "ALT": 3.145,
-    "src": "api-football:medyan(8)",
-    "ÜST": 1.315
+   "OU_GOALS_2.5": {
+    "ALT": 2.07,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.71
    },
-   "HT_OU_GOALS_1.5": {
-    "ALT": 1.46,
-    "src": "api-football:medyan(8)",
-    "ÜST": 2.53
+   "OU_GOALS_3.5": {
+    "ALT": 1.4,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.73
+   }
+  }
+ },
+ {
+  "match_id": "E3:2026-10-26:walsall:salfordcity",
+  "taken_at": "2026-10-26T12:32:46+00:00",
+  "kickoff_at": "2026-10-26T20:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 3.2,
+    "2": 2.04,
+    "X": 3.52,
+    "src": "football-data.co.uk:Avg"
    },
-   "HT_OU_GOALS_2.5": {
-    "ALT": 1.08,
-    "src": "api-football:medyan(7)",
-    "ÜST": 6.2
+   "BTTS": {
+    "VAR": 1.6,
+    "YOK": 2.22,
+    "src": "bsd:konsensüs"
    },
-   "HT_OU_GOALS_3.5": {
-    "ALT": 1.02,
-    "src": "api-football:medyan(5)",
-    "ÜST": 17.0
+   "OU_GOALS_1.5": {
+    "ALT": 4.14,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.2
    },
-   "TEAM_GOALS_AWAY_0.5": {
-    "ALT": 2.22,
-    "src": "api-football:medyan(7)",
-    "ÜST": 1.6
+   "OU_GOALS_2.5": {
+    "ALT": 2.04,
+    "src": "football-data.co.uk:Avg",
+    "ÜST": 1.7
    },
-   "TEAM_GOALS_AWAY_1.5": {
-    "ALT": 1.21,
-    "src": "api-football:medyan(7)",
-    "ÜST": 4.0
+   "OU_GOALS_3.5": {
+    "ALT": 1.4,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.73
+   }
+  }
+ },
+ {
+  "match_id": "E3:2026-10-27:barnet:yorkcity",
+  "taken_at": "2026-10-26T15:14:07+00:00",
+  "kickoff_at": "2026-10-27T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.06,
+    "2": 3.15,
+    "X": 3.73,
+    "src": "bsd:konsensüs"
    },
-   "TEAM_GOALS_AWAY_2.5": {
-    "ALT": 1.03,
-    "src": "api-football:medyan(5)",
-    "ÜST": 10.0
+   "BTTS": {
+    "VAR": 1.43,
+    "YOK": 2.64,
+    "src": "bsd:konsensüs"
    },
-   "TEAM_GOALS_HOME_0.5": {
-    "ALT": 6.0,
-    "src": "api-football:medyan(5)",
-    "ÜST": 1.1
+   "OU_GOALS_1.5": {
+    "ALT": 5.34,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.12
    },
-   "TEAM_GOALS_HOME_1.5": {
-    "ALT": 2.2,
-    "src": "api-football:medyan(7)",
-    "ÜST": 1.6
+   "OU_GOALS_2.5": {
+    "ALT": 2.53,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.47
    },
-   "TEAM_GOALS_HOME_2.5": {
-    "ALT": 1.36,
-    "src": "api-football:medyan(7)",
-    "ÜST": 2.88
+   "OU_GOALS_3.5": {
+    "ALT": 1.63,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.18
+   }
+  }
+ },
+ {
+  "match_id": "E3:2026-10-27:barnet:yorkcity",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.05,
+    "2": 3.12,
+    "X": 3.67,
+    "src": "bsd:konsensüs"
    },
-   "TEAM_GOALS_HOME_3.5": {
-    "ALT": 1.1,
-    "src": "api-football:medyan(5)",
-    "ÜST": 6.0
+   "BTTS": {
+    "VAR": 1.45,
+    "YOK": 2.57,
+    "src": "bsd:konsensüs"
    },
-   "TEAM_GOALS_HOME_4.5": {
-    "ALT": 1.035,
-    "src": "api-football:medyan(2)",
-    "ÜST": 12.125
+   "OU_GOALS_1.5": {
+    "ALT": 5.34,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.12
    },
-   "TEAM_GOALS_HOME_5.5": {
-    "ALT": 1.01,
-    "src": "api-football:medyan(2)",
-    "ÜST": 20.75
+   "OU_GOALS_2.5": {
+    "ALT": 2.47,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.49
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.61,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.23
    }
   }
  },
@@ -81828,688 +85802,6 @@
     "ALT": 1.3,
     "src": "bsd:konsensüs",
     "ÜST": 3.31
-   }
-  }
- },
- {
-  "match_id": "ECL:2026-10-22:boracbanjaluka:kups",
-  "taken_at": "2026-10-21T13:50:30+00:00",
-  "kickoff_at": "2026-10-22T19:00:00+00:00",
-  "odds": {
-   "DC": {
-    "12": 1.28,
-    "1X": 1.235,
-    "X2": 1.88,
-    "src": "api-football:medyan(8)"
-   },
-   "1X2": {
-    "1": 1.844,
-    "2": 4.095,
-    "X": 3.475,
-    "src": "the-odds-api:ortalama(15 şirket)"
-   },
-   "BTTS": {
-    "VAR": 1.755,
-    "YOK": 1.955,
-    "src": "api-football:medyan(6)"
-   },
-   "AH_0.5": {
-    "1": 1.26,
-    "2": 3.7,
-    "src": "api-football:medyan(3)"
-   },
-   "AH_1.5": {
-    "1": 1.02,
-    "2": 8.1,
-    "src": "api-football:medyan(3)"
-   },
-   "AH_-0.5": {
-    "1": 1.89,
-    "2": 1.93,
-    "src": "api-football:medyan(5)"
-   },
-   "AH_-1.5": {
-    "1": 3.45,
-    "2": 1.26,
-    "src": "api-football:medyan(5)"
-   },
-   "AH_-2.5": {
-    "1": 6.4,
-    "2": 1.05,
-    "src": "api-football:medyan(3)"
-   },
-   "AH_-3.5": {
-    "1": 12.0,
-    "2": 1.02,
-    "src": "api-football:medyan(1)"
-   },
-   "SOT_OU_7.5": {
-    "ALT": 2.75,
-    "src": "api-football:medyan(1)",
-    "ÜST": 1.42
-   },
-   "SOT_OU_8.5": {
-    "ALT": 2.05,
-    "src": "api-football:medyan(1)",
-    "ÜST": 1.72
-   },
-   "SOT_OU_9.5": {
-    "ALT": 1.62,
-    "src": "api-football:medyan(1)",
-    "ÜST": 2.22
-   },
-   "1X2_pinnacle": {
-    "1": 1.81,
-    "2": 4.47,
-    "X": 3.53
-   },
-   "OU_GOALS_0.5": {
-    "ALT": 9.0,
-    "src": "api-football:medyan(5)",
-    "ÜST": 1.03
-   },
-   "OU_GOALS_1.5": {
-    "ALT": 3.45,
-    "src": "api-football:medyan(6)",
-    "ÜST": 1.285
-   },
-   "OU_GOALS_2.5": {
-    "ALT": 1.863,
-    "src": "the-odds-api:ortalama(11 şirket)",
-    "ÜST": 1.905
-   },
-   "OU_GOALS_3.5": {
-    "ALT": 1.31,
-    "src": "api-football:medyan(6)",
-    "ÜST": 3.25
-   },
-   "OU_GOALS_4.5": {
-    "ALT": 1.095,
-    "src": "api-football:medyan(6)",
-    "ÜST": 6.105
-   },
-   "OU_GOALS_5.5": {
-    "ALT": 1.03,
-    "src": "api-football:medyan(3)",
-    "ÜST": 13.5
-   },
-   "OU_GOALS_6.5": {
-    "ALT": 1.01,
-    "src": "api-football:medyan(3)",
-    "ÜST": 29.0
-   },
-   "CORNERS_OU_7.5": {
-    "ALT": 3.3,
-    "src": "api-football:medyan(1)",
-    "ÜST": 1.3
-   },
-   "CORNERS_OU_8.5": {
-    "ALT": 2.26,
-    "src": "api-football:medyan(2)",
-    "ÜST": 1.565
-   },
-   "CORNERS_OU_9.5": {
-    "ALT": 1.8,
-    "src": "api-football:medyan(3)",
-    "ÜST": 2.0
-   },
-   "CORNERS_OU_10.5": {
-    "ALT": 1.47,
-    "src": "api-football:medyan(1)",
-    "ÜST": 2.55
-   },
-   "CORNERS_OU_11.5": {
-    "ALT": 1.28,
-    "src": "api-football:medyan(1)",
-    "ÜST": 3.5
-   },
-   "HT_OU_GOALS_0.5": {
-    "ALT": 2.945,
-    "src": "api-football:medyan(8)",
-    "ÜST": 1.375
-   },
-   "HT_OU_GOALS_1.5": {
-    "ALT": 1.4,
-    "src": "api-football:medyan(8)",
-    "ÜST": 2.745
-   },
-   "HT_OU_GOALS_2.5": {
-    "ALT": 1.07,
-    "src": "api-football:medyan(7)",
-    "ÜST": 7.0
-   },
-   "HT_OU_GOALS_3.5": {
-    "ALT": 1.01,
-    "src": "api-football:medyan(5)",
-    "ÜST": 17.0
-   },
-   "TEAM_GOALS_AWAY_0.5": {
-    "ALT": 2.59,
-    "src": "api-football:medyan(7)",
-    "ÜST": 1.45
-   },
-   "TEAM_GOALS_AWAY_1.5": {
-    "ALT": 1.33,
-    "src": "api-football:medyan(7)",
-    "ÜST": 3.18
-   },
-   "TEAM_GOALS_AWAY_2.5": {
-    "ALT": 1.06,
-    "src": "api-football:medyan(5)",
-    "ÜST": 8.0
-   },
-   "TEAM_GOALS_AWAY_3.5": {
-    "ALT": 1.015,
-    "src": "api-football:medyan(2)",
-    "ÜST": 19.0
-   },
-   "TEAM_GOALS_HOME_0.5": {
-    "ALT": 4.315,
-    "src": "api-football:medyan(6)",
-    "ÜST": 1.2
-   },
-   "TEAM_GOALS_HOME_1.5": {
-    "ALT": 1.79,
-    "src": "api-football:medyan(7)",
-    "ÜST": 1.93
-   },
-   "TEAM_GOALS_HOME_2.5": {
-    "ALT": 1.21,
-    "src": "api-football:medyan(7)",
-    "ÜST": 4.0
-   },
-   "TEAM_GOALS_HOME_3.5": {
-    "ALT": 1.04,
-    "src": "api-football:medyan(5)",
-    "ÜST": 9.5
-   },
-   "TEAM_GOALS_HOME_4.5": {
-    "ALT": 1.015,
-    "src": "api-football:medyan(2)",
-    "ÜST": 17.375
-   }
-  }
- },
- {
-  "match_id": "ECL:2026-10-22:boracbanjaluka:kups",
-  "taken_at": "2026-10-22T01:20:48+00:00",
-  "kickoff_at": "2026-10-22T19:00:00+00:00",
-  "odds": {
-   "DC": {
-    "12": 1.28,
-    "1X": 1.235,
-    "X2": 1.88,
-    "src": "api-football:medyan(8)"
-   },
-   "1X2": {
-    "1": 1.787,
-    "2": 4.405,
-    "X": 3.537,
-    "src": "the-odds-api:ortalama(15 şirket)"
-   },
-   "BTTS": {
-    "VAR": 1.755,
-    "YOK": 1.955,
-    "src": "api-football:medyan(6)"
-   },
-   "AH_0.5": {
-    "1": 1.26,
-    "2": 3.7,
-    "src": "api-football:medyan(3)"
-   },
-   "AH_1.5": {
-    "1": 1.02,
-    "2": 8.1,
-    "src": "api-football:medyan(3)"
-   },
-   "AH_-0.5": {
-    "1": 1.89,
-    "2": 1.93,
-    "src": "api-football:medyan(5)"
-   },
-   "AH_-1.5": {
-    "1": 3.45,
-    "2": 1.26,
-    "src": "api-football:medyan(5)"
-   },
-   "AH_-2.5": {
-    "1": 6.4,
-    "2": 1.05,
-    "src": "api-football:medyan(3)"
-   },
-   "AH_-3.5": {
-    "1": 12.0,
-    "2": 1.02,
-    "src": "api-football:medyan(1)"
-   },
-   "SOT_OU_7.5": {
-    "ALT": 2.75,
-    "src": "api-football:medyan(1)",
-    "ÜST": 1.42
-   },
-   "SOT_OU_8.5": {
-    "ALT": 2.05,
-    "src": "api-football:medyan(1)",
-    "ÜST": 1.72
-   },
-   "SOT_OU_9.5": {
-    "ALT": 1.62,
-    "src": "api-football:medyan(1)",
-    "ÜST": 2.22
-   },
-   "1X2_pinnacle": {
-    "1": 1.81,
-    "2": 4.61,
-    "X": 3.6
-   },
-   "OU_GOALS_0.5": {
-    "ALT": 9.0,
-    "src": "api-football:medyan(5)",
-    "ÜST": 1.03
-   },
-   "OU_GOALS_1.5": {
-    "ALT": 3.45,
-    "src": "api-football:medyan(6)",
-    "ÜST": 1.285
-   },
-   "OU_GOALS_2.5": {
-    "ALT": 1.875,
-    "src": "the-odds-api:ortalama(11 şirket)",
-    "ÜST": 1.912
-   },
-   "OU_GOALS_3.5": {
-    "ALT": 1.31,
-    "src": "api-football:medyan(6)",
-    "ÜST": 3.25
-   },
-   "OU_GOALS_4.5": {
-    "ALT": 1.095,
-    "src": "api-football:medyan(6)",
-    "ÜST": 6.105
-   },
-   "OU_GOALS_5.5": {
-    "ALT": 1.03,
-    "src": "api-football:medyan(3)",
-    "ÜST": 13.5
-   },
-   "OU_GOALS_6.5": {
-    "ALT": 1.01,
-    "src": "api-football:medyan(3)",
-    "ÜST": 29.0
-   },
-   "CORNERS_OU_7.5": {
-    "ALT": 3.3,
-    "src": "api-football:medyan(1)",
-    "ÜST": 1.3
-   },
-   "CORNERS_OU_8.5": {
-    "ALT": 2.26,
-    "src": "api-football:medyan(2)",
-    "ÜST": 1.565
-   },
-   "CORNERS_OU_9.5": {
-    "ALT": 1.8,
-    "src": "api-football:medyan(3)",
-    "ÜST": 2.0
-   },
-   "CORNERS_OU_10.5": {
-    "ALT": 1.47,
-    "src": "api-football:medyan(1)",
-    "ÜST": 2.55
-   },
-   "CORNERS_OU_11.5": {
-    "ALT": 1.28,
-    "src": "api-football:medyan(1)",
-    "ÜST": 3.5
-   },
-   "HT_OU_GOALS_0.5": {
-    "ALT": 2.945,
-    "src": "api-football:medyan(8)",
-    "ÜST": 1.375
-   },
-   "HT_OU_GOALS_1.5": {
-    "ALT": 1.4,
-    "src": "api-football:medyan(8)",
-    "ÜST": 2.745
-   },
-   "HT_OU_GOALS_2.5": {
-    "ALT": 1.07,
-    "src": "api-football:medyan(7)",
-    "ÜST": 7.0
-   },
-   "HT_OU_GOALS_3.5": {
-    "ALT": 1.01,
-    "src": "api-football:medyan(5)",
-    "ÜST": 17.0
-   },
-   "TEAM_GOALS_AWAY_0.5": {
-    "ALT": 2.59,
-    "src": "api-football:medyan(7)",
-    "ÜST": 1.45
-   },
-   "TEAM_GOALS_AWAY_1.5": {
-    "ALT": 1.33,
-    "src": "api-football:medyan(7)",
-    "ÜST": 3.18
-   },
-   "TEAM_GOALS_AWAY_2.5": {
-    "ALT": 1.06,
-    "src": "api-football:medyan(5)",
-    "ÜST": 8.0
-   },
-   "TEAM_GOALS_AWAY_3.5": {
-    "ALT": 1.015,
-    "src": "api-football:medyan(2)",
-    "ÜST": 19.0
-   },
-   "TEAM_GOALS_HOME_0.5": {
-    "ALT": 4.315,
-    "src": "api-football:medyan(6)",
-    "ÜST": 1.2
-   },
-   "TEAM_GOALS_HOME_1.5": {
-    "ALT": 1.79,
-    "src": "api-football:medyan(7)",
-    "ÜST": 1.93
-   },
-   "TEAM_GOALS_HOME_2.5": {
-    "ALT": 1.21,
-    "src": "api-football:medyan(7)",
-    "ÜST": 4.0
-   },
-   "TEAM_GOALS_HOME_3.5": {
-    "ALT": 1.04,
-    "src": "api-football:medyan(5)",
-    "ÜST": 9.5
-   },
-   "TEAM_GOALS_HOME_4.5": {
-    "ALT": 1.015,
-    "src": "api-football:medyan(2)",
-    "ÜST": 17.375
-   }
-  }
- },
- {
-  "match_id": "ECL:2026-10-22:crvenazvezda:copenhagen",
-  "taken_at": "2026-10-21T11:43:47+00:00",
-  "kickoff_at": "2026-10-22T16:45:00+00:00",
-  "odds": {
-   "DC": {
-    "12": 1.275,
-    "1X": 1.365,
-    "X2": 1.62,
-    "src": "api-football:medyan(8)"
-   },
-   "1X2": {
-    "1": 2.215,
-    "2": 2.91,
-    "X": 3.6,
-    "src": "api-football:medyan(10)"
-   },
-   "BTTS": {
-    "VAR": 1.53,
-    "YOK": 2.31,
-    "src": "api-football:medyan(7)"
-   },
-   "AH_0.5": {
-    "1": 1.405,
-    "2": 2.865,
-    "src": "api-football:medyan(4)"
-   },
-   "AH_1.5": {
-    "1": 1.095,
-    "2": 5.775,
-    "src": "api-football:medyan(4)"
-   },
-   "AH_2.5": {
-    "1": 1.015,
-    "2": 11.25,
-    "src": "api-football:medyan(2)"
-   },
-   "AH_-0.5": {
-    "1": 2.225,
-    "2": 1.645,
-    "src": "api-football:medyan(4)"
-   },
-   "AH_-1.5": {
-    "1": 4.025,
-    "2": 1.185,
-    "src": "api-football:medyan(4)"
-   },
-   "AH_-2.5": {
-    "1": 8.3,
-    "2": 1.01,
-    "src": "api-football:medyan(3)"
-   },
-   "AH_-3.5": {
-    "1": 13.0,
-    "2": 1.01,
-    "src": "api-football:medyan(1)"
-   },
-   "SOT_OU_8.5": {
-    "ALT": 2.67,
-    "src": "api-football:medyan(1)",
-    "ÜST": 1.44
-   },
-   "SOT_OU_9.5": {
-    "ALT": 2.02,
-    "src": "api-football:medyan(1)",
-    "ÜST": 1.75
-   },
-   "SOT_OU_10.5": {
-    "ALT": 1.62,
-    "src": "api-football:medyan(1)",
-    "ÜST": 2.2
-   },
-   "CARDS_OU_2.5": {
-    "ALT": 3.6,
-    "src": "api-football:medyan(1)",
-    "ÜST": 1.26
-   },
-   "CARDS_OU_3.5": {
-    "ALT": 2.27,
-    "src": "api-football:medyan(1)",
-    "ÜST": 1.6
-   },
-   "CARDS_OU_4.5": {
-    "ALT": 1.65,
-    "src": "api-football:medyan(1)",
-    "ÜST": 2.15
-   },
-   "CARDS_OU_5.5": {
-    "ALT": 1.34,
-    "src": "api-football:medyan(1)",
-    "ÜST": 3.1
-   },
-   "CARDS_OU_6.5": {
-    "ALT": 1.17,
-    "src": "api-football:medyan(1)",
-    "ÜST": 4.6
-   },
-   "OU_GOALS_0.5": {
-    "ALT": 13.7,
-    "src": "api-football:medyan(4)",
-    "ÜST": 1.03
-   },
-   "OU_GOALS_1.5": {
-    "ALT": 4.33,
-    "src": "api-football:medyan(7)",
-    "ÜST": 1.2
-   },
-   "OU_GOALS_2.5": {
-    "ALT": 2.18,
-    "src": "api-football:medyan(8)",
-    "ÜST": 1.665
-   },
-   "OU_GOALS_3.5": {
-    "ALT": 1.45,
-    "src": "api-football:medyan(7)",
-    "ÜST": 2.6
-   },
-   "OU_GOALS_4.5": {
-    "ALT": 1.17,
-    "src": "api-football:medyan(7)",
-    "ÜST": 4.6
-   },
-   "OU_GOALS_5.5": {
-    "ALT": 1.045,
-    "src": "api-football:medyan(6)",
-    "ÜST": 8.75
-   },
-   "OU_GOALS_6.5": {
-    "ALT": 1.01,
-    "src": "api-football:medyan(3)",
-    "ÜST": 21.0
-   },
-   "CORNERS_OU_3.5": {
-    "ALT": 12.5,
-    "src": "api-football:medyan(1)",
-    "ÜST": 1.01
-   },
-   "CORNERS_OU_4.5": {
-    "ALT": 10.25,
-    "src": "api-football:medyan(1)",
-    "ÜST": 1.03
-   },
-   "CORNERS_OU_5.5": {
-    "ALT": 6.9,
-    "src": "api-football:medyan(1)",
-    "ÜST": 1.08
-   },
-   "CORNERS_OU_6.5": {
-    "ALT": 4.55,
-    "src": "api-football:medyan(3)",
-    "ÜST": 1.13
-   },
-   "CORNERS_OU_7.5": {
-    "ALT": 2.97,
-    "src": "api-football:medyan(3)",
-    "ÜST": 1.3
-   },
-   "CORNERS_OU_8.5": {
-    "ALT": 2.18,
-    "src": "api-football:medyan(3)",
-    "ÜST": 1.56
-   },
-   "CORNERS_OU_9.5": {
-    "ALT": 1.725,
-    "src": "api-football:medyan(4)",
-    "ÜST": 1.99
-   },
-   "CORNERS_OU_10.5": {
-    "ALT": 1.4,
-    "src": "api-football:medyan(3)",
-    "ÜST": 2.6
-   },
-   "CORNERS_OU_11.5": {
-    "ALT": 1.22,
-    "src": "api-football:medyan(3)",
-    "ÜST": 3.5
-   },
-   "CORNERS_OU_12.5": {
-    "ALT": 1.1,
-    "src": "api-football:medyan(3)",
-    "ÜST": 5.1
-   },
-   "CORNERS_OU_13.5": {
-    "ALT": 1.08,
-    "src": "api-football:medyan(1)",
-    "ÜST": 6.8
-   },
-   "CORNERS_OU_14.5": {
-    "ALT": 1.04,
-    "src": "api-football:medyan(1)",
-    "ÜST": 9.0
-   },
-   "CORNERS_OU_15.5": {
-    "ALT": 1.02,
-    "src": "api-football:medyan(1)",
-    "ÜST": 11.0
-   },
-   "CORNERS_OU_16.5": {
-    "ALT": 1.01,
-    "src": "api-football:medyan(1)",
-    "ÜST": 12.5
-   },
-   "CORNERS_OU_17.5": {
-    "ALT": 1.01,
-    "src": "api-football:medyan(1)",
-    "ÜST": 15.0
-   },
-   "HT_OU_GOALS_0.5": {
-    "ALT": 3.3,
-    "src": "api-football:medyan(7)",
-    "ÜST": 1.3
-   },
-   "HT_OU_GOALS_1.5": {
-    "ALT": 1.5,
-    "src": "api-football:medyan(8)",
-    "ÜST": 2.42
-   },
-   "HT_OU_GOALS_2.5": {
-    "ALT": 1.11,
-    "src": "api-football:medyan(7)",
-    "ÜST": 5.55
-   },
-   "HT_OU_GOALS_3.5": {
-    "ALT": 1.02,
-    "src": "api-football:medyan(5)",
-    "ÜST": 15.0
-   },
-   "HT_OU_GOALS_4.5": {
-    "ALT": 1.01,
-    "src": "api-football:medyan(1)",
-    "ÜST": 28.0
-   },
-   "TEAM_GOALS_AWAY_0.5": {
-    "ALT": 3.5,
-    "src": "api-football:medyan(7)",
-    "ÜST": 1.26
-   },
-   "TEAM_GOALS_AWAY_1.5": {
-    "ALT": 1.57,
-    "src": "api-football:medyan(7)",
-    "ÜST": 2.29
-   },
-   "TEAM_GOALS_AWAY_2.5": {
-    "ALT": 1.125,
-    "src": "api-football:medyan(6)",
-    "ÜST": 5.45
-   },
-   "TEAM_GOALS_AWAY_3.5": {
-    "ALT": 1.03,
-    "src": "api-football:medyan(3)",
-    "ÜST": 10.0
-   },
-   "TEAM_GOALS_AWAY_4.5": {
-    "ALT": 1.01,
-    "src": "api-football:medyan(1)",
-    "ÜST": 27.0
-   },
-   "TEAM_GOALS_HOME_0.5": {
-    "ALT": 4.33,
-    "src": "api-football:medyan(6)",
-    "ÜST": 1.195
-   },
-   "TEAM_GOALS_HOME_1.5": {
-    "ALT": 1.8,
-    "src": "api-football:medyan(7)",
-    "ÜST": 1.94
-   },
-   "TEAM_GOALS_HOME_2.5": {
-    "ALT": 1.21,
-    "src": "api-football:medyan(7)",
-    "ÜST": 4.0
-   },
-   "TEAM_GOALS_HOME_3.5": {
-    "ALT": 1.04,
-    "src": "api-football:medyan(5)",
-    "ÜST": 9.5
-   },
-   "TEAM_GOALS_HOME_4.5": {
-    "ALT": 1.015,
-    "src": "api-football:medyan(2)",
-    "ÜST": 18.875
    }
   }
  },
@@ -98104,72 +101396,6 @@
     "ALT": 1.025,
     "src": "api-football:medyan(2)",
     "ÜST": 13.375
-   }
-  }
- },
- {
-  "match_id": "ECL:2026-10-22:redstarbelgrade:copenhagen",
-  "taken_at": "2026-10-21T11:43:47+00:00",
-  "kickoff_at": "2026-10-22T16:45:00+00:00",
-  "odds": {
-   "1X2": {
-    "1": 2.231,
-    "2": 2.947,
-    "X": 3.516,
-    "src": "the-odds-api:ortalama(15 şirket)"
-   },
-   "OU_GOALS_3": {
-    "ALT": 1.7,
-    "src": "the-odds-api:ortalama(2 şirket)",
-    "ÜST": 2.095
-   },
-   "1X2_pinnacle": {
-    "1": 2.28,
-    "2": 2.91,
-    "X": 3.66
-   },
-   "OU_GOALS_2.5": {
-    "ALT": 2.144,
-    "src": "the-odds-api:ortalama(7 şirket)",
-    "ÜST": 1.67
-   },
-   "OU_GOALS_2.75": {
-    "ALT": 2.0,
-    "src": "the-odds-api:ortalama(1 şirket)",
-    "ÜST": 1.83
-   }
-  }
- },
- {
-  "match_id": "ECL:2026-10-22:redstarbelgrade:copenhagen",
-  "taken_at": "2026-10-22T01:20:48+00:00",
-  "kickoff_at": "2026-10-22T16:45:00+00:00",
-  "odds": {
-   "1X2": {
-    "1": 2.241,
-    "2": 2.975,
-    "X": 3.519,
-    "src": "the-odds-api:ortalama(15 şirket)"
-   },
-   "OU_GOALS_3": {
-    "ALT": 1.7,
-    "src": "the-odds-api:ortalama(2 şirket)",
-    "ÜST": 2.095
-   },
-   "1X2_pinnacle": {
-    "1": 2.26,
-    "2": 3.01,
-    "X": 3.71
-   },
-   "OU_GOALS_2.5": {
-    "ALT": 2.153,
-    "src": "the-odds-api:ortalama(7 şirket)",
-    "ÜST": 1.669
-   },
-   "OU_GOALS_2.75": {
-    "ALT": 2.02,
-    "src": "the-odds-api:ortalama(1 şirket)",
-    "ÜST": 1.85
    }
   }
  },
@@ -135646,6 +138872,234 @@
   }
  },
  {
+  "match_id": "F1:2026-10-25:psg:lyon",
+  "taken_at": "2026-10-26T01:54:28+00:00",
+  "kickoff_at": "2026-10-26T19:30:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.42,
+    "2": 6.2,
+    "X": 5.14,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.56,
+    "YOK": 2.33,
+    "src": "bsd:konsensüs"
+   },
+   "1X2_pinnacle": {
+    "1": 1.37,
+    "2": 7.23,
+    "X": 5.84
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 6.85,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.08
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 3.04,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.37
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.87,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.96
+   }
+  }
+ },
+ {
+  "match_id": "F1:2026-10-25:psg:lyon",
+  "taken_at": "2026-10-26T05:24:18+00:00",
+  "kickoff_at": "2026-10-26T19:30:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.42,
+    "2": 6.2,
+    "X": 5.14,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.57,
+    "YOK": 2.3,
+    "src": "bsd:konsensüs"
+   },
+   "1X2_pinnacle": {
+    "1": 1.37,
+    "2": 7.23,
+    "X": 5.84
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 6.85,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.08
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 3.04,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.37
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.87,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.96
+   }
+  }
+ },
+ {
+  "match_id": "F1:2026-10-25:psg:lyon",
+  "taken_at": "2026-10-26T06:24:22+00:00",
+  "kickoff_at": "2026-10-26T19:30:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.42,
+    "2": 6.2,
+    "X": 5.14,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.57,
+    "YOK": 2.32,
+    "src": "bsd:konsensüs"
+   },
+   "1X2_pinnacle": {
+    "1": 1.37,
+    "2": 7.23,
+    "X": 5.84
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 6.85,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.08
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 3.04,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.37
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.87,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.96
+   }
+  }
+ },
+ {
+  "match_id": "F1:2026-10-25:psg:lyon",
+  "taken_at": "2026-10-26T07:59:47+00:00",
+  "kickoff_at": "2026-10-26T19:30:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.36,
+    "2": 7.01,
+    "X": 5.52,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.58,
+    "YOK": 2.27,
+    "src": "bsd:konsensüs"
+   },
+   "1X2_pinnacle": {
+    "1": 1.37,
+    "2": 7.23,
+    "X": 5.84
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 6.54,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.09
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 3.06,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.36
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.88,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.95
+   }
+  }
+ },
+ {
+  "match_id": "F1:2026-10-25:psg:lyon",
+  "taken_at": "2026-10-26T09:55:06+00:00",
+  "kickoff_at": "2026-10-26T19:30:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.36,
+    "2": 7.01,
+    "X": 5.52,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.58,
+    "YOK": 2.28,
+    "src": "bsd:konsensüs"
+   },
+   "1X2_pinnacle": {
+    "1": 1.37,
+    "2": 7.23,
+    "X": 5.84
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 6.54,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.09
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 3.06,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.36
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.88,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.95
+   }
+  }
+ },
+ {
+  "match_id": "F1:2026-10-25:psg:lyon",
+  "taken_at": "2026-10-26T12:32:46+00:00",
+  "kickoff_at": "2026-10-26T19:30:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.43,
+    "2": 6.1,
+    "X": 4.94,
+    "src": "football-data.co.uk:Avg"
+   },
+   "BTTS": {
+    "VAR": 1.58,
+    "YOK": 2.28,
+    "src": "bsd:konsensüs"
+   },
+   "1X2_pinnacle": {
+    "1": 1.37,
+    "2": 7.23,
+    "X": 5.84
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 6.54,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.09
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.93,
+    "src": "football-data.co.uk:Avg",
+    "ÜST": 1.37
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.88,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.95
+   }
+  }
+ },
+ {
   "match_id": "F1:2026-10-25:rennes:strasbourg",
   "taken_at": "2026-10-24T11:40:10+00:00",
   "kickoff_at": "2026-10-25T16:15:00+00:00",
@@ -137516,6 +140970,135 @@
   }
  },
  {
+  "match_id": "F2:2026-10-26:boulogne:reims",
+  "taken_at": "2026-10-26T01:54:28+00:00",
+  "kickoff_at": "2026-10-26T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 3.07,
+    "2": 2.26,
+    "X": 3.1,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.84,
+    "YOK": 1.87,
+    "src": "bsd:konsensüs"
+   },
+   "1X2_pinnacle": {
+    "1": 3.28,
+    "2": 2.34,
+    "X": 3.21
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.04,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.34
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.68,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.12
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.23,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.88
+   },
+   "OU_GOALS_2.25": {
+    "ALT": 1.91,
+    "src": "the-odds-api:ortalama(2 şirket)",
+    "ÜST": 1.89
+   }
+  }
+ },
+ {
+  "match_id": "F2:2026-10-26:boulogne:reims",
+  "taken_at": "2026-10-26T05:24:18+00:00",
+  "kickoff_at": "2026-10-26T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 3.1,
+    "2": 2.26,
+    "X": 3.1,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.84,
+    "YOK": 1.87,
+    "src": "bsd:konsensüs"
+   },
+   "1X2_pinnacle": {
+    "1": 3.28,
+    "2": 2.34,
+    "X": 3.21
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.05,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.34
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.68,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.13
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.23,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.88
+   },
+   "OU_GOALS_2.25": {
+    "ALT": 1.91,
+    "src": "the-odds-api:ortalama(2 şirket)",
+    "ÜST": 1.89
+   }
+  }
+ },
+ {
+  "match_id": "F2:2026-10-26:boulogne:reims",
+  "taken_at": "2026-10-26T12:32:46+00:00",
+  "kickoff_at": "2026-10-26T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.99,
+    "2": 2.26,
+    "X": 3.12,
+    "src": "football-data.co.uk:Avg"
+   },
+   "BTTS": {
+    "VAR": 1.84,
+    "YOK": 1.87,
+    "src": "bsd:konsensüs"
+   },
+   "1X2_pinnacle": {
+    "1": 3.28,
+    "2": 2.34,
+    "X": 3.21
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.05,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.34
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.65,
+    "src": "football-data.co.uk:Avg",
+    "ÜST": 2.11
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.23,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.88
+   },
+   "OU_GOALS_2.25": {
+    "ALT": 1.91,
+    "src": "the-odds-api:ortalama(2 şirket)",
+    "ÜST": 1.89
+   }
+  }
+ },
+ {
   "match_id": "F2:2026-10-26:montpellier:redstar",
   "taken_at": "2026-10-25T15:41:52+00:00",
   "kickoff_at": "2026-10-26T19:45:00+00:00",
@@ -137563,6 +141146,72 @@
     "ALT": 1.91,
     "src": "the-odds-api:ortalama(15 şirket)",
     "ÜST": 1.8
+   },
+   "OU_GOALS_2.75": {
+    "ALT": 1.77,
+    "src": "the-odds-api:ortalama(1 şirket)",
+    "ÜST": 1.94
+   }
+  }
+ },
+ {
+  "match_id": "F2:2026-10-26:montpellier:redstar",
+  "taken_at": "2026-10-26T01:54:28+00:00",
+  "kickoff_at": "2026-10-26T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.38,
+    "2": 2.66,
+    "X": 3.34,
+    "src": "football-data.co.uk:Avg"
+   },
+   "BTTS": {
+    "VAR": 1.66,
+    "YOK": 2.1,
+    "src": "bsd:konsensüs"
+   },
+   "1X2_pinnacle": {
+    "1": 2.4,
+    "2": 2.97,
+    "X": 3.43
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.9,
+    "src": "football-data.co.uk:Avg",
+    "ÜST": 1.81
+   },
+   "OU_GOALS_2.75": {
+    "ALT": 1.77,
+    "src": "the-odds-api:ortalama(1 şirket)",
+    "ÜST": 1.94
+   }
+  }
+ },
+ {
+  "match_id": "F2:2026-10-26:montpellier:redstar",
+  "taken_at": "2026-10-26T09:55:06+00:00",
+  "kickoff_at": "2026-10-26T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.38,
+    "2": 2.66,
+    "X": 3.34,
+    "src": "football-data.co.uk:Avg"
+   },
+   "BTTS": {
+    "VAR": 1.68,
+    "YOK": 2.08,
+    "src": "bsd:konsensüs"
+   },
+   "1X2_pinnacle": {
+    "1": 2.4,
+    "2": 2.97,
+    "X": 3.43
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.9,
+    "src": "football-data.co.uk:Avg",
+    "ÜST": 1.81
    },
    "OU_GOALS_2.75": {
     "ALT": 1.77,
@@ -142238,6 +145887,423 @@
   }
  },
  {
+  "match_id": "I1:2026-10-27:roma:cagliari",
+  "taken_at": "2026-10-26T15:14:07+00:00",
+  "kickoff_at": "2026-10-27T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.35,
+    "2": 8.58,
+    "X": 4.89,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 2.0,
+    "YOK": 1.74,
+    "src": "bsd:konsensüs"
+   },
+   "1X2_pinnacle": {
+    "1": 1.35,
+    "2": 10.3,
+    "X": 5.02
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 4.22,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.22
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.11,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.72
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.43,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.75
+   },
+   "OU_GOALS_2.75": {
+    "ALT": 2.05,
+    "src": "the-odds-api:ortalama(1 şirket)",
+    "ÜST": 1.85
+   }
+  }
+ },
+ {
+  "match_id": "I1:2026-10-27:roma:cagliari",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.327,
+    "2": 9.46,
+    "X": 5.108,
+    "src": "the-odds-api:ortalama(23 şirket)"
+   },
+   "BTTS": {
+    "VAR": 1.97,
+    "YOK": 1.77,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_3": {
+    "ALT": 1.79,
+    "src": "the-odds-api:ortalama(2 şirket)",
+    "ÜST": 2.1
+   },
+   "1X2_pinnacle": {
+    "1": 1.34,
+    "2": 10.4,
+    "X": 5.13
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 4.45,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.2
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.232,
+    "src": "the-odds-api:ortalama(13 şirket)",
+    "ÜST": 1.631
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.47,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.63
+   },
+   "OU_GOALS_2.75": {
+    "ALT": 2.11,
+    "src": "the-odds-api:ortalama(1 şirket)",
+    "ÜST": 1.8
+   }
+  }
+ },
+ {
+  "match_id": "I1:2026-10-27:roma:cagliari",
+  "taken_at": "2026-10-27T01:25:24+00:00",
+  "kickoff_at": "2026-10-27T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.34,
+    "2": 8.69,
+    "X": 5.0,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.97,
+    "YOK": 1.77,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_3": {
+    "ALT": 1.79,
+    "src": "the-odds-api:ortalama(2 şirket)",
+    "ÜST": 2.1
+   },
+   "1X2_pinnacle": {
+    "1": 1.34,
+    "2": 10.4,
+    "X": 5.13
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 4.45,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.2
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.23,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.66
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.47,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.63
+   },
+   "OU_GOALS_2.75": {
+    "ALT": 2.11,
+    "src": "the-odds-api:ortalama(1 şirket)",
+    "ÜST": 1.8
+   }
+  }
+ },
+ {
+  "match_id": "I1:2026-10-27:sassuolo:lazio",
+  "taken_at": "2026-10-26T12:32:46+00:00",
+  "kickoff_at": "2026-10-27T17:30:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 3.01,
+    "2": 2.21,
+    "X": 3.5,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.56,
+    "YOK": 2.3,
+    "src": "bsd:konsensüs"
+   },
+   "1X2_pinnacle": {
+    "1": 3.48,
+    "2": 2.12,
+    "X": 3.64
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 4.33,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.21
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.15,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.7
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.45,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.68
+   },
+   "OU_GOALS_2.75": {
+    "ALT": 2.01,
+    "src": "the-odds-api:ortalama(1 şirket)",
+    "ÜST": 1.88
+   }
+  }
+ },
+ {
+  "match_id": "I1:2026-10-27:sassuolo:lazio",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T17:30:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 3.258,
+    "2": 2.143,
+    "X": 3.541,
+    "src": "the-odds-api:ortalama(23 şirket)"
+   },
+   "BTTS": {
+    "VAR": 1.55,
+    "YOK": 2.32,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_3": {
+    "ALT": 1.745,
+    "src": "the-odds-api:ortalama(2 şirket)",
+    "ÜST": 2.17
+   },
+   "1X2_pinnacle": {
+    "1": 3.32,
+    "2": 2.18,
+    "X": 3.67
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 4.41,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.2
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.161,
+    "src": "the-odds-api:ortalama(13 şirket)",
+    "ÜST": 1.666
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.46,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.67
+   },
+   "OU_GOALS_2.75": {
+    "ALT": 2.07,
+    "src": "the-odds-api:ortalama(1 şirket)",
+    "ÜST": 1.83
+   }
+  }
+ },
+ {
+  "match_id": "I1:2026-10-27:sassuolo:lazio",
+  "taken_at": "2026-10-27T01:25:24+00:00",
+  "kickoff_at": "2026-10-27T17:30:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 3.16,
+    "2": 2.15,
+    "X": 3.52,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.55,
+    "YOK": 2.32,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_3": {
+    "ALT": 1.745,
+    "src": "the-odds-api:ortalama(2 şirket)",
+    "ÜST": 2.17
+   },
+   "1X2_pinnacle": {
+    "1": 3.32,
+    "2": 2.18,
+    "X": 3.67
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 4.41,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.2
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.19,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.68
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.46,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.67
+   },
+   "OU_GOALS_2.75": {
+    "ALT": 2.07,
+    "src": "the-odds-api:ortalama(1 şirket)",
+    "ÜST": 1.83
+   }
+  }
+ },
+ {
+  "match_id": "I1:2026-10-27:torino:como",
+  "taken_at": "2026-10-26T15:14:07+00:00",
+  "kickoff_at": "2026-10-27T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 4.34,
+    "2": 1.75,
+    "X": 3.78,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.62,
+    "YOK": 2.18,
+    "src": "bsd:konsensüs"
+   },
+   "1X2_pinnacle": {
+    "1": 4.88,
+    "2": 1.78,
+    "X": 3.7
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 4.35,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.21
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.17,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.68
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.46,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.66
+   },
+   "OU_GOALS_2.75": {
+    "ALT": 2.03,
+    "src": "the-odds-api:ortalama(1 şirket)",
+    "ÜST": 1.86
+   }
+  }
+ },
+ {
+  "match_id": "I1:2026-10-27:torino:como",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 4.777,
+    "2": 1.715,
+    "X": 3.778,
+    "src": "the-odds-api:ortalama(23 şirket)"
+   },
+   "BTTS": {
+    "VAR": 1.63,
+    "YOK": 2.18,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_3": {
+    "ALT": 1.73,
+    "src": "the-odds-api:ortalama(2 şirket)",
+    "ÜST": 2.185
+   },
+   "1X2_pinnacle": {
+    "1": 5.14,
+    "2": 1.74,
+    "X": 3.77
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 4.4,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.21
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.179,
+    "src": "the-odds-api:ortalama(13 şirket)",
+    "ÜST": 1.658
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.46,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.67
+   },
+   "OU_GOALS_2.75": {
+    "ALT": 2.05,
+    "src": "the-odds-api:ortalama(1 şirket)",
+    "ÜST": 1.85
+   }
+  }
+ },
+ {
+  "match_id": "I1:2026-10-27:torino:como",
+  "taken_at": "2026-10-27T01:25:24+00:00",
+  "kickoff_at": "2026-10-27T19:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 4.41,
+    "2": 1.75,
+    "X": 3.78,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.63,
+    "YOK": 2.18,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_3": {
+    "ALT": 1.73,
+    "src": "the-odds-api:ortalama(2 şirket)",
+    "ÜST": 2.185
+   },
+   "1X2_pinnacle": {
+    "1": 5.14,
+    "2": 1.74,
+    "X": 3.77
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 4.4,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.21
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.18,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.68
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.46,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.67
+   },
+   "OU_GOALS_2.75": {
+    "ALT": 2.05,
+    "src": "the-odds-api:ortalama(1 şirket)",
+    "ÜST": 1.85
+   }
+  }
+ },
+ {
   "match_id": "I2:2026-10-23:empoli:vicenza",
   "taken_at": "2026-10-22T13:53:10+00:00",
   "kickoff_at": "2026-10-23T18:30:00+00:00",
@@ -144702,6 +148768,844 @@
     "ALT": 1.35,
     "src": "bsd:konsensüs",
     "ÜST": 3.0
+   }
+  }
+ },
+ {
+  "match_id": "I2:2026-10-27:ascoli:sampdoria",
+  "taken_at": "2026-10-26T15:14:07+00:00",
+  "kickoff_at": "2026-10-27T19:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.19,
+    "2": 3.13,
+    "X": 3.23,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.68,
+    "YOK": 2.08,
+    "src": "bsd:konsensüs"
+   },
+   "1X2_pinnacle": {
+    "1": 2.14,
+    "2": 3.63,
+    "X": 3.26
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.63,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.24
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.89,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.88
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.32,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.08
+   }
+  }
+ },
+ {
+  "match_id": "I2:2026-10-27:ascoli:sampdoria",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T19:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.116,
+    "2": 3.338,
+    "X": 3.2,
+    "src": "the-odds-api:ortalama(21 şirket)"
+   },
+   "BTTS": {
+    "VAR": 1.68,
+    "YOK": 2.07,
+    "src": "bsd:konsensüs"
+   },
+   "1X2_pinnacle": {
+    "1": 2.18,
+    "2": 3.62,
+    "X": 3.29
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.6,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.25
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.843,
+    "src": "the-odds-api:ortalama(15 şirket)",
+    "ÜST": 1.873
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.33,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.12
+   }
+  }
+ },
+ {
+  "match_id": "I2:2026-10-27:ascoli:sampdoria",
+  "taken_at": "2026-10-27T01:25:24+00:00",
+  "kickoff_at": "2026-10-27T19:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.17,
+    "2": 3.19,
+    "X": 3.22,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.68,
+    "YOK": 2.07,
+    "src": "bsd:konsensüs"
+   },
+   "1X2_pinnacle": {
+    "1": 2.18,
+    "2": 3.62,
+    "X": 3.29
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.6,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.25
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.89,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.88
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.33,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.12
+   }
+  }
+ },
+ {
+  "match_id": "I2:2026-10-27:benevento:catanzaro",
+  "taken_at": "2026-10-26T12:32:46+00:00",
+  "kickoff_at": "2026-10-27T18:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.67,
+    "2": 4.31,
+    "X": 3.9,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.64,
+    "YOK": 2.15,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_3": {
+    "ALT": 1.71,
+    "src": "the-odds-api:ortalama(1 şirket)",
+    "ÜST": 2.1
+   },
+   "1X2_pinnacle": {
+    "1": 1.68,
+    "2": 4.42,
+    "X": 4.25
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 4.32,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.19
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.18,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.64
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.44,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.63
+   },
+   "OU_GOALS_2.75": {
+    "ALT": 1.96,
+    "src": "the-odds-api:ortalama(2 şirket)",
+    "ÜST": 1.84
+   }
+  }
+ },
+ {
+  "match_id": "I2:2026-10-27:benevento:catanzaro",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T18:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.686,
+    "2": 4.258,
+    "X": 3.872,
+    "src": "the-odds-api:ortalama(21 şirket)"
+   },
+   "BTTS": {
+    "VAR": 1.63,
+    "YOK": 2.14,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_3": {
+    "ALT": 1.7,
+    "src": "the-odds-api:ortalama(1 şirket)",
+    "ÜST": 2.12
+   },
+   "1X2_pinnacle": {
+    "1": 1.74,
+    "2": 4.39,
+    "X": 4.17
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 4.32,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.19
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.132,
+    "src": "the-odds-api:ortalama(11 şirket)",
+    "ÜST": 1.62
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.44,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.63
+   },
+   "OU_GOALS_2.75": {
+    "ALT": 1.96,
+    "src": "the-odds-api:ortalama(2 şirket)",
+    "ÜST": 1.855
+   }
+  }
+ },
+ {
+  "match_id": "I2:2026-10-27:benevento:catanzaro",
+  "taken_at": "2026-10-27T01:25:24+00:00",
+  "kickoff_at": "2026-10-27T18:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.67,
+    "2": 4.31,
+    "X": 3.9,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.63,
+    "YOK": 2.14,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_3": {
+    "ALT": 1.7,
+    "src": "the-odds-api:ortalama(1 şirket)",
+    "ÜST": 2.12
+   },
+   "1X2_pinnacle": {
+    "1": 1.74,
+    "2": 4.39,
+    "X": 4.17
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 4.32,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.19
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.18,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.64
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.44,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.63
+   },
+   "OU_GOALS_2.75": {
+    "ALT": 1.96,
+    "src": "the-odds-api:ortalama(2 şirket)",
+    "ÜST": 1.855
+   }
+  }
+ },
+ {
+  "match_id": "I2:2026-10-27:cesena:empoli",
+  "taken_at": "2026-10-26T15:14:07+00:00",
+  "kickoff_at": "2026-10-27T19:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.96,
+    "2": 3.7,
+    "X": 3.25,
+    "src": "bsd:konsensüs"
+   },
+   "1X2_pinnacle": {
+    "1": 2.03,
+    "2": 3.65,
+    "X": 3.52
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.868,
+    "src": "the-odds-api:ortalama(14 şirket)",
+    "ÜST": 1.843
+   }
+  }
+ },
+ {
+  "match_id": "I2:2026-10-27:cesena:empoli",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T19:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.143,
+    "2": 3.204,
+    "X": 3.26,
+    "src": "the-odds-api:ortalama(20 şirket)"
+   },
+   "BTTS": {
+    "VAR": 1.68,
+    "YOK": 2.08,
+    "src": "bsd:konsensüs"
+   },
+   "1X2_pinnacle": {
+    "1": 2.23,
+    "2": 3.4,
+    "X": 3.38
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.872,
+    "src": "the-odds-api:ortalama(14 şirket)",
+    "ÜST": 1.849
+   }
+  }
+ },
+ {
+  "match_id": "I2:2026-10-27:cesena:empoli",
+  "taken_at": "2026-10-27T01:25:24+00:00",
+  "kickoff_at": "2026-10-27T19:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.96,
+    "2": 3.7,
+    "X": 3.25,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.68,
+    "YOK": 2.08,
+    "src": "bsd:konsensüs"
+   },
+   "1X2_pinnacle": {
+    "1": 2.23,
+    "2": 3.4,
+    "X": 3.38
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.872,
+    "src": "the-odds-api:ortalama(14 şirket)",
+    "ÜST": 1.849
+   }
+  }
+ },
+ {
+  "match_id": "I2:2026-10-27:mantova:cremonese",
+  "taken_at": "2026-10-26T15:14:07+00:00",
+  "kickoff_at": "2026-10-27T19:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.25,
+    "2": 2.99,
+    "X": 3.24,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.71,
+    "YOK": 2.03,
+    "src": "bsd:konsensüs"
+   },
+   "1X2_pinnacle": {
+    "1": 2.23,
+    "2": 3.28,
+    "X": 3.37
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.4,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.27
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.84,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.93
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.29,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.27
+   }
+  }
+ },
+ {
+  "match_id": "I2:2026-10-27:mantova:cremonese",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T19:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.095,
+    "2": 3.297,
+    "X": 3.274,
+    "src": "the-odds-api:ortalama(21 şirket)"
+   },
+   "BTTS": {
+    "VAR": 1.73,
+    "YOK": 1.98,
+    "src": "bsd:konsensüs"
+   },
+   "1X2_pinnacle": {
+    "1": 2.19,
+    "2": 3.48,
+    "X": 3.4
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.43,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.28
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.803,
+    "src": "the-odds-api:ortalama(15 şirket)",
+    "ÜST": 1.92
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.29,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.32
+   }
+  }
+ },
+ {
+  "match_id": "I2:2026-10-27:mantova:cremonese",
+  "taken_at": "2026-10-27T01:25:24+00:00",
+  "kickoff_at": "2026-10-27T19:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.21,
+    "2": 3.07,
+    "X": 3.24,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.73,
+    "YOK": 1.98,
+    "src": "bsd:konsensüs"
+   },
+   "1X2_pinnacle": {
+    "1": 2.19,
+    "2": 3.48,
+    "X": 3.4
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.43,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.28
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.83,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.94
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.29,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.32
+   }
+  }
+ },
+ {
+  "match_id": "I2:2026-10-27:padova:sudtirol",
+  "taken_at": "2026-10-26T15:14:07+00:00",
+  "kickoff_at": "2026-10-27T19:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.31,
+    "2": 2.95,
+    "X": 3.18,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.81,
+    "YOK": 1.91,
+    "src": "bsd:konsensüs"
+   },
+   "1X2_pinnacle": {
+    "1": 2.39,
+    "2": 3.12,
+    "X": 3.21
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.08,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.32
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.71,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.07
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.24,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.66
+   },
+   "OU_GOALS_2.25": {
+    "ALT": 1.91,
+    "src": "the-odds-api:ortalama(2 şirket)",
+    "ÜST": 1.88
+   }
+  }
+ },
+ {
+  "match_id": "I2:2026-10-27:padova:sudtirol",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T19:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.319,
+    "2": 3.023,
+    "X": 3.1,
+    "src": "the-odds-api:ortalama(21 şirket)"
+   },
+   "BTTS": {
+    "VAR": 1.83,
+    "YOK": 1.89,
+    "src": "bsd:konsensüs"
+   },
+   "1X2_pinnacle": {
+    "1": 2.45,
+    "2": 3.16,
+    "X": 3.2
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.07,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.33
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.672,
+    "src": "the-odds-api:ortalama(13 şirket)",
+    "ÜST": 2.081
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.23,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.78
+   },
+   "OU_GOALS_2.25": {
+    "ALT": 1.915,
+    "src": "the-odds-api:ortalama(2 şirket)",
+    "ÜST": 1.89
+   }
+  }
+ },
+ {
+  "match_id": "I2:2026-10-27:padova:sudtirol",
+  "taken_at": "2026-10-27T01:25:24+00:00",
+  "kickoff_at": "2026-10-27T19:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.31,
+    "2": 2.97,
+    "X": 3.15,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.83,
+    "YOK": 1.89,
+    "src": "bsd:konsensüs"
+   },
+   "1X2_pinnacle": {
+    "1": 2.45,
+    "2": 3.16,
+    "X": 3.2
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.07,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.33
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.69,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.11
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.23,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.78
+   },
+   "OU_GOALS_2.25": {
+    "ALT": 1.915,
+    "src": "the-odds-api:ortalama(2 şirket)",
+    "ÜST": 1.89
+   }
+  }
+ },
+ {
+  "match_id": "I2:2026-10-27:vicenza:modena",
+  "taken_at": "2026-10-26T15:14:07+00:00",
+  "kickoff_at": "2026-10-27T19:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 3.2,
+    "2": 2.04,
+    "X": 3.52,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.58,
+    "YOK": 2.27,
+    "src": "bsd:konsensüs"
+   },
+   "1X2_pinnacle": {
+    "1": 3.54,
+    "2": 2.04,
+    "X": 3.59
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 4.15,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.19
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.12,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.68
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.42,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.67
+   },
+   "OU_GOALS_2.75": {
+    "ALT": 1.885,
+    "src": "the-odds-api:ortalama(2 şirket)",
+    "ÜST": 1.9
+   }
+  }
+ },
+ {
+  "match_id": "I2:2026-10-27:vicenza:modena",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T19:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 3.335,
+    "2": 2.011,
+    "X": 3.456,
+    "src": "the-odds-api:ortalama(21 şirket)"
+   },
+   "BTTS": {
+    "VAR": 1.59,
+    "YOK": 2.23,
+    "src": "bsd:konsensüs"
+   },
+   "1X2_pinnacle": {
+    "1": 3.58,
+    "2": 2.06,
+    "X": 3.62
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 4.2,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.19
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.038,
+    "src": "the-odds-api:ortalama(12 şirket)",
+    "ÜST": 1.685
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.42,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.72
+   },
+   "OU_GOALS_2.75": {
+    "ALT": 1.915,
+    "src": "the-odds-api:ortalama(2 şirket)",
+    "ÜST": 1.895
+   }
+  }
+ },
+ {
+  "match_id": "I2:2026-10-27:vicenza:modena",
+  "taken_at": "2026-10-27T01:25:24+00:00",
+  "kickoff_at": "2026-10-27T19:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 3.27,
+    "2": 2.03,
+    "X": 3.48,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.59,
+    "YOK": 2.23,
+    "src": "bsd:konsensüs"
+   },
+   "1X2_pinnacle": {
+    "1": 3.58,
+    "2": 2.06,
+    "X": 3.62
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 4.2,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.19
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.12,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.68
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.42,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.72
+   },
+   "OU_GOALS_2.75": {
+    "ALT": 1.915,
+    "src": "the-odds-api:ortalama(2 şirket)",
+    "ÜST": 1.895
+   }
+  }
+ },
+ {
+  "match_id": "I2:2026-10-27:virtusentella:avellino",
+  "taken_at": "2026-10-26T15:14:07+00:00",
+  "kickoff_at": "2026-10-27T19:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.01,
+    "2": 3.63,
+    "X": 3.2,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.87,
+    "YOK": 1.85,
+    "src": "bsd:konsensüs"
+   },
+   "1X2_pinnacle": {
+    "1": 2.12,
+    "2": 3.8,
+    "X": 3.17
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 2.97,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.34
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.68,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.12
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.22,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.89
+   },
+   "OU_GOALS_2.25": {
+    "ALT": 1.88,
+    "src": "the-odds-api:ortalama(2 şirket)",
+    "ÜST": 1.905
+   }
+  }
+ },
+ {
+  "match_id": "I2:2026-10-27:virtusentella:avellino",
+  "taken_at": "2026-10-27T01:04:53+00:00",
+  "kickoff_at": "2026-10-27T19:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.04,
+    "2": 3.622,
+    "X": 3.131,
+    "src": "the-odds-api:ortalama(21 şirket)"
+   },
+   "BTTS": {
+    "VAR": 1.87,
+    "YOK": 1.84,
+    "src": "bsd:konsensüs"
+   },
+   "1X2_pinnacle": {
+    "1": 2.14,
+    "2": 3.85,
+    "X": 3.21
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.0,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.35
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.658,
+    "src": "the-odds-api:ortalama(13 şirket)",
+    "ÜST": 2.102
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.22,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.94
+   },
+   "OU_GOALS_2.25": {
+    "ALT": 1.895,
+    "src": "the-odds-api:ortalama(2 şirket)",
+    "ÜST": 1.915
+   }
+  }
+ },
+ {
+  "match_id": "I2:2026-10-27:virtusentella:avellino",
+  "taken_at": "2026-10-27T01:25:24+00:00",
+  "kickoff_at": "2026-10-27T19:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.02,
+    "2": 3.61,
+    "X": 3.19,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.87,
+    "YOK": 1.84,
+    "src": "bsd:konsensüs"
+   },
+   "1X2_pinnacle": {
+    "1": 2.14,
+    "2": 3.85,
+    "X": 3.21
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.0,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.35
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.67,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.13
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.22,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.94
+   },
+   "OU_GOALS_2.25": {
+    "ALT": 1.895,
+    "src": "the-odds-api:ortalama(2 şirket)",
+    "ÜST": 1.915
    }
   }
  },
@@ -148260,6 +153164,138 @@
     "ALT": 1.963,
     "src": "the-odds-api:ortalama(14 şirket)",
     "ÜST": 1.777
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.33,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.1
+   }
+  }
+ },
+ {
+  "match_id": "P1:2026-10-26:santaclara:benfica",
+  "taken_at": "2026-10-26T01:54:28+00:00",
+  "kickoff_at": "2026-10-26T18:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 8.04,
+    "2": 1.37,
+    "X": 4.59,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 2.13,
+    "YOK": 1.65,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.62,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.25
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.95,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.83
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.33,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.1
+   }
+  }
+ },
+ {
+  "match_id": "P1:2026-10-26:santaclara:benfica",
+  "taken_at": "2026-10-26T05:24:18+00:00",
+  "kickoff_at": "2026-10-26T18:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 8.17,
+    "2": 1.36,
+    "X": 4.64,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 2.13,
+    "YOK": 1.65,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.63,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.25
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.96,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.82
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.33,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.1
+   }
+  }
+ },
+ {
+  "match_id": "P1:2026-10-26:santaclara:benfica",
+  "taken_at": "2026-10-26T09:55:06+00:00",
+  "kickoff_at": "2026-10-26T18:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 8.17,
+    "2": 1.36,
+    "X": 4.64,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 2.11,
+    "YOK": 1.66,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.63,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.25
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.96,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.82
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.33,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.1
+   }
+  }
+ },
+ {
+  "match_id": "P1:2026-10-26:santaclara:benfica",
+  "taken_at": "2026-10-26T12:32:46+00:00",
+  "kickoff_at": "2026-10-26T18:45:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 8.19,
+    "2": 1.36,
+    "X": 4.55,
+    "src": "football-data.co.uk:Avg"
+   },
+   "BTTS": {
+    "VAR": 2.11,
+    "YOK": 1.66,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.63,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.25
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.93,
+    "src": "football-data.co.uk:Avg",
+    "ÜST": 1.8
    },
    "OU_GOALS_3.5": {
     "ALT": 1.33,
@@ -154723,6 +159759,221 @@
   }
  },
  {
+  "match_id": "SP1:2026-10-26:sevilla:osasuna",
+  "taken_at": "2026-10-26T01:54:28+00:00",
+  "kickoff_at": "2026-10-26T20:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.93,
+    "2": 4.07,
+    "X": 3.38,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.95,
+    "YOK": 1.79,
+    "src": "bsd:konsensüs"
+   },
+   "1X2_pinnacle": {
+    "1": 1.92,
+    "2": 4.41,
+    "X": 3.47
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.01,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.38
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.68,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.19
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.24,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.92
+   },
+   "OU_GOALS_2.25": {
+    "ALT": 1.93,
+    "src": "the-odds-api:ortalama(1 şirket)",
+    "ÜST": 1.96
+   }
+  }
+ },
+ {
+  "match_id": "SP1:2026-10-26:sevilla:osasuna",
+  "taken_at": "2026-10-26T03:45:09+00:00",
+  "kickoff_at": "2026-10-26T20:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.93,
+    "2": 4.07,
+    "X": 3.38,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.94,
+    "YOK": 1.8,
+    "src": "bsd:konsensüs"
+   },
+   "1X2_pinnacle": {
+    "1": 1.92,
+    "2": 4.41,
+    "X": 3.47
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.01,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.38
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.68,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.19
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.24,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.92
+   },
+   "OU_GOALS_2.25": {
+    "ALT": 1.93,
+    "src": "the-odds-api:ortalama(1 şirket)",
+    "ÜST": 1.96
+   }
+  }
+ },
+ {
+  "match_id": "SP1:2026-10-26:sevilla:osasuna",
+  "taken_at": "2026-10-26T05:24:18+00:00",
+  "kickoff_at": "2026-10-26T20:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.92,
+    "2": 4.16,
+    "X": 3.39,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.94,
+    "YOK": 1.8,
+    "src": "bsd:konsensüs"
+   },
+   "1X2_pinnacle": {
+    "1": 1.92,
+    "2": 4.41,
+    "X": 3.47
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.05,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.37
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.69,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.18
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.24,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.86
+   },
+   "OU_GOALS_2.25": {
+    "ALT": 1.93,
+    "src": "the-odds-api:ortalama(1 şirket)",
+    "ÜST": 1.96
+   }
+  }
+ },
+ {
+  "match_id": "SP1:2026-10-26:sevilla:osasuna",
+  "taken_at": "2026-10-26T09:55:06+00:00",
+  "kickoff_at": "2026-10-26T20:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.92,
+    "2": 4.16,
+    "X": 3.39,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.95,
+    "YOK": 1.79,
+    "src": "bsd:konsensüs"
+   },
+   "1X2_pinnacle": {
+    "1": 1.92,
+    "2": 4.41,
+    "X": 3.47
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.05,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.37
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.69,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.18
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.24,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.86
+   },
+   "OU_GOALS_2.25": {
+    "ALT": 1.93,
+    "src": "the-odds-api:ortalama(1 şirket)",
+    "ÜST": 1.96
+   }
+  }
+ },
+ {
+  "match_id": "SP1:2026-10-26:sevilla:osasuna",
+  "taken_at": "2026-10-26T12:32:46+00:00",
+  "kickoff_at": "2026-10-26T20:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.92,
+    "2": 4.0,
+    "X": 3.36,
+    "src": "football-data.co.uk:Avg"
+   },
+   "BTTS": {
+    "VAR": 1.95,
+    "YOK": 1.79,
+    "src": "bsd:konsensüs"
+   },
+   "1X2_pinnacle": {
+    "1": 1.92,
+    "2": 4.41,
+    "X": 3.47
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.05,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.37
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.67,
+    "src": "football-data.co.uk:Avg",
+    "ÜST": 2.1
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.24,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.86
+   },
+   "OU_GOALS_2.25": {
+    "ALT": 1.93,
+    "src": "the-odds-api:ortalama(1 şirket)",
+    "ÜST": 1.96
+   }
+  }
+ },
+ {
   "match_id": "SP2:2026-10-23:granada:valladolid",
   "taken_at": "2026-10-22T13:53:10+00:00",
   "kickoff_at": "2026-10-23T18:30:00+00:00",
@@ -157419,6 +162670,135 @@
   }
  },
  {
+  "match_id": "SP2:2026-10-26:andorra:burgos",
+  "taken_at": "2026-10-26T01:54:28+00:00",
+  "kickoff_at": "2026-10-26T19:30:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.81,
+    "2": 3.8,
+    "X": 3.4,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.77,
+    "YOK": 1.94,
+    "src": "bsd:konsensüs"
+   },
+   "1X2_pinnacle": {
+    "1": 2.12,
+    "2": 3.78,
+    "X": 3.29
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.5,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.29
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.85,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.95
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.3,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.4
+   },
+   "OU_GOALS_2.25": {
+    "ALT": 1.98,
+    "src": "the-odds-api:ortalama(2 şirket)",
+    "ÜST": 1.785
+   }
+  }
+ },
+ {
+  "match_id": "SP2:2026-10-26:andorra:burgos",
+  "taken_at": "2026-10-26T09:55:06+00:00",
+  "kickoff_at": "2026-10-26T19:30:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.81,
+    "2": 3.8,
+    "X": 3.4,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.78,
+    "YOK": 1.93,
+    "src": "bsd:konsensüs"
+   },
+   "1X2_pinnacle": {
+    "1": 2.12,
+    "2": 3.78,
+    "X": 3.29
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.5,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.29
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.85,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.95
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.3,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.4
+   },
+   "OU_GOALS_2.25": {
+    "ALT": 1.98,
+    "src": "the-odds-api:ortalama(2 şirket)",
+    "ÜST": 1.785
+   }
+  }
+ },
+ {
+  "match_id": "SP2:2026-10-26:andorra:burgos",
+  "taken_at": "2026-10-26T12:32:46+00:00",
+  "kickoff_at": "2026-10-26T19:30:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.88,
+    "2": 3.78,
+    "X": 3.36,
+    "src": "football-data.co.uk:Avg"
+   },
+   "BTTS": {
+    "VAR": 1.78,
+    "YOK": 1.93,
+    "src": "bsd:konsensüs"
+   },
+   "1X2_pinnacle": {
+    "1": 2.12,
+    "2": 3.78,
+    "X": 3.29
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 3.5,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.29
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 1.77,
+    "src": "football-data.co.uk:Avg",
+    "ÜST": 1.95
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.3,
+    "src": "bsd:konsensüs",
+    "ÜST": 3.4
+   },
+   "OU_GOALS_2.25": {
+    "ALT": 1.98,
+    "src": "the-odds-api:ortalama(2 şirket)",
+    "ÜST": 1.785
+   }
+  }
+ },
+ {
   "match_id": "T1:2026-10-23:alanyaspor:kocaelispor",
   "taken_at": "2026-10-22T11:43:21+00:00",
   "kickoff_at": "2026-10-23T17:00:00+00:00",
@@ -158932,6 +164312,135 @@
   }
  },
  {
+  "match_id": "T1:2026-10-26:besiktas:basaksehir",
+  "taken_at": "2026-10-26T01:54:28+00:00",
+  "kickoff_at": "2026-10-26T16:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.35,
+    "2": 7.19,
+    "X": 5.19,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.58,
+    "YOK": 2.25,
+    "src": "bsd:konsensüs"
+   },
+   "1X2_pinnacle": {
+    "1": 1.38,
+    "2": 7.34,
+    "X": 5.45
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 6.48,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.1
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.93,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.39
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.8,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.99
+   },
+   "OU_GOALS_3.25": {
+    "ALT": 2.01,
+    "src": "the-odds-api:ortalama(1 şirket)",
+    "ÜST": 1.86
+   }
+  }
+ },
+ {
+  "match_id": "T1:2026-10-26:besiktas:basaksehir",
+  "taken_at": "2026-10-26T05:24:18+00:00",
+  "kickoff_at": "2026-10-26T16:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.35,
+    "2": 7.24,
+    "X": 5.2,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.59,
+    "YOK": 2.23,
+    "src": "bsd:konsensüs"
+   },
+   "1X2_pinnacle": {
+    "1": 1.38,
+    "2": 7.34,
+    "X": 5.45
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 6.36,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.1
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.92,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.39
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.79,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.0
+   },
+   "OU_GOALS_3.25": {
+    "ALT": 2.01,
+    "src": "the-odds-api:ortalama(1 şirket)",
+    "ÜST": 1.86
+   }
+  }
+ },
+ {
+  "match_id": "T1:2026-10-26:besiktas:basaksehir",
+  "taken_at": "2026-10-26T12:32:46+00:00",
+  "kickoff_at": "2026-10-26T16:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 1.35,
+    "2": 6.76,
+    "X": 5.07,
+    "src": "football-data.co.uk:Avg"
+   },
+   "BTTS": {
+    "VAR": 1.59,
+    "YOK": 2.23,
+    "src": "bsd:konsensüs"
+   },
+   "1X2_pinnacle": {
+    "1": 1.38,
+    "2": 7.34,
+    "X": 5.45
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 6.36,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.1
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.89,
+    "src": "football-data.co.uk:Avg",
+    "ÜST": 1.37
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.79,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.0
+   },
+   "OU_GOALS_3.25": {
+    "ALT": 2.01,
+    "src": "the-odds-api:ortalama(1 şirket)",
+    "ÜST": 1.86
+   }
+  }
+ },
+ {
   "match_id": "T1:2026-10-26:galatasaray:fenerbahce",
   "taken_at": "2026-10-25T13:40:08+00:00",
   "kickoff_at": "2026-10-26T18:30:00+00:00",
@@ -159028,6 +164537,246 @@
   }
  },
  {
+  "match_id": "T1:2026-10-26:galatasaray:fenerbahce",
+  "taken_at": "2026-10-26T01:54:28+00:00",
+  "kickoff_at": "2026-10-26T18:30:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.16,
+    "2": 2.93,
+    "X": 3.74,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.43,
+    "YOK": 2.66,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_3": {
+    "ALT": 2.03,
+    "src": "the-odds-api:ortalama(2 şirket)",
+    "ÜST": 1.75
+   },
+   "1X2_pinnacle": {
+    "1": 2.08,
+    "2": 3.24,
+    "X": 3.99
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 5.61,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.13
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.6,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.48
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.66,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.19
+   },
+   "OU_GOALS_3.25": {
+    "ALT": 1.85,
+    "src": "the-odds-api:ortalama(1 şirket)",
+    "ÜST": 2.02
+   }
+  }
+ },
+ {
+  "match_id": "T1:2026-10-26:galatasaray:fenerbahce",
+  "taken_at": "2026-10-26T03:45:09+00:00",
+  "kickoff_at": "2026-10-26T18:30:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.16,
+    "2": 2.93,
+    "X": 3.74,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.42,
+    "YOK": 2.67,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_3": {
+    "ALT": 2.03,
+    "src": "the-odds-api:ortalama(2 şirket)",
+    "ÜST": 1.75
+   },
+   "1X2_pinnacle": {
+    "1": 2.08,
+    "2": 3.24,
+    "X": 3.99
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 5.61,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.13
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.6,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.48
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.66,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.19
+   },
+   "OU_GOALS_3.25": {
+    "ALT": 1.85,
+    "src": "the-odds-api:ortalama(1 şirket)",
+    "ÜST": 2.02
+   }
+  }
+ },
+ {
+  "match_id": "T1:2026-10-26:galatasaray:fenerbahce",
+  "taken_at": "2026-10-26T05:24:18+00:00",
+  "kickoff_at": "2026-10-26T18:30:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.06,
+    "2": 3.1,
+    "X": 3.78,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.42,
+    "YOK": 2.66,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_3": {
+    "ALT": 2.03,
+    "src": "the-odds-api:ortalama(2 şirket)",
+    "ÜST": 1.75
+   },
+   "1X2_pinnacle": {
+    "1": 2.08,
+    "2": 3.24,
+    "X": 3.99
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 5.64,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.13
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.62,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.47
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.65,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.2
+   },
+   "OU_GOALS_3.25": {
+    "ALT": 1.85,
+    "src": "the-odds-api:ortalama(1 şirket)",
+    "ÜST": 2.02
+   }
+  }
+ },
+ {
+  "match_id": "T1:2026-10-26:galatasaray:fenerbahce",
+  "taken_at": "2026-10-26T09:55:06+00:00",
+  "kickoff_at": "2026-10-26T18:30:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.06,
+    "2": 3.1,
+    "X": 3.78,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.43,
+    "YOK": 2.65,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_3": {
+    "ALT": 2.03,
+    "src": "the-odds-api:ortalama(2 şirket)",
+    "ÜST": 1.75
+   },
+   "1X2_pinnacle": {
+    "1": 2.08,
+    "2": 3.24,
+    "X": 3.99
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 5.64,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.13
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.62,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.47
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.65,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.2
+   },
+   "OU_GOALS_3.25": {
+    "ALT": 1.85,
+    "src": "the-odds-api:ortalama(1 şirket)",
+    "ÜST": 2.02
+   }
+  }
+ },
+ {
+  "match_id": "T1:2026-10-26:galatasaray:fenerbahce",
+  "taken_at": "2026-10-26T12:32:46+00:00",
+  "kickoff_at": "2026-10-26T18:30:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 2.13,
+    "2": 2.85,
+    "X": 3.73,
+    "src": "football-data.co.uk:Avg"
+   },
+   "BTTS": {
+    "VAR": 1.43,
+    "YOK": 2.65,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_3": {
+    "ALT": 2.03,
+    "src": "the-odds-api:ortalama(2 şirket)",
+    "ÜST": 1.75
+   },
+   "1X2_pinnacle": {
+    "1": 2.08,
+    "2": 3.24,
+    "X": 3.99
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 5.64,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.13
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.53,
+    "src": "football-data.co.uk:Avg",
+    "ÜST": 1.47
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.65,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.2
+   },
+   "OU_GOALS_3.25": {
+    "ALT": 1.85,
+    "src": "the-odds-api:ortalama(1 şirket)",
+    "ÜST": 2.02
+   }
+  }
+ },
+ {
   "match_id": "T1:2026-10-26:rizespor:trabzonspor",
   "taken_at": "2026-10-25T11:39:46+00:00",
   "kickoff_at": "2026-10-26T16:00:00+00:00",
@@ -159110,6 +164859,178 @@
     "ALT": 1.585,
     "src": "the-odds-api:ortalama(2 şirket)",
     "ÜST": 2.41
+   }
+  }
+ },
+ {
+  "match_id": "T1:2026-10-26:rizespor:trabzonspor",
+  "taken_at": "2026-10-26T01:54:28+00:00",
+  "kickoff_at": "2026-10-26T16:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 3.46,
+    "2": 1.94,
+    "X": 3.78,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.51,
+    "YOK": 2.43,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_3": {
+    "ALT": 1.89,
+    "src": "the-odds-api:ortalama(3 şirket)",
+    "ÜST": 1.913
+   },
+   "1X2_pinnacle": {
+    "1": 3.56,
+    "2": 1.96,
+    "X": 4.01
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 4.96,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.16
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.39,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.57
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.55,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.39
+   }
+  }
+ },
+ {
+  "match_id": "T1:2026-10-26:rizespor:trabzonspor",
+  "taken_at": "2026-10-26T05:24:18+00:00",
+  "kickoff_at": "2026-10-26T16:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 3.48,
+    "2": 1.94,
+    "X": 3.77,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.51,
+    "YOK": 2.43,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_3": {
+    "ALT": 1.89,
+    "src": "the-odds-api:ortalama(3 şirket)",
+    "ÜST": 1.913
+   },
+   "1X2_pinnacle": {
+    "1": 3.56,
+    "2": 1.96,
+    "X": 4.01
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 4.98,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.16
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.39,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.57
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.55,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.39
+   }
+  }
+ },
+ {
+  "match_id": "T1:2026-10-26:rizespor:trabzonspor",
+  "taken_at": "2026-10-26T09:55:06+00:00",
+  "kickoff_at": "2026-10-26T16:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 3.48,
+    "2": 1.94,
+    "X": 3.77,
+    "src": "bsd:konsensüs"
+   },
+   "BTTS": {
+    "VAR": 1.5,
+    "YOK": 2.44,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_3": {
+    "ALT": 1.89,
+    "src": "the-odds-api:ortalama(3 şirket)",
+    "ÜST": 1.913
+   },
+   "1X2_pinnacle": {
+    "1": 3.56,
+    "2": 1.96,
+    "X": 4.01
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 4.98,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.16
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.39,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.57
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.55,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.39
+   }
+  }
+ },
+ {
+  "match_id": "T1:2026-10-26:rizespor:trabzonspor",
+  "taken_at": "2026-10-26T12:32:46+00:00",
+  "kickoff_at": "2026-10-26T16:00:00+00:00",
+  "odds": {
+   "1X2": {
+    "1": 3.33,
+    "2": 1.92,
+    "X": 3.76,
+    "src": "football-data.co.uk:Avg"
+   },
+   "BTTS": {
+    "VAR": 1.5,
+    "YOK": 2.44,
+    "src": "bsd:konsensüs"
+   },
+   "OU_GOALS_3": {
+    "ALT": 1.89,
+    "src": "the-odds-api:ortalama(3 şirket)",
+    "ÜST": 1.913
+   },
+   "1X2_pinnacle": {
+    "1": 3.56,
+    "2": 1.96,
+    "X": 4.01
+   },
+   "OU_GOALS_1.5": {
+    "ALT": 4.98,
+    "src": "bsd:konsensüs",
+    "ÜST": 1.16
+   },
+   "OU_GOALS_2.5": {
+    "ALT": 2.35,
+    "src": "football-data.co.uk:Avg",
+    "ÜST": 1.53
+   },
+   "OU_GOALS_3.5": {
+    "ALT": 1.55,
+    "src": "bsd:konsensüs",
+    "ÜST": 2.39
    }
   }
  }
