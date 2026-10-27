@@ -70,10 +70,17 @@ class OddsPapi:
             names = {int(k): v for k, v in parts.items()}
         else:
             names = {int(p.get("participantId")): p.get("participantName") for p in parts or [] if p.get("participantId")}
-        r = get(f"{BASE}/odds-by-tournaments", params={"apiKey": self.key, "bookmaker": BOOKMAKER,
-                                                         "tournamentIds": ",".join(str(t) for t in tours)})
-        if r.status_code in (401, 403):
-            raise SourceError(f"OddsPapi yetki hatası (HTTP {r.status_code})")
-        if r.status_code != 200:
-            raise SourceError(f"OddsPapi HTTP {r.status_code}")
-        return parse_odds(r.json(), tours, names)
+        import time
+
+        ids, rows = list(tours), []
+        for i in range(0, len(ids), 5):  # API en çok 5 turnuva kimliği kabul eder (fazlası HTTP 400)
+            if i:
+                time.sleep(1.5)  # uç nokta başına hız sınırı
+            r = get(f"{BASE}/odds-by-tournaments", params={"apiKey": self.key, "bookmaker": BOOKMAKER,
+                                                             "tournamentIds": ",".join(str(t) for t in ids[i:i + 5])})
+            if r.status_code in (401, 403):
+                raise SourceError(f"OddsPapi yetki hatası (HTTP {r.status_code})")
+            if r.status_code != 200:
+                raise SourceError(f"OddsPapi HTTP {r.status_code}: {(r.text or '')[:120]}")
+            rows += r.json() or []
+        return parse_odds(rows, tours, names)

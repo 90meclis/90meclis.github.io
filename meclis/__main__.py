@@ -47,6 +47,40 @@ def main(argv=None) -> int:
     from .settlement import run_settlement
 
     pool = DataPool(store, s)
+    from .sources.bsd import BsdBudget
+
+    def _bsd_ledger_load():
+        try:
+            from .timeutil import now_utc as _n
+
+            row = store.get("source_status", source="bsd:kota") or {}
+            BsdBudget.used_before = int(row.get("calls_today") or 0) if row.get("calls_date") == _n().date().isoformat() else 0
+        except Exception:
+            BsdBudget.used_before = 0
+
+    _bsd_ledger_load()
+    try:  # saatlik pay: kalan günlük kota / kalan saat (×2 esneklik); tek çalışma günü bitiremez
+        from .timeutil import now_utc as _n2
+
+        _share = BsdBudget.remaining() / max(1, 24 - _n2().hour)
+        pool.bsd.max_calls = int(min(pool.bsd.max_calls, max(150, 2 * _share), BsdBudget.remaining()))
+    except Exception:
+        pass
+    _bsd_logged = [0]
+
+    def _bsd_ledger_flush():
+        """Bu çalışmanın BSD isteklerini günlük deftere ekler (adım adım: iptal olsa da kayıt kalır)."""
+        try:
+            delta = pool.bsd.calls - _bsd_logged[0]
+            if BsdBudget.exhausted:
+                delta = max(delta, BsdBudget.DAILY + 200 - BsdBudget.used_before - _bsd_logged[0])
+            if delta > 0:
+                _bsd_logged[0] += delta
+                store.set_source_status("bsd:kota", not BsdBudget.exhausted,
+                                        f"günlük kota defteri (UTC): bu çalışmada +{delta}; kalan ≈ "
+                                        f"{BsdBudget.remaining(pool.bsd.calls)}", add_calls=delta)
+        except Exception:
+            pass
     out_logs = _LiveLog()
     # İŞ DÜZENİ (her biri ayrı iş akışı, ayrı zaman bütçesi — biri yavaşlarsa yayın beklemez):
     #   yayin       : fikstür/oran (bugün+yarın+2 gün) → eksik/ilk 11 (48 saat) → analiz + seçim + kilit → mühür
@@ -95,7 +129,9 @@ def main(argv=None) -> int:
             signal.alarm(0)
             signal.signal(signal.SIGALRM, old)
         dt = _t.monotonic() - t0
-        print(f"■ {step}: {'OK' if ok else 'HATA'} {dt:.0f} sn", flush=True)
+        _bsd_ledger_flush()
+        print(f"■ {step}: {'OK' if ok else 'HATA'} {dt:.0f} sn (BSD bu çalışmada {pool.bsd.calls}, "
+              f"bugün kalan ≈ {BsdBudget.remaining(pool.bsd.calls)})", flush=True)
         try:
             store.set_source_status(f"is:{is_adi}:{step}", ok, f"{dt:.0f} sn — {msg}")
             if ok:
@@ -121,7 +157,7 @@ def main(argv=None) -> int:
             from .timeutil import now_utc
 
             back = a.geri if a.geri > 0 else (now_utc().date() - season_start().date()).days + 1
-            pool.bsd.max_calls = max(pool.bsd.max_calls, 5000)
+            pool.bsd.max_calls = pool.bsd.calls + min(5000, BsdBudget.heavy_cap(pool.bsd.calls))
         ahead = 7 if a.komut in ("gecmis", "yenile") else 3  # yayın işi: bugün + 2 gün (hız)
         r = pool.refresh(days_back=back, days_ahead=ahead, history="yenile_s" in steps or a.geri is not None)
         out_logs.extend(r["log"] + [f"Havuz: {r['records']} kaynak kaydı → {r['matches']} birleşik maç"])
@@ -152,7 +188,7 @@ def main(argv=None) -> int:
         from .backfill import Backfill
         from .timeutil import now_utc
 
-        pool.bsd.max_calls = max(pool.bsd.max_calls, 3000)
+        pool.bsd.max_calls = pool.bsd.calls + min(3000, BsdBudget.heavy_cap(pool.bsd.calls))
         pool.refresh(days_back=(now_utc().date() - season_start().date()).days + 1, days_ahead=7, history=True)
         out_logs.extend(Backfill(pool).run()["log"])
 
@@ -179,7 +215,7 @@ def main(argv=None) -> int:
         from .gapstats import GapStats
         from .season import SeasonFill
 
-        cap = 1500
+        cap = min(1500, BsdBudget.heavy_cap(pool.bsd.calls))  # saatlik yayın payı (RESERVE) korunur
         pool.bsd.max_calls = max(pool.bsd.max_calls, pool.bsd.calls + cap)
         out_logs.extend(SeasonFill(pool, max_calls=cap).run()["log"])
         try:

@@ -44,6 +44,9 @@ def is_season_block(msg: str) -> bool:
     return "do not have access to this season" in m or ("free plan" in m and "season" in m)
 
 
+ODDS_RESERVE = 30  # günlük bütçenin oran çağrılarına ayrılan kısmı
+
+
 class ApiFootball:
     _last = 0.0
 
@@ -91,8 +94,12 @@ class ApiFootball:
     def _get(self, path: str, params: dict) -> list:
         if not self.key:
             raise SourceError("API_FOOTBALL_KEY tanımlı değil.")
-        if self.calls_today() >= self.daily_budget:
+        used = self.calls_today()
+        if used >= self.daily_budget:
             raise SourceError(f"Günlük API-Football bütçesi doldu ({self.daily_budget} istek).")
+        if path != "/odds" and used >= self.daily_budget - ODDS_RESERVE:
+            # oran (pazar karşılaştırması) önceliklidir: diğer işler son ODDS_RESERVE isteğe dokunamaz
+            raise SourceError(f"API-Football: kalan {self.daily_budget - used} istek oranlara ayrıldı")
         wait = ApiFootball._last + MIN_INTERVAL - time.monotonic()
         if wait > 0 and ApiFootball._last:
             time.sleep(wait)

@@ -460,16 +460,28 @@ class TeamNews:
         ms = sorted(ms, key=lambda m: m["kickoff_at"])  # en yakın maç önce (süre biterse yakınlar tamamdır)
         out = {"matches": len(ms), "injury_known": 0, "injury_rows": 0, "lineups_confirmed": 0, "lineups_predicted": 0}
 
+        def due(m, kind):
+            """Kota dostu tazelik: maça uzak olan seyrek, yakın olan her saat. (Saatlik iş 200+ maçın her birine
+            her saat 2 BSD isteği atıyordu → günlük 7.500 kota öğleden sonra bitiyordu.)"""
+            h = (parse_dt(m["kickoff_at"]) - now).total_seconds() / 3600
+            if kind == "ilk11":
+                return h <= 6 or (h <= 30 and now.hour % 4 == 0)
+            return h <= 6 or (h <= 24 and now.hour % 3 == 0) or now.hour % 6 == 0
+
         def one(m):
             r = {"injury_known": 0, "injury_rows": 0, "lineups_confirmed": 0, "lineups_predicted": 0}
             try:
-                rows, known = self.injuries(m)
+                if due(m, "eksik"):
+                    rows, known = self.injuries(m)
+                else:
+                    rows = fresh_injuries(self.store, m["id"])
+                    known = bool(rows)
                 r["injury_known"] = 1 if known else 0
                 r["injury_rows"] = len(rows)
             except Exception as e:
                 self.pool.log.append(f"⚠️ eksikler {m['id']}: {e}")
             try:
-                lus = self.lineups(m)
+                lus = self.lineups(m) if due(m, "ilk11") else self.store.select("lineups", [("match_id", "eq", m["id"])])
                 r["lineups_confirmed"] = sum(1 for x in lus if is_confirmed(x))
                 r["lineups_predicted"] = sum(1 for x in lus if not is_confirmed(x))
             except Exception as e:

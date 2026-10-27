@@ -26,7 +26,7 @@ def get(url: str, *, params: dict | None = None, headers: dict | None = None, ti
         try:
             r = requests.get(url, params=params, headers=h, timeout=timeout)
             if r.status_code == 429:
-                raise SourceError("İstek limiti aşıldı (429).")
+                raise SourceError(f"İstek limiti aşıldı (429). {(r.text or '')[:160]}")
             if r.status_code >= 500:
                 raise SourceError(f"Sunucu hatası {r.status_code}")
             return r

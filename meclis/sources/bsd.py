@@ -148,6 +148,24 @@ class BsdThrottle:
     until = 0.0
 
 
+class BsdBudget:
+    """Günlük kota defteri (UTC günü, 7.500 istek). Çalışmalar arası paylaşılır: source_status 'bsd:kota'.
+    used_before = bu çalışmadan önce bugün harcanan; agir işler (sezon/kadro_s/geçmiş) saatlik yayın için
+    RESERVE kadarını asla harcamaz."""
+    DAILY = 7300  # 7.500'ün 200 altı: başka IP/süreç sapmalarına pay
+    RESERVE = 2500
+    used_before = 0
+    exhausted = False
+
+    @classmethod
+    def remaining(cls, calls_now: int = 0) -> int:
+        return max(0, cls.DAILY - cls.used_before - calls_now)
+
+    @classmethod
+    def heavy_cap(cls, calls_now: int = 0) -> int:
+        return max(0, cls.remaining(calls_now) - cls.RESERVE)
+
+
 class BSD:
     def __init__(self, key: str | None, max_calls: int = 1200):
         self.key = key
@@ -170,12 +188,16 @@ class BSD:
 
         if _time.monotonic() < BsdThrottle.until:
             raise SourceError("BSD istek limiti (429) — devre kesici: birkaç dakika denenmiyor")
+        if BsdBudget.exhausted or BsdBudget.remaining(self.calls) <= 0:
+            raise SourceError("BSD günlük kotası bitti (UTC gece yarısı yenilenir) — alanlar sıradaki kaynaktan")
         self.calls += 1
         try:
             r = get(f"{BASE}{path}", params=params, headers={"Authorization": f"Token {self.key}"})
         except SourceError as e:
             if "429" in str(e):
                 BsdThrottle.until = _time.monotonic() + 300
+                if "exhausted" in str(e) or "daily" in str(e):
+                    BsdBudget.exhausted = True  # günlük kota bitti: bugün bir daha denenmez (defter de dolu yazılır)
             raise
         if r.status_code in (401, 403):
             raise SourceError(f"BSD yetki hatası (HTTP {r.status_code}) — BSD_API_KEY geçersiz olabilir")
