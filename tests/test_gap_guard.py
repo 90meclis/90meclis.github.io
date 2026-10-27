@@ -12,12 +12,12 @@ def _payload(p_home, o_home, o_draw, o_away):
 
 def test_wild_gap_is_not_value():
     pl = _payload(0.53, 4.99, 4.2, 1.6)  # model %53, piyasa ~%19
-    picks = rank_picks(pl, SimpleNamespace(value_edge_min=0.03), annotate=True)
+    picks = rank_picks(pl, SimpleNamespace(value_edge_min=0.03, pick_mode="deger"), annotate=True)
     assert not [x for x in picks if x["selection"] == "1" and x.get("kind") == "değer"]
     assert "ayrışıyor" in pl["markets"][0]["neden"]
 
 
 def test_normal_edge_still_value():
     pl = _payload(0.53, 2.20, 3.4, 3.6)  # kalibrasyon (w=0.35) sonrası değer ≈ +%4
-    picks = rank_picks(pl, SimpleNamespace(value_edge_min=0.03))
+    picks = rank_picks(pl, SimpleNamespace(value_edge_min=0.03, pick_mode="deger"))
     assert any(x["selection"] == "1" and x.get("kind") == "değer" for x in picks)

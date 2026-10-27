@@ -129,10 +129,13 @@ class Settings:
     horizon_hours: float = 168.0
     live_extras_hours: float = 24.0
     publish_lead_hours: float = 3.0  # seçim en geç başlamadan bu kadar saat önce yayımlanır
-    publish_window_hours: float = 12.0  # TR günü dışındaki maçlar için yayın penceresi
+    publish_window_hours: float = 30.0  # TR günü dışındaki maçlar için yayın penceresi
     require_injury_data: bool = False
     min_team_matches: int = 4
     value_edge_min: float = 0.03
+    pick_mode: str = "isabet"  # "isabet" (en olası, oran ≥ 1.50) | "deger" (edge ≥ %3)
+    single_min_prob: float = 0.52  # isabet modunda Meclis Görüşü için en az kalibre olasılık
+    singles_max_per_day: int = 8
     no_odds_min_prob: float = 0.72
     coupon_min_odds: float = 2.30
     coupon_max_odds: float = 4.00
@@ -221,10 +224,11 @@ def load_settings() -> Settings:
         horizon_hours=get_float("BOT_HORIZON_HOURS", 168.0),
         live_extras_hours=get_float("BOT_LIVE_EXTRAS_HOURS", 24.0),
         publish_lead_hours=get_float("BOT_PUBLISH_LEAD_HOURS", 3.0),
-        publish_window_hours=get_float("BOT_PUBLISH_WINDOW_HOURS", 12.0),
+        publish_window_hours=get_float("BOT_PUBLISH_WINDOW_HOURS", 30.0),
         require_injury_data=get_bool("REQUIRE_INJURY_DATA", False),
         min_team_matches=int(get_float("MIN_TEAM_MATCHES", 4)),
         value_edge_min=get_float("VALUE_EDGE_MIN", 0.03),
+        pick_mode=os.environ.get("PICK_MODE", "isabet"),
         no_odds_min_prob=get_float("NO_ODDS_MIN_PROB", 0.72),
         coupon_min_odds=get_float("COUPON_MIN_ODDS", 2.30),
         coupon_max_odds=get_float("COUPON_MAX_ODDS", 4.00),

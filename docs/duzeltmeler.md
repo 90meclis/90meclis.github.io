@@ -70,3 +70,9 @@ herkese açık (t25u).
 - Tek parça `meclis.yml` kaldırıldı → `meclis-yayin` (saatlik), `meclis-sonuc` (2 saatte bir), `meclis-gundem` (4×/gün), `meclis-gece` (03:40 TSİ), `meclis-saglik` (09:10/21:10 TSİ). Adım başına süre bütçesi; hata → "otomatik-izleme" issue. Ayrıntı README.
 - Zaman aşımının kökü: kadro adımı BSD 429 / Wikipedia maxlag yüzünden her çalışmada yüzlerce takımı yeniden deniyordu (+ her maç için 70 günlük maç listesinin yeniden okunması). Devre kesici + günlük deneme + takım dizini önbelleği.
 - Arşiv = "Meclis Defteri" (altın, editoryal; yalnız yayımlanan kararlar). Ortak = bütün bültenin canlı analiz masası.
+
+## 27 Ekim 2026 — seçim kuralı: "değer" yerine "isabet" (kullanıcı kararı)
+- Kullanıcı: "bizim için değerli maç değil, gelecek/tutacak analiz ve tahmin lazım." Değer-önce kuralı (edge ≥ %3) 27 Ekim'de hiç seçim çıkarmadı: oranlar piyasa ortalaması (marjlı), olasılık marjsız Pinnacle'a harmanlanıyor → oran 1.50–5.00 bandında kalibre değer neredeyse hiç %3'ü geçmiyordu (yalnızca 5.00 üstü uç oranlar).
+- Yeni kural (PICK_MODE=isabet, varsayılan): maç başına, oranı ≥ 1.50 olan pazarlar arasında KALİBRE OLASILIĞI en yüksek seçim (model + marjsız piyasa harmanı). Olasılık ≥ %50; Meclis Görüşü için ≥ %52, günde en fazla 8 tekli. Günün Kararı: en güvenilen 2–3 maç, toplam oran 2.30–4.00, beklenen değer şartı yok. Değer artık bilgi amaçlı. Veri kontrol (aşırı ayrışma) seçilmez, kadro belirsizliği güveni düşürür, ≥ 3 saat önce kilit.
+- Geri test (bu sezon, 2.311 pazar satırı, açılış oranı): kalibre olasılık bantları isabetle örtüşüyor — 1X2 %50–55 → %53, %55–60 → %57; 2.5 gol %50–55 → %54, %55–60 → %60.
+- Yayın penceresi 30 saat: ertesi günün bülteni bir önceki akşam yayımlanabilir (Günün Kararı bütün günün maçlarından kurulur).

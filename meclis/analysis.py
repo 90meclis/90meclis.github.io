@@ -317,6 +317,10 @@ SINGLE_MAX_ODDS = 5.00
 CAL_W = 0.65
 CAL_W_DEFAULT = 0.35  # geri testi olmayan pazarlar (korner, kart, şut…)
 CAL_W_FLOOR = 0.20  # geri testli pazarlarda modelin asgari ağırlığı
+# İSABET MODU (27.10.2026 kullanıcı kararı: "değerli maç değil, tutacak tahmin"): maçın seçimi, oranı ≥ 1.50 olan
+# pazarlar arasında KALİBRE OLASILIĞI en yüksek olandır. Değer (edge) yalnızca bilgi. Geri test (bu sezon, 2.311
+# satır): kalibre olasılık bantları isabetle örtüşüyor (%50–55 → %50–54, %55–60 → %57–60).
+ISABET_MIN_P = 0.50
 
 
 def _market_implied(markets: list[dict]) -> dict:
@@ -365,6 +369,7 @@ def rank_picks(payload: dict, settings, model_based: bool | None = None, q: floa
         model_based = str(payload.get("basis") or "").startswith("model")
     implied = _market_implied(payload["markets"])
     edge_min = getattr(settings, "value_edge_min", 0.03)
+    isabet = getattr(settings, "pick_mode", "isabet") == "isabet"
     value, fair = [], []
     bias = payload.get("bias") or {}
     for m in payload["markets"]:
@@ -405,7 +410,9 @@ def rank_picks(payload: dict, settings, model_based: bool | None = None, q: floa
                        f", değer {edge * 100:+.0f}%); doğrulanmadan seçim yok")
                 if annotate:
                     m["veri_kontrol"] = True
-            elif edge < edge_min:
+            elif isabet and pc < ISABET_MIN_P:
+                why = f"olasılık %{pc * 100:.0f} < %{ISABET_MIN_P * 100:.0f} (isabet eşiği)"
+            elif not isabet and edge < edge_min:
                 why = f"değer {edge * 100:+.1f}% < %{edge_min * 100:.0f}"
             elif not pm:
                 why = "piyasanın karşı tarafı yok — marjsız olasılık hesaplanamıyor (kalibrasyon yapılamaz)"
@@ -413,14 +420,18 @@ def rank_picks(payload: dict, settings, model_based: bool | None = None, q: floa
                 if annotate:
                     m.update(deger=False, neden=why)
                 continue
-            score = edge * q
-            if isinstance(bt, dict) and bt.get("roi") is not None:  # geri testte değer kuralı bu pazarda kârlı mı?
-                score *= 1.15 if bt["roi"] > 0 else 0.85
+            if isabet:
+                score = pc * q  # en olası (kalibre) sonuç; veri derinliği düşük maç geride kalır
+            else:
+                score = edge * q
+                if isinstance(bt, dict) and bt.get("roi") is not None:  # geri testte değer kuralı bu pazarda kârlı mı?
+                    score *= 1.15 if bt["roi"] > 0 else 0.85
             unc = payload.get("xi_uncertainty") or 0.0  # kilit oyuncu oynayacak mı belirsizliği (0–1)
             score *= 1 - 0.3 * min(1.0, unc)
             if annotate:
-                m.update(deger=True, neden=f"değerli: {edge * 100:+.1f}%")
-            value.append(dict(m, kind="değer", probability_model=round(p, 4), probability=round(pc, 4),
+                m.update(deger=True, neden=(f"isabet adayı: olasılık %{pc * 100:.0f}, oran {o:.2f} (değer {edge * 100:+.1f}%)"
+                                            if isabet else f"değerli: {edge * 100:+.1f}%"))
+            value.append(dict(m, kind="isabet" if isabet else "değer", probability_model=round(p, 4), probability=round(pc, 4),
                               edge=round(edge, 4), confidence=round(score, 4), calibration=cal_used))
         else:
             fo = 1 / p if p > 0 else 99

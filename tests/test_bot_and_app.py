@@ -258,6 +258,7 @@ def test_value_ranking_opens_all_markets_and_avoids_low_odds():
     from meclis.config import load_settings
 
     s = load_settings()
+    s.pick_mode = "deger"  # değer modu (isabet modu ayrı testte)
     payload = {"ready": True, "basis": "model", "quality": {"factor": 1.0}, "model_matches": {"home": 8, "away": 8},
                "min_team_matches": 4, "markets": [
                    # çok yüksek olasılık ama oran 1.18 → tekli için elenmeli
@@ -274,6 +275,23 @@ def test_value_ranking_opens_all_markets_and_avoids_low_odds():
     assert all((r.get("odds") or 1 / r["probability"]) >= SINGLE_MIN_ODDS for r in ranked)
     assert [r["market"] for r in ranked if r["kind"] != "değer"] == ["CORNERS_OU"]
     assert select_single(payload, s)["market"] == "1X2"
+
+
+def test_isabet_mode_picks_most_likely_market_priced_at_least_150():
+    from meclis.analysis import rank_picks
+    from meclis.config import load_settings
+
+    s = load_settings()
+    s.pick_mode = "isabet"
+    payload = {"ready": True, "basis": "model", "quality": {"factor": 1.0}, "model_matches": {"home": 8, "away": 8},
+               "min_team_matches": 4, "markets": [
+                   _mk_market("OU_GOALS", "ÜST", 0.5, 0.93, 1.18), _mk_market("OU_GOALS", "ALT", 0.5, 0.07, 6.0),
+                   _mk_market("OU_GOALS", "ÜST", 2.5, 0.60, 1.70), _mk_market("OU_GOALS", "ALT", 2.5, 0.40, 2.15),
+                   _mk_market("1X2", "1", None, 0.50, 2.40), _mk_market("1X2", "X", None, 0.25, 3.40),
+                   _mk_market("1X2", "2", None, 0.25, 3.10)]}
+    ranked = [r for r in rank_picks(payload, s) if r["kind"] == "isabet"]
+    assert ranked and ranked[0]["market"] == "OU_GOALS" and ranked[0]["line"] == 2.5 and ranked[0]["selection"] == "ÜST"
+    assert all(r["odds"] >= 1.50 and r["probability"] >= 0.50 for r in ranked)
 
 
 def test_asian_handicap_market_and_settlement():
@@ -401,7 +419,7 @@ def test_rank_picks_blocks_absurd_edge_and_uses_backtest_weight():
           {"market": "1X2", "selection": "X", "line": None, "probability": 0.12, "odds": 3.40},
           {"market": "1X2", "selection": "2", "line": None, "probability": 0.08, "odds": 3.00}]
     pl = {"markets": [dict(m) for m in mk], "quality": {"factor": 1.0}, "basis": "model"}
-    r = rank_picks(pl, SimpleNamespace(value_edge_min=0.03), True, annotate=True)
+    r = rank_picks(pl, SimpleNamespace(value_edge_min=0.03, pick_mode="deger"), True, annotate=True)
     assert not [x for x in r if x.get("kind") == "değer"]  # %25 üstü değer → yayımlanmaz
     assert pl["markets"][0]["deger"] is False
     mk = [{"market": "1X2", "selection": "1", "line": None, "probability": 0.55, "odds": 2.70},
@@ -409,5 +427,5 @@ def test_rank_picks_blocks_absurd_edge_and_uses_backtest_weight():
           {"market": "1X2", "selection": "2", "line": None, "probability": 0.20, "odds": 3.00}]
     pl2 = {"markets": [dict(m) for m in mk], "quality": {"factor": 1.0}, "basis": "model",
            "cal_params": {"1X2": {"w": 0.1, "roi": 0.02}}}
-    r2 = rank_picks(pl2, SimpleNamespace(value_edge_min=0.03), True)
+    r2 = rank_picks(pl2, SimpleNamespace(value_edge_min=0.03, pick_mode="deger"), True)
     assert r2 and r2[0]["calibration"]["kaynak"] == "geri test" and r2[0]["calibration"]["w"] == 0.1

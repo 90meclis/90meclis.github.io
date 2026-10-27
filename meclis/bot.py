@@ -439,9 +439,14 @@ class Bot:
     def _publish(self, analyses: list[tuple[dict, dict]], now) -> tuple[int, list[str]]:
         """Arşiv katmanı: yayın penceresindeki maçların bot seçimlerinden içerik kurar."""
         by_day: dict = {}
+        seen_slots: set = set()  # aynı saatte aynı takım = aynı maçın ikinci kaydı (ad eşleşmesi kopyası) → bir kez
         for m, a in analyses:
+            slot_h, slot_a = (m["kickoff_at"][:16], m["home_team_id"]), (m["kickoff_at"][:16], m["away_team_id"])
+            if slot_h in seen_slots or slot_a in seen_slots:
+                continue
+            seen_slots |= {slot_h, slot_a}
             bp = a.get("best_pick")
-            if bp and bp.get("kind") == "değer" and bp.get("odds") and self.publishable(m, now):
+            if bp and bp.get("kind") in ("değer", "isabet") and bp.get("odds") and self.publishable(m, now):
                 by_day.setdefault(tr_date(m["kickoff_at"]), []).append((m, a, bp))
         recorded, created = 0, []
         for day, items in sorted(by_day.items()):
@@ -455,8 +460,9 @@ class Bot:
             if not self.store.select("coupons", [("coupon_date", "eq", dstr), ("tag", "eq", "gunun_karari")], limit=1):
                 cands = [dict(bp, match_id=m["id"]) for m, a, bp in items
                          if m["id"] not in singles_ids and m["id"] not in gk_ids]
-                c = build_daily_coupon(cands, self.s.coupon_min_odds, self.s.coupon_max_odds, self.s.coupon_min_ev,
-                                       rank="confidence")
+                isabet = getattr(self.s, "pick_mode", "isabet") == "isabet"
+                c = build_daily_coupon(cands, self.s.coupon_min_odds, self.s.coupon_max_odds,
+                                       -1.0 if isabet else self.s.coupon_min_ev, rank="confidence")
                 if c:
                     created += self._insert_coupon("gunun_karari", dstr, c, mmap, "piyasa")
                     gk_ids |= {l["match_id"] for l in c["legs"]}
@@ -464,13 +470,18 @@ class Bot:
                     self.log.append(f"Günün Kararı ({dstr}): {self.s.coupon_min_odds:.2f}-{self.s.coupon_max_odds:.2f} "
                                     "bandında değerli kombinasyon kurulamadı — kupon yok.")
             # 2) Meclis Görüşü — tekliler; Günün Kararı'ndaki maç o gün tekli olarak yayımlanmaz
+            isabet = getattr(self.s, "pick_mode", "isabet") == "isabet"
             for m, a, bp in sorted(items, key=lambda x: -(x[2].get("confidence") or 0)):
                 if m["id"] in gk_ids or m["id"] in singles_ids:
                     continue
-                if (bp.get("confidence") or 0) < self.s.single_min_trust:
+                if isabet:
+                    if bp.get("probability", 0) < self.s.single_min_prob or \
+                            len(singles_ids) >= self.s.singles_max_per_day:
+                        continue  # Ortak'ta kalır, Defter'e alınmaz
+                elif (bp.get("confidence") or 0) < self.s.single_min_trust:
                     continue  # bot bülteninde kalır, arşive alınmaz
                 lab = pick_label(bp["market"], bp["selection"], bp.get("line"), m["home_name"], m["away_name"])
-                why = (f"{lab}: olasılık %{bp['probability'] * 100:.1f} (kalibre), oran {bp['odds']:.2f}, değer "
+                why = (f"{lab}: olasılık %{bp['probability'] * 100:.1f} (kalibre: model + marjsız piyasa), oran {bp['odds']:.2f}, değer "
                        f"{bp['edge'] * 100:+.1f}%; λ {a['lambdas']['home']:.2f}-{a['lambdas']['away']:.2f}; "
                        f"dayanak: {a.get('basis')}; veri derinliği {a['quality']['score']:.0f}/100")
                 sc = "; ".join(f"{x['ad']} (%{100 * x['olasılık']:.0f})" if x.get("olasılık") else x["ad"]
