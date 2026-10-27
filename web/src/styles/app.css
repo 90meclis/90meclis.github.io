@@ -983,3 +983,19 @@ html, body { overflow-x: clip; }
 .seal-list .ok { color: var(--lime); } .seal-list .bad { color: #ff7a7a; } .seal-list .sl-l { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .seal-list code { color: var(--muted); font-size: 11px; }
 /* CLS: yükleme sırasında alt bilgi ekranda görünüp aşağı itilmesin */
 main.main { min-height: 100vh; }
+
+/* Editoryal: bülten, gerekçe kartı, maç sonrası not */
+.bulteni { border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; background: linear-gradient(180deg, rgba(215,255,63,.05), transparent); }
+.bulteni-lead { font-size: 1.02rem; line-height: 1.6; margin: 6px 0 10px; }
+.bulteni-more summary { cursor: pointer; font-weight: 600; margin: 6px 0; }
+.gerekce { margin-top: 8px; padding: 8px 10px; border-left: 3px solid var(--mint); background: rgba(255,255,255,.03); border-radius: 0 8px 8px 0; font-size: .86rem; }
+.gerekce summary { cursor: pointer; font-weight: 600; font-size: .82rem; }
+.gk-title { display: block; font-weight: 700; font-size: .8rem; letter-spacing: .02em; text-transform: uppercase; opacity: .8; margin-bottom: 4px; }
+.gk-bullets { margin: 4px 0 6px; padding-left: 18px; }
+.gk-bullets li { margin: 2px 0; line-height: 1.45; }
+.gk-risk { margin: 4px 0; }
+.gk-band { margin: 2px 0 0; }
+.son-not { margin-top: 8px; font-size: .85rem; padding: 6px 10px; border-radius: 8px; }
+.son-not.ok { background: rgba(46,160,67,.10); }
+.son-not.bad { background: rgba(218,54,51,.10); }
+.ch-why { grid-column: 1 / -1; }

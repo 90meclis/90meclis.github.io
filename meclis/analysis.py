@@ -214,6 +214,17 @@ def analyze_match(match: dict, ctx: LeagueContext, settings, injuries: list[dict
             payload["market_weight"] = wm
             if min(nh_cur, na_cur) < THIN_CURRENT:
                 gaps.append(f"bu sezon az maç ({nh_cur}/{na_cur}) — piyasa oranıyla güçlendirildi")
+        elif euro:
+            # Kupa + piyasa oranı yok: farklı lig seviyelerindeki takımların gücü aynı ölçekte değil (canlı denetim
+            # 27.10: Copa del Rey'de %99'luk 1X2). Güç farkı yarıya büzülür, λ 0.35–3.0 aralığına sınırlanır.
+            import math
+
+            g = math.sqrt(lh0 * la0)
+            r = math.sqrt(lh0 / la0) if la0 > 0 else 1.0
+            r = r ** 0.5
+            lh0, la0 = min(3.0, max(0.35, g * r)), min(3.0, max(0.35, g / r))
+            basis += "; kupa, piyasa oranı yok — güç farkı büzüldü"
+            gaps.append("kupa maçı ve piyasa oranı yok — ligler arası güç farkı belirsiz, olasılıklar sınırlandı")
     elif mkt:
         lh0, la0 = mkt
         basis = "piyasa oranı (lig geçmişi yok)"

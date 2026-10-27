@@ -10,6 +10,7 @@ import { CouponCard, CouponHero } from "../components/CouponCard";
 import { PickCard } from "../components/PickCard";
 import { Empty, Gate, StatusPill, TagPill } from "../components/ui";
 import type { PredStatus } from "../lib/types";
+import { editorialFor } from "../lib/editorial";
 
 const PAGE = 40;
 
@@ -59,6 +60,8 @@ export default function Archive() {
   const gk = dayCoupons.filter((c) => c.tag === "gunun_karari");
   const kb = dayCoupons.filter((c) => c.tag === "karar_birligi");
   const legsOf = (id: string) => preds.filter((p) => p.coupon_id === id);
+  const edQ = useAsync(d.data ? `archive:ed:${day}` : null, () => editorialFor([day]));
+  const ed = edQ.data ?? undefined;
   const gkMatches = new Set(gk.flatMap((c) => legsOf(c.id).map((p) => p.match_id)));
   const daySingles = preds.filter((p) => p.tag === "meclis_gorusu" && trDay(p.kickoff_at) === day && !gkMatches.has(p.match_id))
     .sort((a, b) => a.kickoff_at.localeCompare(b.kickoff_at));
@@ -113,16 +116,16 @@ export default function Archive() {
                 </label>
               )}
             </div>
-            {gk.length ? gk.map((c) => <CouponHero key={c.id} c={c} legs={legsOf(c.id)} />) : (
-              <div className="coupon-hero empty"><span className="kicker">Günün Kararı</span><p className="muted">{day >= today ? "Günün Kararı, değer gören seçimler netleştiğinde maçtan en az 3 saat önce burada kilitlenir. Değer yoksa Meclis oynamaz." : "Bu gün Günün Kararı çıkmadı: kurallara uyan değerli seçim yoktu."}</p></div>
+            {gk.length ? gk.map((c) => <CouponHero key={c.id} c={c} legs={legsOf(c.id)} ed={ed} />) : (
+              <div className="coupon-hero empty"><span className="kicker">Günün Kararı</span><p className="muted">{day >= today ? "Günün Kararı, bir önceki gün 18:00'de (TSİ) bütün günün maçları masadayken kurulur ve her maçtan en az 3 saat önce kilitlenir. Kurallara uyan seçim yoksa kupon çıkmaz." : "Bu gün Günün Kararı çıkmadı: kurallara uyan seçim yoktu."}</p></div>
             )}
             <h3 className="sub">Meclis Görüşleri <span className="muted">· {daySingles.length} tekli</span></h3>
-            {daySingles.length ? <div className="picks grid">{daySingles.map((p) => <PickCard key={p.id} p={p} />)}</div>
+            {daySingles.length ? <div className="picks grid">{daySingles.map((p) => <PickCard key={p.id} p={p} kart={ed?.kart[p.id]} not={ed?.not[p.id]} />)}</div>
               : <p className="muted">Bu gün için Günün Kararı dışında tekli görüş yok.</p>}
             {kb.length > 0 && (
               <>
                 <h3 className="sub">Karar Birliği</h3>
-                <div className="coupons">{kb.map((c) => <CouponCard key={c.id} c={c} legs={legsOf(c.id)} />)}</div>
+                <div className="coupons">{kb.map((c) => <CouponCard key={c.id} c={c} legs={legsOf(c.id)} ed={ed} />)}</div>
               </>
             )}
             

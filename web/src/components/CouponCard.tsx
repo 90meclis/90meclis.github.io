@@ -8,8 +8,12 @@ import { PickCard } from "./PickCard";
 import { ShareButton } from "./ShareButton";
 import { SealBadge } from "./SealBadge";
 import { cardForCoupon } from "../lib/share";
+import type { Kart } from "../lib/editorial";
+import { Gerekce, SonNot } from "./Gerekce";
 
-export function CouponCard({ c, legs }: { c: Coupon; legs: Prediction[] }) {
+type Ed = { kart?: Record<string, Kart>; not?: Record<string, string> };
+
+export function CouponCard({ c, legs, ed }: { c: Coupon; legs: Prediction[]; ed?: Ed }) {
   return (
     <article className={`coupon c-${c.tag} st-border-${c.status}`}>
       <header className="coupon-head">
@@ -21,7 +25,8 @@ export function CouponCard({ c, legs }: { c: Coupon; legs: Prediction[] }) {
         <div><small>Birlikte tutma olasılığı</small><b>{pct(c.joint_probability, 1)}</b></div>
         <div><small>Kâr/Zarar</small><b className={c.profit === null ? "" : c.profit >= 0 ? "pos" : "neg"}>{c.profit === null ? "—" : signed(c.profit)}</b></div>
       </div>
-      <div className="coupon-legs">{legs.map((p) => <PickCard key={p.id} p={p} compact />)}</div>
+      <div className="coupon-legs">{legs.map((p) => <PickCard key={p.id} p={p} compact kart={ed?.kart?.[p.id]} not={ed?.not?.[p.id]} />)}</div>
+      {ed?.not?.[c.id] && <SonNot text={ed.not[c.id]} />}
       <SealBadge id={c.id} />
       {legs.length > 0 && <ShareButton make={() => cardForCoupon(c, legs)} name={`90meclis-${c.tag}-${c.coupon_date}.png`} text={`90 Meclis · ${c.coupon_date}`} />}
     </article>
@@ -29,7 +34,7 @@ export function CouponCard({ c, legs }: { c: Coupon; legs: Prediction[] }) {
 }
 
 /** Günün Kararı vitrini: masanın ana kuponu. */
-export function CouponHero({ c, legs }: { c: Coupon; legs: Prediction[] }) {
+export function CouponHero({ c, legs, ed }: { c: Coupon; legs: Prediction[]; ed?: Ed }) {
   return (
     <article className={`coupon-hero st-border-${c.status}`}>
       <header>
@@ -43,9 +48,12 @@ export function CouponHero({ c, legs }: { c: Coupon; legs: Prediction[] }) {
             <span className="ch-pick">{pickLabel(p.market, p.selection, p.line, p.home_name ?? "Ev", p.away_name ?? "Dep")}</span>
             <span className="ch-o">{num(p.odds ?? p.fair_odds)}</span>
             <StatusPill status={p.status} />
+            {ed?.kart?.[p.id] && <div className="ch-why"><Gerekce k={ed.kart[p.id]} compact /></div>}
+            {ed?.not?.[p.id] && <div className="ch-why"><SonNot text={ed.not[p.id]} /></div>}
           </li>
         ))}
       </ol>
+      {ed?.not?.[c.id] && <SonNot text={ed.not[c.id]} />}
       <footer>
         <span>Birlikte tutma olasılığı <b>{pct(c.joint_probability, 1)}</b></span>
         <span>Durum <StatusPill status={c.status} /></span>

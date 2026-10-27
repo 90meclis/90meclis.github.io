@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import * as api from "../lib/data";
 import { useAsync } from "../lib/useAsync";
+import { bulten as bultenOf, type Bulten } from "../lib/editorial";
 import { summarize, toBets, clvStat, SETTLED } from "../lib/trust";
 import { trDay, addDays, relTime, num, time, dateLong, dateTime, dayLabel, signed } from "../lib/format";
 import { league, pickLabel, TAG_LABELS } from "../lib/labels";
@@ -96,6 +97,21 @@ function WinBar({ p1, px, p2 }: { p1: number; px: number; p2: number }) {
   );
 }
 
+function MeclisBulteni({ list, today }: { list: Bulten[]; today: string }) {
+  const [first, ...rest] = list;
+  const head = (b: Bulten) => (b.tarih === today ? "Bugün" : dateLong(b.tarih + "T12:00:00+03:00"));
+  return (
+    <section className="block bulteni" aria-label="Meclis Bülteni">
+      <div className="sec-head"><h2>Meclis Bülteni <span className="muted small">· {head(first)}</span></h2><Link to="/tahmin-arsivi" className="more">Defter →</Link></div>
+      <p className="bulteni-lead">{first.metin}</p>
+      {rest.map((b) => (
+        <details key={b.tarih} className="bulteni-more"><summary>{head(b)} bülteni</summary><p>{b.metin}</p></details>
+      ))}
+      <p className="muted tiny">Bülten her yayın çalışmasında veriden yeniden yazılır; sayıların hepsi analiz, kilitli kayıt ve geri testten gelir. Her kararın gerekçesi Defter'de, kartın altında.</p>
+    </section>
+  );
+}
+
 export default function Home() {
   const meta = ROUTES[0];
   usePageMeta(meta.title, meta.description);
@@ -125,6 +141,7 @@ export default function Home() {
     return { ...b, scan: await scanFor(b.fixtures.map((f) => f.id)) };
   });
   const newsQ = useAsync("news:home", () => api.news(60));
+  const bq = useAsync(`home:bulten:${today}`, async () => (await Promise.all([bultenOf(today), bultenOf(addDays(today, 1))])).filter((x): x is Bulten => !!x));
 
   const preds = useMemo(() => book.data?.p ?? [], [book.data]);
   const coupons = useMemo(() => book.data?.c ?? [], [book.data]);
@@ -245,6 +262,8 @@ export default function Home() {
         </section>
       </div>
 
+      {(bq.data?.length ?? 0) > 0 && <MeclisBulteni list={bq.data!} today={today} />}
+
       <section className="block">
         <div className="sec-head"><h2>{nd ? (nd.day === today ? "Bugünün öne çıkanları" : `Sıradaki maç günü · ${dateLong(nd.day + "T12:00:00+03:00")}`) : "Maçlar"}</h2><Link to="/mac-merkezi" className="more">Bütün maçlar{nd ? ` (${nd.matches.length})` : ""} →</Link></div>
         <Gate loading={next.loading} error={next.error} rows={4}>
@@ -314,7 +333,7 @@ export default function Home() {
         <h2>Neden 90 Meclis?</h2>
         <ul>
           <li><b>Kilitli defter</b><span>Karar maçtan önce yazılır; seçim, oran ve olasılık sonradan değişmez, kayıt silinmez.</span></li>
-          <li><b>Yalnızca değer</b><span>Model piyasadan anlamlı biçimde ayrılmıyorsa Meclis oynamaz. Oranlar yalnızca yabancı piyasalardan.</span></li>
+          <li><b>Önce isabet</b><span>Oranı en az 1.50 olan pazarlar içinden tutma olasılığı en yüksek seçim; model ile piyasa çelişiyorsa ya da geri testte derinlik yoksa Meclis oynamaz.</span></li>
           <li><b>Ölçülebilir</b><span>İsabet, ROI, kapanış oranı farkı ve kalibrasyon herkese açık.</span></li>
         </ul>
       </section>

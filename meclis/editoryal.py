@@ -66,8 +66,8 @@ def card(pred: dict, a: dict | None, motor: dict | None) -> dict:
         first += f": model {pc(pm)}, marjsız piyasa {pc(pk)} — ikisi aynı yönde" if abs(pm - pk) <= 0.06 else \
             f": model {pc(pm)}, marjsız piyasa {pc(pk)}"
     if pred.get("odds"):
-        first += f"; oran {f(pred['odds'])}."
-    bullets.append(first)
+        first += f"; oran {f(pred['odds'])}"
+    bullets.append(first + ".")
     goals_mk = mk in ("OU_GOALS", "BTTS", "HT_OU_GOALS", "TEAM_GOALS_HOME", "TEAM_GOALS_AWAY")
     if lh is not None and la is not None:
         if goals_mk:

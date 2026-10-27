@@ -7,8 +7,10 @@ import { StatusPill, TagPill } from "./ui";
 import { ShareButton } from "./ShareButton";
 import { SealBadge } from "./SealBadge";
 import { cardForPick } from "../lib/share";
+import type { Kart } from "../lib/editorial";
+import { Gerekce, SonNot } from "./Gerekce";
 
-export function PickCard({ p, compact = false }: { p: Prediction; compact?: boolean }) {
+export function PickCard({ p, compact = false, kart, not }: { p: Prediction; compact?: boolean; kart?: Kart; not?: string }) {
   const home = p.home_name ?? "Ev", away = p.away_name ?? "Dep";
   return (
     <article className={`pick st-border-${p.status} ${compact ? "compact" : ""}`}>
@@ -28,12 +30,12 @@ export function PickCard({ p, compact = false }: { p: Prediction; compact?: bool
       </div>
       <div className="pick-meta">
         <span>Olasılık <b>{pct(p.probability)}</b></span>
-        {p.edge !== null && <span>Değer <b>{signed((p.edge ?? 0) * 100, 1)}%</b></span>}
         {p.confidence !== null && <span>Güven <b>{pct(p.confidence)}</b></span>}
         {p.result_value && <span>Sonuç <b>{p.result_value}</b></span>}
         {p.profit !== null && p.status !== "bekliyor" && <span>K/Z <b className={p.profit >= 0 ? "pos" : "neg"}>{signed(p.profit)}</b></span>}
       </div>
-      {!compact && p.scenario_note && <p className="pick-note"><span className="muted">Senaryo:</span> {p.scenario_note}</p>}
+      {kart ? <Gerekce k={kart} compact={compact} /> : !compact && p.scenario_note && <p className="pick-note"><span className="muted">Senaryo:</span> {p.scenario_note}</p>}
+      {not && <SonNot text={not} />}
       <p className="pick-lock" title={`Kayıt: ${dateTime(p.recorded_at)} TSİ`}>
         <span aria-hidden="true">🔒</span> Maçtan {hoursBefore(p.recorded_at, p.kickoff_at)} kilitlendi
       </p>

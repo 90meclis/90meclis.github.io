@@ -154,7 +154,7 @@ export default function PredictionBot() {
           <span className="desk-kicker">Ortak · analist masası · canlı</span>
         </div>
         <h1>Ortak</h1>
-        <p className="lead">Meclis'in yapay zekâ analisti. Bültendeki bütün maçları ve bütün pazarları kendi modeliyle fiyatlar, piyasayla yan yana koyar; değer gördüğünü söyler, görmediğini nedeniyle geçer. Buradaki her şey keşif içindir; yayımlanan kararlar <Link to="/tahmin-arsivi">Meclis Defteri</Link>'nde.</p>
+        <p className="lead">Meclis'in yapay zekâ analisti. Bültendeki bütün maçları ve bütün pazarları kendi modeliyle fiyatlar, piyasayla yan yana koyar; tutma olasılığı en yüksek seçimi söyler, görmediğini nedeniyle geçer. Buradaki her şey keşif içindir; yayımlanan kararlar <Link to="/tahmin-arsivi">Meclis Defteri</Link>'nde.</p>
         {d.data && all.length > 0 && (
           <div className="desk-kpi">
             <div><b>{kpi.analiz}/{kpi.mac}</b><span>maç analiz</span></div>

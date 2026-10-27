@@ -1,3 +1,4 @@
+import { motor as motorRow, groupOf, GROUP_TR, type Motor } from "../lib/editorial";
 import * as api from "../lib/data";
 import { useAsync } from "../lib/useAsync";
 import { num, pct, signed } from "../lib/format";
@@ -8,7 +9,7 @@ import { CalibrationChart, EquityChart } from "../components/charts";
 import { PickCard } from "../components/PickCard";
 import { Card, Empty, Gate, PageHead, Stat, StatusPill } from "../components/ui";
 import { Link } from "react-router-dom";
-import type { Tag, Coupon } from "../lib/types";
+import type { Tag, Coupon, Prediction } from "../lib/types";
 import { asBt, backtest, streaks, weekly, type Bt, type WeekPt } from "../lib/trust2";
 import { Ring } from "../components/elite/viz";
 import { dateShort } from "../lib/format";
@@ -173,6 +174,39 @@ function sampleNote(n: number) {
   return `${n} sonuçlanmış tekli.`;
 }
 
+type LiveAgg = { n: number; won: number; roi: number | null; priced: number };
+function liveAgg(ps: Prediction[]): LiveAgg {
+  const st = ps.filter((p) => p.status === "kazandi" || p.status === "kaybetti");
+  const pr = st.filter((p) => p.odds);
+  const prof = pr.reduce((a, p) => a + (p.status === "kazandi" ? (p.odds as number) - 1 : -1), 0);
+  return { n: st.length, won: st.filter((p) => p.status === "kazandi").length, roi: pr.length ? prof / pr.length : null, priced: pr.length };
+}
+const pctOr = (x: number | null | undefined) => (x == null ? "—" : `%${Math.round(x * 100)}`);
+
+/** Motorun örneklem dışı geri testi ile yayımlanan seçimlerin canlı sonuçları, aynı bant/pazar kırılımında. */
+function MotorVsLive({ m, preds }: { m: Motor; preds: Prediction[] }) {
+  const bands = m.geritest.bantlar.filter((b) => b.n > 0);
+  const inBand = (p: Prediction, lo: number, hi: number) => (p.probability ?? 0) >= lo && (p.probability ?? 0) < hi;
+  const groups = m.geritest.pazarlar.filter((g) => g.n > 0);
+  const t = m.geritest.toplam;
+  return (
+    <Card title="Geri test ↔ canlı" aside={<span className="muted small">Bant ve pazar bazında · tekliler + kupon ayakları</span>}>
+      <p className="muted small">Geri test: {num(m.geritest.mac, 0)} geçmiş maçta, karar anı oranlarıyla, örneklem dışı (bir yarıyla öğrenilip öbür yarıda ölçüldü). Toplam {num(t.n, 0)} seçim, isabet {pctOr(t.isabet)}, ROI {t.roi != null ? `${signed(t.roi * 100, 1)}%` : "—"}. Canlı sütun yalnızca kilitli kayıttan sayılır; örneklem küçükken farklar şansa bağlıdır.</p>
+      <div className="table-wrap"><table className="tbl">
+        <thead><tr><th>Olasılık bandı</th><th>Geri test isabet</th><th>n</th><th>Canlı isabet</th><th>n</th><th>Canlı ROI</th></tr></thead>
+        <tbody>{bands.map((b) => { const L = liveAgg(preds.filter((p) => inBand(p, b.alt, b.ust >= 1 ? 1.01 : b.ust))); return (
+          <tr key={b.bant}><td>{b.bant}</td><td>{pctOr(b.isabet)}</td><td>{b.n}</td><td>{L.n ? pctOr(L.won / L.n) : "—"}</td><td>{L.n}</td><td>{L.roi != null ? `${signed(L.roi * 100, 1)}%` : "—"}</td></tr>); })}</tbody>
+      </table></div>
+      <div className="table-wrap"><table className="tbl">
+        <thead><tr><th>Pazar</th><th>Geri test isabet</th><th>n</th><th>Canlı isabet</th><th>n</th><th>Yayına açık</th></tr></thead>
+        <tbody>{groups.map((g) => { const L = liveAgg(preds.filter((p) => groupOf(p.market, p.line) === g.pazar)); return (
+          <tr key={g.pazar}><td>{GROUP_TR[g.pazar] ?? g.pazar}</td><td>{pctOr(g.isabet)}</td><td>{g.n}</td><td>{L.n ? pctOr(L.won / L.n) : "—"}</td><td>{L.n}</td><td>{m.derin_pazarlar.includes(g.pazar) ? "evet" : "hayır"}</td></tr>); })}</tbody>
+      </table></div>
+      <p className="muted tiny">Geri testte ROI negatif: piyasa marjı yüzünden yüksek isabet tek başına kâr demek değildir. Meclis isabeti öne alır; değer (edge) yalnızca bilgi amaçlı gösterilir. Yayına yalnızca geri test derinliği yeten pazarlar açılır.</p>
+    </Card>
+  );
+}
+
 export default function Trust() {
   const meta = ROUTES[4];
   usePageMeta(meta.title, meta.description);
@@ -191,6 +225,7 @@ export default function Trust() {
   const lost = preds.filter((p) => p.status === "kaybetti" && p.tag === "meclis_gorusu");
   const lostC: Coupon[] = (d.data?.coupons ?? []).filter((c) => c.status === "kaybetti");
   const bt = useAsync("trust:backtest", backtest);
+  const mq = useAsync("trust:motor", motorRow);
   const sk = streaks(bets);
   const wk = weekly(bets);
 
@@ -220,6 +255,7 @@ export default function Trust() {
               {clvAll && <p className="muted tiny">CLV: kayıt anındaki oranın kapanış oranına göre farkı. Uzun vadede kazancı en iyi öngören ölçüt; isabet ve ROI'den çok daha az şansa bağlıdır.</p>}
             </Card>
 
+            {mq.data && <MotorVsLive m={mq.data} preds={preds} />}
             {bt.data && <Backtest rows={bt.data.map(asBt)} />}
 
             <Card title="Özet">
