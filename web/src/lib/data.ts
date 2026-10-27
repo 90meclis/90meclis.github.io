@@ -41,7 +41,7 @@ async function all<T>(make: () => Sel, max = 20000): Promise<T[]> {
   return out;
 }
 
-const MATCH_LIST = "id,league,kickoff_at,home_team_id,away_team_id,home_name,away_name,home_goals,away_goals,score,ht_home_goals,ht_away_goals,status,durum,venue,referee,city,odds,missing_fields,completeness,updated_at,season";
+const MATCH_LIST = "id,league,kickoff_at,home_team_id,away_team_id,home_name,away_name,home_goals,away_goals,score,ht_home_goals,ht_away_goals,status,durum,venue,referee,city,odds,missing_fields,completeness,updated_at,season,canli:sources->_canli";
 
 export async function leaguesInDb(): Promise<string[]> {
   const since = new Date(Date.now() - 45 * 86400000).toISOString();

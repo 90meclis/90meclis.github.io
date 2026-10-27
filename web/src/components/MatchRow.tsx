@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import type { Match, Prediction } from "../lib/types";
 import type { BotAnalysis } from "../lib/data";
 import { time, num, pct, signed } from "../lib/format";
-import { hasScore, matchPath, matchState, odds1x2 } from "../lib/match";
+import { hasScore, liveScore, matchPath, matchState, odds1x2 } from "../lib/match";
 import { TAG_LABELS, pickLabel } from "../lib/labels";
 import { scanMatch } from "../lib/scan";
 import { Crest } from "./Crest";
@@ -14,9 +14,11 @@ const TAG_SHORT: Record<string, string> = { gunun_karari: "Günün Kararı", mec
 export function MatchRow({ m, picks, an }: { m: Match; picks?: Prediction[]; an?: BotAnalysis }) {
   const st = matchState(m);
   const o = odds1x2(m);
-  const sc = hasScore(m);
-  const homeWin = sc && m.home_goals! > m.away_goals!;
-  const awayWin = sc && m.away_goals! > m.home_goals!;
+  const lv = hasScore(m) ? null : liveScore(m);
+  const sc = hasScore(m) || !!lv;
+  const hg = lv ? lv.hg : m.home_goals, ag = lv ? lv.ag : m.away_goals;
+  const homeWin = !lv && sc && hg! > ag!;
+  const awayWin = !lv && sc && ag! > hg!;
   const own = (an?.basis ?? "").startsWith("model") && !!an?.ready;
   const p1 = own ? Object.fromEntries((an?.markets ?? []).filter((x) => x.market === "1X2").map((x) => [x.selection, x.probability])) : {};
   const enough = Math.min(an?.model_matches?.home ?? 0, an?.model_matches?.away ?? 0) >= (an?.min_team_matches ?? 4);
@@ -37,8 +39,8 @@ export function MatchRow({ m, picks, an }: { m: Match; picks?: Prediction[]; an?
         {UEFA.has(m.league) && <small className="cup-badge">{m.league}</small>}
       </div>
       <div className="mrow-teams">
-        <div className={`team ${homeWin ? "win" : ""}`}><Crest name={m.home_name} small /><span className="tname">{m.home_name}</span>{sc && <b className="tgoal">{m.home_goals}</b>}</div>
-        <div className={`team ${awayWin ? "win" : ""}`}><Crest name={m.away_name} small /><span className="tname">{m.away_name}</span>{sc && <b className="tgoal">{m.away_goals}</b>}</div>
+        <div className={`team ${homeWin ? "win" : ""}`}><Crest name={m.home_name} small /><span className="tname">{m.home_name}</span>{sc && <b className={`tgoal ${lv ? "live" : ""}`}>{hg}</b>}</div>
+        <div className={`team ${awayWin ? "win" : ""}`}><Crest name={m.away_name} small /><span className="tname">{m.away_name}</span>{sc && <b className={`tgoal ${lv ? "live" : ""}`}>{ag}</b>}</div>
         {bar && (
           <div className={`mrow-pb ${bar.src === "Model" ? "own" : ""}`} title={`${bar.src}: ev ${pct(bar.v[0])} · beraberlik ${pct(bar.v[1])} · deplasman ${pct(bar.v[2])}`}>
             <span className="mrow-pb-bar"><i style={{ width: `${bar.v[0] * 100}%` }} /><i style={{ width: `${bar.v[1] * 100}%` }} /><i style={{ width: `${bar.v[2] * 100}%` }} /></span>

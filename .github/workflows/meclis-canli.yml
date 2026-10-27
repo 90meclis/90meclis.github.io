@@ -1,0 +1,24 @@
+name: 90 Meclis · Canlı skor
+
+# Başlamış maçların skoru/dakikası (ESPN, anahtarsız/kotasız). Resmî sonuç bu işte YAZILMAZ (sonuç işi kesinleştirir).
+on:
+  schedule:
+    - cron: "*/10 10-23 * * *"  # TSİ 13:00–02:59 arası 10 dakikada bir
+    - cron: "*/10 0-1 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: meclis-canli
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  is:
+    uses: ./.github/workflows/_meclis-is.yml
+    secrets: inherit
+    with:
+      komut: canli
+      sure: 8

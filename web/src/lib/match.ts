@@ -1,4 +1,4 @@
-import type { Match } from "./types";
+import type { Canli, Match } from "./types";
 import { DURUM_LABELS } from "./labels";
 
 /** Maç kimliği "LG:YYYY-AA-GG:ev:dep" → arama motoru dostu yol "/mac/lg-ev-dep-YYYY-AA-GG/" (slug'lar yalnızca a-z0-9). */
@@ -22,10 +22,23 @@ export function hasScore(m: Pick<Match, "home_goals" | "away_goals"> & { status?
 }
 
 /** Görünen durum: başlama saati geçmiş ama sonucu gelmemiş maç "gelecek" görünmez. */
+/** Canlı skor: son 20 dakikada güncellendiyse ve resmî sonuç henüz yoksa. */
+export function liveScore(m: Match): { hg: number; ag: number; label: string; final: boolean } | null {
+  const c = m.canli ?? ((m.sources as { _canli?: Canli } | null)?._canli ?? null);
+  if (!c || m.status === "bitti" || m.durum === "bitti") return null;
+  if (Date.now() - new Date(c.at).getTime() > 20 * 60000) return null;
+  const [hg, ag] = c.skor.split("-").map(Number);
+  if (!Number.isFinite(hg) || !Number.isFinite(ag)) return null;
+  const label = c.bitti ? "MS*" : c.durum === "Devre arası" ? "İY" : c.dakika && c.dakika !== "0'" ? c.dakika : c.durum ?? "Canlı";
+  return { hg, ag, label, final: c.bitti };
+}
+
 export function matchState(m: Match): { key: string; label: string } {
   const started = Date.now() >= new Date(m.kickoff_at).getTime();
   if (m.durum === "ertelendi" || m.durum === "iptal") return { key: m.durum, label: DURUM_LABELS[m.durum] };
   if (m.durum === "bitti" || (hasScore(m) && m.status === "bitti")) return { key: "bitti", label: "MS" };
+  const lv = liveScore(m);
+  if (lv) return { key: lv.final ? "sonuc" : "canli", label: lv.label };
   if (m.durum === "canlı") return { key: "canli", label: "Canlı" };
   if (started) {
     const mins = (Date.now() - new Date(m.kickoff_at).getTime()) / 60000;

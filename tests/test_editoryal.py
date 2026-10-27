@@ -33,3 +33,15 @@ def test_postmortem_lost_over():
     assert "bitiricilik" in n  # xG 3.0 > 2.5: oyun tahmine uygundu
     n2 = postmortem(_pred(status="kazandi"), {"home_goals": 2, "away_goals": 1}, {}, None)
     assert n2.startswith("Tuttu ✓")
+
+
+def test_live_pairing_and_no_settlement():
+    from meclis.canli import pair
+
+    m = {"kickoff_at": "2026-10-27T19:45:00Z", "home_name": "Bradford", "away_name": "Peterborough"}
+    ev = [{"ko": "2026-10-27T19:45Z", "home": "Bradford City", "away": "Peterborough United", "hg": 1, "ag": 0,
+           "canli": True, "bitti": False, "durum": "1. yarı", "dakika": "15'"},
+          {"ko": "2026-10-27T22:45Z", "home": "Bradford City", "away": "Peterborough United", "hg": 0, "ag": 0,
+           "canli": False, "bitti": False, "durum": None, "dakika": None}]
+    assert pair(m, ev)["hg"] == 1
+    assert pair({**m, "home_name": "Fleetwood"}, ev) is None

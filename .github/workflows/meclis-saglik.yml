@@ -22,7 +22,7 @@ jobs:
     steps:
       - name: Zamanlanmış işleri etkin tut (GitHub'ın 60 gün hareketsizlik kapatmasına karşı)
         run: |
-          for w in meclis-yayin.yml meclis-sonuc.yml meclis-gundem.yml meclis-gece.yml meclis-saglik.yml pages.yml; do
+          for w in meclis-yayin.yml meclis-canli.yml meclis-sonuc.yml meclis-gundem.yml meclis-gece.yml meclis-saglik.yml pages.yml; do
             gh api -X PUT "repos/$REPO/actions/workflows/$w/enable" >/dev/null 2>&1 || true
           done
       - name: Son başarılı çalışmalar (v_sistem_durumu) — gecikme varsa issue

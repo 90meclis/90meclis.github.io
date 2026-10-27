@@ -999,3 +999,4 @@ main.main { min-height: 100vh; }
 .son-not.ok { background: rgba(46,160,67,.10); }
 .son-not.bad { background: rgba(218,54,51,.10); }
 .ch-why { grid-column: 1 / -1; }
+.tgoal.live, .sb-goals.live { color: var(--live); }

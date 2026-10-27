@@ -1,5 +1,7 @@
 export type Json = Record<string, unknown>;
 
+export interface Canli { kaynak: string; durum: string | null; dakika: string | null; skor: string; at: string; bitti: boolean }
+
 export interface Match {
   id: string;
   league: string;
@@ -12,6 +14,8 @@ export interface Match {
   home_goals: number | null;
   away_goals: number | null;
   score: string | null;
+  /** Canlı skor (ESPN, sık güncellenir; resmî sonuç değildir). Liste sorgularında sources->_canli. */
+  canli?: Canli | null;
   ht_home_goals: number | null;
   ht_away_goals: number | null;
   status: string;

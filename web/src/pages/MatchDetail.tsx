@@ -7,7 +7,7 @@ import { useAsync } from "../lib/useAsync";
 import { abbr, Crest } from "../components/Crest";
 import { dateLong, dateShort, dateTime, hoursBefore, num, pct, relTime, signed, time } from "../lib/format";
 import { league, pickLabel, sourceLabel, fmtLine } from "../lib/labels";
-import { hasScore, idFromSlug, matchPath, matchState, sameTeam } from "../lib/match";
+import { hasScore, idFromSlug, liveScore, matchPath, matchState, sameTeam } from "../lib/match";
 import { usePageMeta } from "../lib/seo";
 import type { AnalysisPayload, Injury, Lineup, Match, MatchStat, Prediction } from "../lib/types";
 import { Card, Empty, Gate, Meter, Skeleton, Stat, StatusPill, TagPill } from "../components/ui";
@@ -155,6 +155,7 @@ function Detail({ m }: { m: Match }) {
     document.querySelector<HTMLElement>("#mtabs button.on")?.scrollIntoView({ inline: "center", block: "nearest" });
   }, [tab]);
   const st = matchState(m);
+  const lv = hasScore(m) ? null : liveScore(m);
   const sc = hasScore(m);
   const l = league(m.league);
   const [stuck, setStuck] = useState(false);
@@ -183,9 +184,10 @@ function Detail({ m }: { m: Match }) {
             {d.data && <FormPills rows={d.data.hRows} />}
           </div>
           <div className="sb-score">
-            {sc ? <span className="sb-goals">{m.home_goals}<i>–</i>{m.away_goals}</span> : <span className="sb-time">{time(m.kickoff_at)}</span>}
+            {sc ? <span className="sb-goals">{m.home_goals}<i>–</i>{m.away_goals}</span> : lv ? <span className="sb-goals live">{lv.hg}<i>–</i>{lv.ag}</span> : <span className="sb-time">{time(m.kickoff_at)}</span>}
             {st.label && <span className={`mstate ${st.key}`}>{st.label}</span>}
-            {!sc && <Countdown iso={m.kickoff_at} />}
+            {!sc && !lv && <Countdown iso={m.kickoff_at} />}
+            {lv && <small className="muted tiny">{lv.final ? "Maç bitti · resmî sonuç birkaç saat içinde kesinleşir" : "Canlı skor · ESPN, ~10 dk'da bir"}</small>}
             {m.ht_home_goals !== null && sc && <small className="muted">İY {m.ht_home_goals}-{m.ht_away_goals}</small>}
           </div>
           <div className="sb-side away">
