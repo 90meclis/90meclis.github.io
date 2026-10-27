@@ -9,18 +9,35 @@ from .timeutil import now_utc, to_iso
 
 
 def link_news(items: list[dict], matches: list[dict]) -> list[dict]:
-    """Takım adı eşleşmesiyle haberleri maçlara bağlar (aksan ve Türkçe ek duyarsız)."""
+    """Takım adı eşleşmesiyle haberleri maçlara bağlar (aksan ve Türkçe ek duyarsız).
+    İki takımı da geçen maç varsa yalnızca o maç(lar) bağlanır ("Hull – Brentford 1-1" haberi Brentford'un bütün
+    maçlarına değil); yoksa her takım için haber tarihinden sonraki İLK maç bağlanır."""
+    from .timeutil import parse_dt
+
     for it in items:
         text = f"{it['title']} {it.get('summary') or ''}"
         teams, mids = set(it.get("team_ids") or []), set(it.get("match_ids") or [])
+        hits = []
         for m in matches:
-            hit = False
-            for side in ("home", "away"):
-                if mentions_team(text, m[f"{side}_name"]):
-                    teams.add(m[f"{side}_team_id"])
-                    hit = True
-            if hit:
-                mids.add(m["id"])
+            sides = [side for side in ("home", "away") if mentions_team(text, m[f"{side}_name"])]
+            if sides:
+                hits.append((m, sides))
+        both = [(m, sd) for m, sd in hits if len(sd) == 2]
+        chosen = both
+        if not both:
+            pub = parse_dt(it.get("published_at")) if it.get("published_at") else None
+            first: dict = {}
+            for m, sd in sorted(hits, key=lambda x: x[0]["kickoff_at"]):
+                ko = parse_dt(m["kickoff_at"])
+                if pub and ko and ko < pub:
+                    continue
+                tid = m[f"{sd[0]}_team_id"]
+                first.setdefault(tid, (m, sd))
+            chosen = list(first.values())
+        for m, sd in chosen:
+            mids.add(m["id"])
+            for side in sd:
+                teams.add(m[f"{side}_team_id"])
         it["team_ids"], it["match_ids"] = sorted(teams), sorted(mids)
         it["match_id"] = it["match_ids"][0] if it["match_ids"] else None
         it["impact_note"] = impact_note(it, [m for m in matches if m["id"] in mids])

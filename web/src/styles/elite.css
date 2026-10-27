@@ -34,7 +34,7 @@
 .trust-strip .skeletons { grid-column: 1 / -1; padding: 8px; background: var(--bg-2); }
 
 .home-grid { display: grid; gap: 18px; }
-@media (min-width: 900px) { .home-grid { grid-template-columns: 1.25fr 1fr; align-items: start; } .trust-strip { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); max-width: 760px; } .hero2 { padding: 56px 44px 36px; } }
+@media (min-width: 900px) { .home-grid { grid-template-columns: 1.25fr 1fr; align-items: start; } .trust-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: 760px; } .trust-strip:has(> div:nth-of-type(4)) { grid-template-columns: repeat(4, minmax(0, 1fr)); } .hero2 { padding: 56px 44px 36px; } }
 
 /* Günün Kararı kahraman kartı */
 .gk-hero { position: relative; overflow: hidden; border-radius: 22px; padding: 20px 18px 16px; border: 1px solid rgba(215, 255, 63, .35);

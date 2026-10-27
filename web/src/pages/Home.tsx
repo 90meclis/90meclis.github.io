@@ -98,7 +98,9 @@ function WinBar({ p1, px, p2 }: { p1: number; px: number; p2: number }) {
 }
 
 function MeclisBulteni({ list, today }: { list: Bulten[]; today: string }) {
-  const [first, ...rest] = list;
+  // Bugünün bülteninde henüz karar yoksa (ör. kuponlar ertesi gün için kuruldu) yarının bülteni öne çıkar
+  const lead = list.find((b) => (b.maddeler ?? []).length > 0) ?? list[0];
+  const [first, ...rest] = [lead, ...list.filter((b) => b !== lead)];
   const head = (b: Bulten) => (b.tarih === today ? "Bugün" : dateLong(b.tarih + "T12:00:00+03:00"));
   return (
     <section className="block bulteni" aria-label="Meclis Bülteni">
@@ -169,7 +171,7 @@ export default function Home() {
   }).sort((a, b) => league(a.league).order - league(b.league).order || a.kickoff_at.localeCompare(b.kickoff_at)).slice(0, 6);
   // İsabet önceliği: Ortak'ın en olası (kalibre) seçimleri; oran ≥ 1.50, veri kontrolü (aşırı ayrışma) hariç
   const pk = (r: ScanRow) => r.p_kal ?? r.p_model ?? 0;
-  const candRows = (nd?.scan ?? []).filter((r) => r.deger && r.odds && r.odds >= 1.5 && Math.abs(r.edge ?? 0) <= 0.4 && !gkMatchIds.has(r.match_id));
+  const candRows = (nd?.scan ?? []).filter((r) => r.deger && r.odds && r.odds >= 1.5 && pk(r) >= 0.52 && Math.abs(r.edge ?? 0) <= 0.4 && !gkMatchIds.has(r.match_id));
   const chosen = candRows.filter((r) => r.secildi);
   const picks = (chosen.length ? chosen : candRows).sort((a, b) => pk(b) - pk(a));
   const picksAreChoices = chosen.length > 0;
@@ -240,12 +242,12 @@ export default function Home() {
                     <li key={r.match_id}><Link to={matchPath(m.id)}>
                       <span className="muted tiny">{league(m.league).flag} {time(m.kickoff_at)} · {m.home_name} – {m.away_name}</span>
                       <b>{pickLabel(r.market, r.selection, r.line, m.home_name, m.away_name)}</b>
-                      <span className="op-nums"><span>olasılık <b>%{Math.round(pk(r) * 100)}</b></span><span>oran <b>{num(r.odds)}</b></span><span className={(r.edge ?? 0) >= 0 ? "pos" : "muted"}>değer <b>{signed((r.edge ?? 0) * 100, 1)}%</b></span></span>
+                      <span className="op-nums"><span>olasılık <b>%{Math.round(pk(r) * 100)}</b></span><span>oran <b>{num(r.odds)}</b></span></span>
                     </Link></li>
                   );
                 })}
               </ul>
-            </>) : <p className="muted small">Ortak bu bültende oranı 1.50 ve üzeri olup tutma olasılığı %50'yi geçen seçim görmüyor. Bülten tazelendikçe burası güncellenir.</p>}
+            </>) : <p className="muted small">Ortak bu bültende oranı 1.50 ve üzeri olup tutma olasılığı %52'ye ulaşan seçim görmüyor. Bülten tazelendikçe burası güncellenir.</p>}
           </Gate>
           {huntTop.length > 0 && (
             <div className="hunt-mini">

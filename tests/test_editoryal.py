@@ -58,3 +58,18 @@ def test_referee_factor_shrinks():
     f2, _ = ctx.referee_factor("Az Maç")
     assert f2 < f  # tek maç: lig ortalamasına daha çok çekilir
     assert ctx.referee_factor(None) == (1.0, None)
+
+
+def test_news_links_only_the_named_fixture():
+    from meclis.news import link_news
+
+    ms = [{"id": "a", "home_name": "Hull City", "away_name": "Brentford", "home_team_id": "h", "away_team_id": "b",
+           "kickoff_at": "2026-10-25T15:00:00Z"},
+          {"id": "b", "home_name": "Sunderland", "away_name": "Brentford", "home_team_id": "s", "away_team_id": "b",
+           "kickoff_at": "2026-11-01T15:00:00Z"},
+          {"id": "c", "home_name": "Brentford", "away_name": "Everton", "home_team_id": "b", "away_team_id": "e",
+           "kickoff_at": "2026-11-08T15:00:00Z"}]
+    it = link_news([{"title": "Hull City - Brentford: 1-1", "published_at": "2026-10-25T18:00:00Z"}], ms)[0]
+    assert it["match_ids"] == ["a"]
+    it2 = link_news([{"title": "Brentford'da sakatlık şoku", "published_at": "2026-10-26T10:00:00Z"}], ms)[0]
+    assert it2["match_ids"] == ["b"]

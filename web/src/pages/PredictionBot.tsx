@@ -105,6 +105,10 @@ export default function PredictionBot() {
   const own = all.filter((x) => x.own);
   const vals = own.flatMap((x) => x.rows.filter((r) => r.value).map((r) => ({ x, r }))).sort((a, b) => (b.r.edge ?? 0) - (a.r.edge ?? 0));
   const picks = all.filter((x) => x.v.kind === "secim");
+  // İsabet önceliği: oranı ≥ 1.50, kalibre tutma olasılığı ≥ %52, ayrışma/veri kontrol işareti olmayan seçimler
+  const cands = own.flatMap((x) => x.rows.filter((r) => r.odds && r.odds >= 1.5 && (r.pCal ?? 0) >= 0.52 && !r.wild && !r.check)
+    .map((r) => ({ x, r }))).sort((a, b) => (b.r.pCal ?? 0) - (a.r.pCal ?? 0));
+  const candMatches = new Set(cands.map((c) => c.x.m.id)).size;
   const wildM = own.filter((x) => x.rows.some((r) => r.wild));
   const pending = all.filter((x) => x.v.kind === "bekliyor").length;
   const fair = own.filter((x) => x.v.kind === "pas").length;
@@ -135,14 +139,13 @@ export default function PredictionBot() {
     pas: all.filter((x) => x.v.kind === "pas").length,
     kontrol: all.filter((x) => x.rows.some((r) => r.check && r.odds)).length,
   };
-  const top = vals[0];
   const sent: string[] = d.data ? [
     `${dateLong(day + "T12:00:00+03:00").split(" ").slice(0, 2).join(" ")} bülteninde ${all.length} maç var; ${own.length} tanesinde kendi modelimle karar verecek kadar veri topladım.`,
-    vals.length && top ? `${vals.length} pazarda piyasadan daha iyi fiyat görüyorum. En güçlüsü ${top.x.m.home_name} – ${top.x.m.away_name} maçında ${pickLabel(top.r.market, top.r.selection, top.r.line, top.x.m.home_name, top.x.m.away_name)}: oran ${num(top.r.odds)}, değer ${signed((top.r.edge ?? 0) * 100, 1)}%.` : own.length ? "Bugün piyasa iyi fiyatlamış; zorlama bir karar vermiyorum." : "",
+    cands.length ? `${candMatches} maçta oranı en az 1.50 olup tutma olasılığı %52'yi geçen seçim görüyorum. En olası: ${cands[0].x.m.home_name} – ${cands[0].x.m.away_name}, ${pickLabel(cands[0].r.market, cands[0].r.selection, cands[0].r.line, cands[0].x.m.home_name, cands[0].x.m.away_name)} (%${Math.round((cands[0].r.pCal ?? 0) * 100)}, oran ${num(cands[0].r.odds)}).` : own.length ? "Bu bültende oranı 1.50 üstünde ve tutma olasılığı %52'yi geçen seçim yok; zorlama bir karar vermiyorum." : "",
     picks.length ? `${picks.length} maçta kararımı masaya koydum.` : "",
     wildM.length ? `${wildM.length} maçta modelim piyasadan 20 puandan fazla ayrışıyor; bu kadar büyük fark çoğu zaman değer değil, ölçüm hatasıdır. O pazarlarda karar vermiyorum.` : "",
     fair ? `${fair} maçı geçtim: ya piyasa doğru fiyatlamış ya da verim yetersiz. Nedenleri her maçın altında.` : "",
-    finds.length ? `Seri avında ${finds.length} belirgin seri buldum; ${finds.filter((f) => f.row?.value).length} tanesinde değer de var.` : "",
+    finds.length ? `Seri avında ${finds.length} belirgin seri buldum; ${finds.filter((f) => f.row?.odds && f.row.odds >= 1.5).length} tanesinde oran 1.50 ve üzeri.` : "",
     pending ? `${pending} maçın analizi sırada${ns ? `; yaklaşık ${ns} TSİ'de hazır` : ""}.` : "",
   ].filter(Boolean) : [];
 
@@ -160,7 +163,7 @@ export default function PredictionBot() {
             <div><b>{kpi.analiz}/{kpi.mac}</b><span>maç analiz</span></div>
             <div><b>{kpi.pazar}</b><span>pazar fiyatlandı</span></div>
             <div><b>{kpi.oranli}</b><span>piyasayla kıyas</span></div>
-            <div className="hot"><b>{kpi.deger + kpi.secim}</b><span>değer / karar</span></div>
+            <div className="hot"><b>{candMatches}</b><span>güçlü aday maç</span></div>
             <div><b>{kpi.pas}</b><span>pas</span></div>
             {kpi.kontrol > 0 && <div className="chk"><b>{kpi.kontrol}</b><span>veri kontrol</span></div>}
           </div>

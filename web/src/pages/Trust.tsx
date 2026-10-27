@@ -55,8 +55,8 @@ function Backtest({ rows }: { rows: Bt[] }) {
             </div>
             <p className="bt-verdict">{better === null ? "Karşılaştırma için veri yetersiz." : better
               ? `Model bu pazarda piyasadan daha isabetli olasılık veriyor (Brier ${num(r.brier_model, 3)} / ${num(r.brier_market, 3)}).`
-              : `Bu pazarda piyasa, modelden daha isabetli (Brier ${num(r.brier_market, 3)} / ${num(r.brier_model, 3)}). Meclis bu yüzden piyasayı taban alır ve yalnızca model piyasadan anlamlı biçimde ayrıldığında karar verir.`}
-              {r.deger_secim_sayisi ? ` Değer kuralını geçen ${r.deger_secim_sayisi} seçimde isabet ${pct(r.deger_isabet, 1)}, ROI ${r.deger_roi !== null ? signed(r.deger_roi * 100, 1) + "%" : "—"}.` : ""}</p>
+              : `Bu pazarda piyasa, modelden daha isabetli (Brier ${num(r.brier_market, 3)} / ${num(r.brier_model, 3)}). Meclis bu yüzden olasılığı piyasayla harmanlar (ağırlık motor geri testinde öğrenilir) ve model ile piyasa çeliştiğinde oynamaz.`}
+              {r.deger_secim_sayisi ? ` (Eski "değer" kuralının ${r.deger_secim_sayisi} seçimi: isabet ${pct(r.deger_isabet, 1)} — artık kullanılmıyor; güncel kuralın sonucu yukarıdaki "Geri test ↔ canlı" tablosunda.)` : ""}</p>
             {cal.length > 1 && <details className="mm-list"><summary>Kalibrasyon ({btMarket(r.market)})</summary><CalibrationChart bins={cal} /></details>}
           </div>
         );
