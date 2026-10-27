@@ -756,7 +756,8 @@ class DataPool:
                 try:
                     rows = self.oddspapi.odds(leagues)
                     recs += rows
-                    self._note("oddspapi", True, f"{len(rows)} maç oranı (Pinnacle)", calls=1)
+                    self._note("oddspapi", True, f"{len(rows)} maç oranı (Pinnacle)",
+                               calls=getattr(self.oddspapi, "last_calls", 1))
                 except Exception as e:
                     self._note("oddspapi", False, str(e))
             else:

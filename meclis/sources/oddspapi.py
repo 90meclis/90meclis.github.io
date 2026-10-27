@@ -1,5 +1,5 @@
 """OddsPapi (api.oddspapi.io v4) — ODDSPAPI_KEY. Ücretsiz: ayda 250 istek. Bot günde en çok bir oran
-çağrısı yapar (tüm liglerin turnuva kimlikleri tek istekte); turnuva/takım listeleri 7 gün önbelleklenir."""
+çalışması yapar (istek başına en çok 5 turnuva); turnuva/takım listeleri 7 gün önbelleklenir."""
 from __future__ import annotations
 
 import json
@@ -13,7 +13,15 @@ SPORT_ID = 10
 # lig kodu -> (categorySlug, tournamentSlug)
 SLUGS = {"T1": ("turkiye", "super-lig"), "E0": ("england", "premier-league"), "E1": ("england", "championship"),
          "SP1": ("spain", "laliga"), "I1": ("italy", "serie-a"), "D1": ("germany", "bundesliga"),
-         "F1": ("france", "ligue-1"), "N1": ("netherlands", "eredivisie"), "P1": ("portugal", "liga-portugal")}
+         "F1": ("france", "ligue-1"), "N1": ("netherlands", "eredivisie"), "P1": ("portugal", "liga-portugal"),
+         # 27.10.2026: B-ligleri ve kupalar (BSD kotası dolduğunda Pinnacle 1X2 yedeği). Günde 1 çalışma × 5 istek
+         # ≈ 155 istek/ay (ücretsiz plan 250).
+         "CL": ("international-clubs", "uefa-champions-league"), "EL": ("international-clubs", "uefa-europa-league"),
+         "ECL": ("international-clubs", "uefa-conference-league"), "E2": ("england", "league-one"),
+         "E3": ("england", "league-two"), "SP2": ("spain", "laliga-2"), "I2": ("italy", "serie-b"),
+         "D2": ("germany", "2-bundesliga"), "F2": ("france", "ligue-2"), "T2": ("turkiye", "1-lig"),
+         "B1": ("belgium", "pro-league"), "SC0": ("scotland", "premiership"), "SC1": ("scotland", "championship"),
+         "G1": ("greece", "super-league")}
 BOOKMAKER = "pinnacle"
 
 
@@ -22,7 +30,7 @@ def map_tournaments(tours: list[dict], leagues: list[str]) -> dict[int, str]:
     for t in tours or []:
         for lg in leagues:
             cat, slug = SLUGS.get(lg, (None, None))
-            if cat and t.get("tournamentSlug") == slug and (t.get("categorySlug") or "").startswith(cat[:5]):
+            if cat and t.get("tournamentSlug") == slug and (t.get("categorySlug") or "") == cat:
                 out[int(t["tournamentId"])] = lg
     return out
 
@@ -73,6 +81,7 @@ class OddsPapi:
         import time
 
         ids, rows = list(tours), []
+        self.last_calls = (len(ids) + 4) // 5
         for i in range(0, len(ids), 5):  # API en çok 5 turnuva kimliği kabul eder (fazlası HTTP 400)
             if i:
                 time.sleep(1.5)  # uç nokta başına hız sınırı
