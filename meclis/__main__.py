@@ -25,7 +25,7 @@ from .store import get_store
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="python -m meclis", description="90 Meclis komut satırı")
     ap.add_argument("komut", choices=["yenile", "gundem", "bot", "sonuclandir", "sabah", "durum", "kadro",
-                                        "gecmis", "analiz", "sezon", "yedek", "gunici", "yayin", "yerel", "geritest", "muhur", "simulasyon"])
+                                        "gecmis", "analiz", "sezon", "yedek", "gunici", "yayin", "yerel", "geritest", "muhur", "simulasyon", "editoryal", "notlar"])
     ap.add_argument("--zorla", action="store_true", help="kadro: 7 günlük önbelleği yok say")
     ap.add_argument("--saat", type=float, default=168, help="kadro: kaç saat sonrasına kadarki maçlar (varsayılan 168 = 7 gün)")
     ap.add_argument("--gecmis", action="store_true", help="geçmiş sezon verisini de çek")
@@ -89,7 +89,8 @@ def main(argv=None) -> int:
     #   gecmis      : gece ağır işleri (sezon doldurma, yerel lig, geri test, simülasyon) — kaldığı yerden devam eder
     STEPS = {"sabah": ["yenile", "gundem", "kadro", "bot", "sonuclandir"],
              "gunici": ["yenile", "kadro", "bot", "kadro_s", "sonuclandir"],
-             "yayin": ["yenile", "kadro", "bot", "kadro_s"],
+             "yayin": ["yenile", "kadro", "bot", "editoryal", "kadro_s"],
+             "sonuclandir": ["sonuclandir", "notlar"],
              "gecmis": ["gecmis", "yerel", "sezon", "geritest", "simulasyon", "muhur"],
              "analiz": ["analiz"]}
     steps = list(STEPS.get(a.komut, [a.komut]))
@@ -97,7 +98,7 @@ def main(argv=None) -> int:
         steps = ["yenile_s"]
     # adım başına zaman bütçesi (saniye) — aşılırsa adım kesilir, sonraki adımlar yine çalışır
     BUDGET = {"kesif": 180, "yenile": 600, "yenile_s": 1800, "kadro": 600, "kadro_s": 600, "bot": 1500, "gundem": 1200, "gecmis": 2400,
-              "yerel": 900, "sezon": 1500, "geritest": 600, "simulasyon": 900, "muhur": 300, "sonuclandir": 1200,
+              "yerel": 900, "sezon": 1500, "geritest": 600, "simulasyon": 900, "muhur": 300, "sonuclandir": 1200, "editoryal": 240, "notlar": 300,
               "analiz": 2400, "yedek": 600}
     is_adi = a.komut
     state = {"failed": []}
@@ -270,6 +271,16 @@ def main(argv=None) -> int:
         r = Bot(store, s, pool).run(record=not a.kuru, publish=False)
         out_logs.extend(r["log"])
 
+    def editoryal():
+        from .editoryal import run_bulletins
+
+        run_bulletins(store, s, out_logs)
+
+    def notlar():
+        from .editoryal import run_notes
+
+        run_notes(store, out_logs)
+
     def sonuclandir():
         if a.komut in ("sonuclandir", "gunici") and not s.demo_mode:
             pool.refresh(days_back=7, days_ahead=0, history=True)
@@ -281,7 +292,7 @@ def main(argv=None) -> int:
                 print(f"  {st['source']}: {'OK' if st['ok'] else 'SORUN'} — {st['message']} ({st['updated_at']})")
 
     FN = {"kadro_s": kadro_s, "yenile": yenile, "yenile_s": yenile, "gundem": gundem, "kadro": kadro, "gecmis": gecmis, "yerel": yerel,
-          "geritest": geritest, "bot": bot, "sezon": sezon, "simulasyon": simulasyon, "muhur": muhur, "yedek": yedek,
+          "geritest": geritest, "bot": bot, "editoryal": editoryal, "notlar": notlar, "sezon": sezon, "simulasyon": simulasyon, "muhur": muhur, "yedek": yedek,
           "analiz": analiz, "sonuclandir": sonuclandir, "durum": durum}
     if not a.ligler and not s.demo_mode and any(x in steps for x in ("yenile", "yenile_s", "gecmis", "bot")):
         run("kesif", kesif)
