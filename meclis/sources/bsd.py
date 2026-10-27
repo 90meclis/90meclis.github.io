@@ -190,6 +190,14 @@ class BSD:
     def available(self) -> bool:
         return bool(self.key)
 
+    @property
+    def usable(self) -> bool:
+        """Anahtar var VE kota/devre kesici izin veriyor (maç başına yüzlerce boşuna deneme ve log yok)."""
+        import time as _time
+
+        return bool(self.key) and not BsdBudget.exhausted and _time.monotonic() >= BsdThrottle.until \
+            and BsdBudget.remaining(self.calls) > 0 and self.calls < self.max_calls
+
     def _get(self, path: str, params: dict | None = None) -> dict:
         if not self.key:
             raise SourceError("BSD_API_KEY tanımlı değil.")

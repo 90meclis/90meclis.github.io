@@ -644,7 +644,9 @@ class DataPool:
                     break
         else:
             self._waiting_key("the-odds-api", "ODDS_API_KEY", "çok şirketli 1X2/Alt-Üst oranları")
-        if self.bsd.available:
+        if self.bsd.available and not self.bsd.usable:
+            self.log.append("⏸️ bsd: günlük kota/devre kesici — bu çalışmada alanlar sıradaki kaynaklardan ve önbellekten")
+        elif self.bsd.available:
             try:
                 rows = self.bsd.events(today - timedelta(days=days_back), today + timedelta(days=days_ahead), leagues,
                                        known=self._bsd_known(today - timedelta(days=days_back)),

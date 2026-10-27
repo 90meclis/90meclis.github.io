@@ -179,7 +179,7 @@ class TeamNews:
             have = set(ext0.get("squad_sources") or [])
             # ...ama aynı gün yeniden denenmez (kaynak düşükken her çalışmada yüzlerce takım beklenmesin)
             new_src = chk != today.isoformat() and (
-                (bsd is not None and bsd.available and bsd_ids.get(t["id"]) and "bsd" not in have)
+                (bsd is not None and getattr(bsd, "usable", bsd.available) and bsd_ids.get(t["id"]) and "bsd" not in have)
                 or ("squad_sources" not in ext0))
             if force or not chk or new_src or \
                     (today - parse_dt(chk + "T00:00:00+00:00").date()).days >= SQUAD_MAX_AGE_DAYS:
@@ -213,7 +213,7 @@ class TeamNews:
                 wp_err += 1
                 if wp_err <= 5:
                     self._note("wikipedia", False, f"{t['name']}: {e}")
-            if bsd is not None and bsd.available and bsd_ids.get(t["id"]) and not bsd_off:
+            if bsd is not None and getattr(bsd, "usable", bsd.available) and bsd_ids.get(t["id"]) and not bsd_off:
                 try:
                     bs = bsd.squad(bsd_ids[t["id"]])
                     if bs:
@@ -285,7 +285,7 @@ class TeamNews:
         out, known, log = [], False, []
         ko = parse_dt(match["kickoff_at"])
         bsd = getattr(self.pool, "bsd", None)
-        if bsd is not None and bsd.available and ext.get("bsd"):
+        if bsd is not None and getattr(bsd, "usable", bsd.available) and ext.get("bsd"):
             try:
                 lu = bsd.lineups(int(ext["bsd"]))
                 self._bsd_lineup_cache = (match["id"], lu)
@@ -398,7 +398,7 @@ class TeamNews:
         found: dict[str, dict] = {}
         predicted: dict[str, dict] = {}
         bsd = getattr(self.pool, "bsd", None)
-        if bsd is not None and bsd.available and ext.get("bsd"):
+        if bsd is not None and getattr(bsd, "usable", bsd.available) and ext.get("bsd"):
             try:
                 c = getattr(self, "_bsd_lineup_cache", None)
                 lu = c[1] if c and c[0] == match["id"] else bsd.lineups(int(ext["bsd"]))
