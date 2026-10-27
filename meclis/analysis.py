@@ -323,6 +323,11 @@ CAL_W_FLOOR = 0.20  # geri testli pazarlarda modelin asgari ağırlığı
 ISABET_MIN_P = 0.50
 
 
+def _group(m: dict) -> str:
+    """Motor pazar grubu anahtarı: OU_GOALS_2.5, 1X2, DC, BTTS…"""
+    return f"{m['market']}_{float(m['line']):g}" if m["market"] == "OU_GOALS" and m.get("line") is not None else m["market"]
+
+
 def _market_implied(markets: list[dict]) -> dict:
     groups: dict = {}
     for m in markets:
@@ -390,8 +395,13 @@ def rank_picks(payload: dict, settings, model_based: bool | None = None, q: floa
             w = (bt or {}).get("w", CAL_W_DEFAULT) if isinstance(bt, dict) else CAL_W_DEFAULT
             w *= payload.get("cal_w_factor", 1.0)  # kupa: ligler arası güç belirsiz → piyasaya daha yakın
             pc = w * p + (1 - w) * pm if pm else p
+            if isinstance(bt, dict) and bt.get("iso") and pm:  # izotonik kalibrasyon (motor; geri testte öğrenildi)
+                from .motor import iso_apply
+
+                pc = min(0.99, max(0.01, iso_apply(pc, bt["iso"])))
             edge = pc * o - 1
-            cal_used = {"w": round(w, 3), "kaynak": "geri test" if isinstance(bt, dict) else "varsayılan",
+            cal_used = {"w": round(w, 3), "kaynak": (bt.get("kaynak") or "geri test") if isinstance(bt, dict) else "varsayılan",
+                        "izotonik": bool(isinstance(bt, dict) and bt.get("iso")),
                         "p_model": round(p, 4), "p_piyasa": round(pm, 4) if pm else None,
                         "sapma_duz": bias.get(f"{m['market']}|{m['selection']}|{m.get('line')}", 0.0)}
             if annotate:
@@ -410,6 +420,9 @@ def rank_picks(payload: dict, settings, model_based: bool | None = None, q: floa
                        f", değer {edge * 100:+.0f}%); doğrulanmadan seçim yok")
                 if annotate:
                     m["veri_kontrol"] = True
+            elif isabet and payload.get("derin_pazarlar") is not None and _group(m) not in payload["derin_pazarlar"]:
+                why = ("bu pazarın geri testi yetersiz ya da seçim kuralı bu pazarda tutmuyor — yalnızca bilgi "
+                       f"(yayına açık: {', '.join(payload['derin_pazarlar'])})")
             elif isabet and pc < ISABET_MIN_P:
                 why = f"olasılık %{pc * 100:.0f} < %{ISABET_MIN_P * 100:.0f} (isabet eşiği)"
             elif not isabet and edge < edge_min:

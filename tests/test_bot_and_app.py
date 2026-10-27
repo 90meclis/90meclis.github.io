@@ -472,3 +472,27 @@ def test_bsd_odds_cadence():
     assert not odds_due(far, "2026-10-28T08:20:00+00:00", now)  # 1 saat önce alındı, maç uzak
     assert odds_due(far, "2026-10-28T05:00:00+00:00", now)
     assert odds_due("2026-10-28T14:00:00+00:00", "2026-10-28T07:00:00+00:00", now)  # yakın maç, 2+ saat
+
+
+def test_motor_isotonic_and_guard():
+    import random
+
+    from meclis import motor
+
+    random.seed(1)
+    xs = [random.random() for _ in range(2000)]
+    ys = [int(random.random() < x) for x in xs]
+    iso = motor.pav(xs, ys)
+    assert all(a[1] <= b[1] for a, b in zip(iso, iso[1:]))  # artan
+    assert abs(motor.iso_apply(0.6, iso) - 0.6) < 0.08
+    # koruma: piyasa mükemmel, model gürültü → model ağırlığı artmaz, mevcut korunur ya da w küçük kalır
+    ms = []
+    for i in range(400):
+        pk = random.uniform(0.3, 0.7)
+        y = int(random.random() < pk)
+        ms.append({"t": f"2026-08-{1 + i % 28:02d}T{i % 24:02d}", "sels": [
+            {"g": "BTTS", "sel": "VAR", "pm": random.random(), "pk": pk, "odds": 1 / pk, "y": y}]})
+    ms.sort(key=lambda m: m["t"])
+    prm, log = motor.learn(ms, None)
+    assert prm["BTTS"].get("w", 0.35) <= 0.35
+    assert motor.band_of(0.57) == "%55–60" and motor.band_of(0.72) == "%70+"

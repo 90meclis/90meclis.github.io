@@ -202,6 +202,12 @@ def main(argv=None) -> int:
     def geritest():
         from .backtest import run_backtest
 
+        from .motor import run as motor_run
+
+        try:  # öğrenen isabet motoru (korumalı): w + izotonik kalibrasyon + seçim kuralının bant geri testi
+            motor_run(store, out_logs)
+        except Exception as e:
+            out_logs.append(f"⚠️ motor: {e}")
         r = run_backtest(store)
         out_logs.append(f"ℹ️ geri test: {r['rows']} tahmin; " + "; ".join(
             f"{x['market']}: n={x['n']} LL model {x['ll_model']} / piyasa {x['ll_market']} (w*={x['w_opt']})"

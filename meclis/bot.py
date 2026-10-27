@@ -361,7 +361,23 @@ class Bot:
                           if r.get("w_opt") is not None and (r.get("n") or 0) >= 100}
         except Exception:
             cal_params = {}
+        deep = None
+        try:  # öğrenen motor (gece işi, korumalı): pazar grubu başına w + izotonik kalibrasyon ve yayına açık pazarlar
+            from .motor import latest as _motor
+
+            mot = _motor(self.store) or {}
+            for g, prm in (mot.get("params") or {}).items():
+                if prm and prm.get("w") is not None:
+                    cal_params[g] = dict(cal_params.get(g) or {}, w=float(prm["w"]), iso=prm.get("iso") or None,
+                                         kaynak="motor")
+            if mot.get("derin_pazarlar"):
+                deep = list(mot["derin_pazarlar"])
+            self._motor = mot
+        except Exception as e:
+            self.log.append(f"⚠️ motor parametreleri okunamadı: {e}")
         for a in good:  # en iyi seçim bülten geneli kalibrasyonla yeniden seçilir
+            if deep is not None:
+                a["derin_pazarlar"] = deep
             a["bias"] = bias
             if self.is_cup(a.get("league") or ""):
                 a["cal_w_factor"] = 0.5  # kupa: ligler arası güç farkı belirsiz → piyasaya daha yakın
