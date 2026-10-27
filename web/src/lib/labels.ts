@@ -4,36 +4,41 @@ export interface LeagueInfo { name: string; country: string; flag: string; order
 
 // Boru hattının kapsadığı ligler. Filtre listeleri veriden türetilir; bilinmeyen kod, kodun kendisiyle gösterilir.
 export const LEAGUES: Record<string, LeagueInfo> = {
-  T1: { name: "Süper Lig", country: "Türkiye", flag: "🇹🇷", order: 1 },
-  T2: { name: "TFF 1. Lig", country: "Türkiye", flag: "🇹🇷", order: 2 },
-  E0: { name: "Premier Lig", country: "İngiltere", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", order: 3 },
-  E1: { name: "Championship", country: "İngiltere", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", order: 4 },
-  E2: { name: "League One", country: "İngiltere", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", order: 5 },
-  E3: { name: "League Two", country: "İngiltere", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", order: 6 },
-  SP1: { name: "La Liga", country: "İspanya", flag: "🇪🇸", order: 7 },
-  SP2: { name: "La Liga 2", country: "İspanya", flag: "🇪🇸", order: 8 },
-  I1: { name: "Serie A", country: "İtalya", flag: "🇮🇹", order: 9 },
-  I2: { name: "Serie B", country: "İtalya", flag: "🇮🇹", order: 10 },
-  D1: { name: "Bundesliga", country: "Almanya", flag: "🇩🇪", order: 11 },
-  D2: { name: "2. Bundesliga", country: "Almanya", flag: "🇩🇪", order: 12 },
-  F1: { name: "Ligue 1", country: "Fransa", flag: "🇫🇷", order: 13 },
-  F2: { name: "Ligue 2", country: "Fransa", flag: "🇫🇷", order: 14 },
-  N1: { name: "Eredivisie", country: "Hollanda", flag: "🇳🇱", order: 15 },
-  P1: { name: "Liga Portugal", country: "Portekiz", flag: "🇵🇹", order: 16 },
-  B1: { name: "Pro Lig", country: "Belçika", flag: "🇧🇪", order: 17 },
-  SC0: { name: "Premiership", country: "İskoçya", flag: "🏴󠁧󠁢󠁳󠁣󠁴󠁿", order: 18 },
-  SC1: { name: "Championship", country: "İskoçya", flag: "🏴󠁧󠁢󠁳󠁣󠁴󠁿", order: 19 },
-  G1: { name: "Super League", country: "Yunanistan", flag: "🇬🇷", order: 20 },
+  T1: { name: "Süper Lig", country: "Türkiye", flag: "🇹🇷", order: 6 },
+  T2: { name: "TFF 1. Lig", country: "Türkiye", flag: "🇹🇷", order: 40 },
+  E0: { name: "Premier Lig", country: "İngiltere", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", order: 1 },
+  E1: { name: "Championship", country: "İngiltere", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", order: 30 },
+  E2: { name: "League One", country: "İngiltere", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", order: 41 },
+  E3: { name: "League Two", country: "İngiltere", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", order: 42 },
+  SP1: { name: "La Liga", country: "İspanya", flag: "🇪🇸", order: 2 },
+  SP2: { name: "La Liga 2", country: "İspanya", flag: "🇪🇸", order: 31 },
+  I1: { name: "Serie A", country: "İtalya", flag: "🇮🇹", order: 3 },
+  I2: { name: "Serie B", country: "İtalya", flag: "🇮🇹", order: 32 },
+  D1: { name: "Bundesliga", country: "Almanya", flag: "🇩🇪", order: 4 },
+  D2: { name: "2. Bundesliga", country: "Almanya", flag: "🇩🇪", order: 33 },
+  F1: { name: "Ligue 1", country: "Fransa", flag: "🇫🇷", order: 5 },
+  F2: { name: "Ligue 2", country: "Fransa", flag: "🇫🇷", order: 34 },
+  N1: { name: "Eredivisie", country: "Hollanda", flag: "🇳🇱", order: 10 },
+  P1: { name: "Liga Portugal", country: "Portekiz", flag: "🇵🇹", order: 11 },
+  B1: { name: "Pro Lig", country: "Belçika", flag: "🇧🇪", order: 12 },
+  SC0: { name: "Premiership", country: "İskoçya", flag: "🏴󠁧󠁢󠁳󠁣󠁴󠁿", order: 13 },
+  SC1: { name: "Championship", country: "İskoçya", flag: "🏴󠁧󠁢󠁳󠁣󠁴󠁿", order: 43 },
+  G1: { name: "Super League", country: "Yunanistan", flag: "🇬🇷", order: 14 },
   CL: { name: "Şampiyonlar Ligi", country: "UEFA", flag: "🇪🇺", order: 0.5 },
   EL: { name: "Avrupa Ligi", country: "UEFA", flag: "🇪🇺", order: 0.6 },
   ECL: { name: "Konferans Ligi", country: "UEFA", flag: "🇪🇺", order: 0.7 },
 };
 
 /** Veritabanındaki lig adlarını (leagues tablosu) bilinmeyen kodlar için kaydeder. */
+// Sıra: UEFA kupaları → beş büyük lig → Süper Lig → büyük ulusal kupalar → diğer üst ligler → alt ligler → geri kalan.
+const BIG_CUPS = /carabao|efl cup|fa cup|dfb|coppa italia|copa del rey|coupe de france|türkiye kupas|ziraat|taça de portugal|knvb/i;
+const TOP_FLIGHTS = /brasileirão serie a|liga profesional|mls|eredivisie|saudi pro|liga mx|super league|superliga|allsvenskan|eliteserien|ekstraklasa|bundesliga|czech first|j1 league|k league 1|a-league|copa libertadores/i;
+
 export function registerLeagues(rows: { code: string; name: string | null; country: string | null; cup: boolean | null }[]) {
   rows.forEach((r, i) => {
     if (!r.code || !r.name || LEAGUES[r.code]) return;
-    LEAGUES[r.code] = { name: r.name, country: r.country ?? "", flag: r.cup ? "🏆" : "⚽", order: 100 + i };
+    const order = BIG_CUPS.test(r.name) ? 20 : TOP_FLIGHTS.test(r.name) ? 25 : r.cup ? 60 + i / 1000 : 50 + i / 1000;
+    LEAGUES[r.code] = { name: r.name, country: r.country ?? "", flag: r.cup ? "🏆" : "⚽", order };
   });
 }
 
@@ -50,7 +55,7 @@ export const TAG_LABELS: Record<Tag, string> = {
 export const TAG_HINT: Record<Tag, string> = {
   gunun_karari: "Meclis'in ana tercihlerinden oluşan günün kuponu",
   meclis_gorusu: "Maç başına tek seçim (tekli)",
-  karar_birligi: "Günde 5+ Meclis Görüşü varsa en güvenilenlerden kombine",
+  karar_birligi: "Model ile piyasanın birlikte en güçlü gördüğü, başka üründe olmayan 2–3 maç",
 };
 
 export const STATUS_LABELS: Record<PredStatus, string> = {
