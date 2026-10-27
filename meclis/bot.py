@@ -441,10 +441,12 @@ class Bot:
         by_day: dict = {}
         seen_slots: set = set()  # aynı saatte aynı takım = aynı maçın ikinci kaydı (ad eşleşmesi kopyası) → bir kez
         for m, a in analyses:
-            slot_h, slot_a = (m["kickoff_at"][:16], m["home_team_id"]), (m["kickoff_at"][:16], m["away_team_id"])
-            if slot_h in seen_slots or slot_a in seen_slots:
+            ko = m["kickoff_at"][:16]
+            slots = {(ko, v) for v in (m.get("home_team_id"), m.get("away_team_id"),
+                                       (m.get("home_name") or "").casefold(), (m.get("away_name") or "").casefold()) if v}
+            if slots & seen_slots:
                 continue
-            seen_slots |= {slot_h, slot_a}
+            seen_slots |= slots
             bp = a.get("best_pick")
             if bp and bp.get("kind") in ("değer", "isabet") and bp.get("odds") and self.publishable(m, now):
                 by_day.setdefault(tr_date(m["kickoff_at"]), []).append((m, a, bp))
