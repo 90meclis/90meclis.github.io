@@ -202,6 +202,7 @@ function MotorVsLive({ m, preds }: { m: Motor; preds: Prediction[] }) {
         <tbody>{groups.map((g) => { const L = liveAgg(preds.filter((p) => groupOf(p.market, p.line) === g.pazar)); return (
           <tr key={g.pazar}><td>{GROUP_TR[g.pazar] ?? g.pazar}</td><td>{pctOr(g.isabet)}</td><td>{g.n}</td><td>{L.n ? pctOr(L.won / L.n) : "—"}</td><td>{L.n}</td><td>{m.derin_pazarlar.includes(g.pazar) ? "evet" : "hayır"}</td></tr>); })}</tbody>
       </table></div>
+      <p className="muted tiny">Topluluk: gol beklentisi Dixon-Coles ile Elo'nun harmanı (Elo payı {m.elo_w != null ? `%${Math.round(m.elo_w * 100)}` : "—"}{m.topluluk ? `, ${m.topluluk.durum}` : ""}); ardından pazar başına model–piyasa ağırlığı ve izotonik kalibrasyon. Lig başına kalibrasyon: {Object.keys(m.params_lig ?? {}).length ? Object.keys(m.params_lig ?? {}).map((l) => league(l).name).join(", ") : "henüz hiçbir ligde yeterli örnek yok (pazar başına 300 seçim gerekir); küresel parametre kullanılıyor"}. Öğrenme her gece çalışır; yeni parametre son dilimde mevcuttan iyi değilse benimsenmez.</p>
       <p className="muted tiny">Geri testte ROI negatif: piyasa marjı yüzünden yüksek isabet tek başına kâr demek değildir. Meclis isabeti öne alır; değer (edge) yalnızca bilgi amaçlı gösterilir. Yayına yalnızca geri test derinliği yeten pazarlar açılır.</p>
     </Card>
   );

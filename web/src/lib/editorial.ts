@@ -10,6 +10,10 @@ export type Motor = {
   derin_pazarlar: string[];
   params: Record<string, { w?: number; n?: number; iso?: unknown }>;
   uretildi?: string;
+  elo_w?: number;
+  topluluk?: { w: number; durum: string; n_dogrula?: number };
+  params_lig?: Record<string, Record<string, unknown>>;
+  guncellendi?: string;
 };
 
 async function payload<T>(key: string): Promise<T | null> {

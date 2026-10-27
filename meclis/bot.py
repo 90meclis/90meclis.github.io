@@ -390,6 +390,9 @@ class Bot:
             if self.is_cup(a.get("league") or ""):
                 a["cal_w_factor"] = 0.5  # kupa: ligler arası güç farkı belirsiz → piyasaya daha yakın
             a["cal_params"] = cal_params
+            lgp = ((getattr(self, "_motor", None) or {}).get("params_lig") or {}).get(a.get("league") or "")
+            if lgp:  # lig başına kalibrasyon (motor; yalnızca ligde yeterli örnek ve doğrulamada küreselden iyiyse)
+                a["cal_params"] = {**cal_params, **{g: dict(v, kaynak="motor-lig") for g, v in lgp.items() if v}}
             a["best_pick"] = annotate_scan(a, self.s)
             try:  # film senaryoları (benzetim + maçın kendi sayıları); seçim bilindikten sonra kurulur
                 from .senaryo import build_film

@@ -284,6 +284,37 @@ def learn(matches: list[dict], current: dict | None) -> tuple[dict, list[dict]]:
     return adopted, log
 
 
+LEAGUE_N = 300  # lig başına kalibrasyon için grupta en az seçim satırı
+
+
+def learn_leagues(matches: list[dict], glob: dict) -> tuple[dict, list[dict]]:
+    """Lig başına w + izotonik (hiyerarşik: varsayılan küresel). Ligde grupta ≥ LEAGUE_N satır varsa zaman sıralı
+    %70'te öğrenilir; son %30'da küresel parametreden iyi (log-loss) değilse benimsenmez."""
+    out, log = {}, []
+    by_lg: dict[str, list] = {}
+    for mt in matches:
+        by_lg.setdefault(mt["league"], []).append(mt)
+    for lg, ms in by_lg.items():
+        for g in GROUPS:
+            rows = _flat(ms, g)
+            if len(rows) < LEAGUE_N:
+                continue
+            cut = int(len(ms) * 0.7)
+            rtr, rva = _flat(ms[:cut], g), _flat(ms[cut:], g)
+            new = fit_group(rtr)
+            base = glob.get(g) or {"w": 0.35}
+            if not new or len(rva) < 60:
+                continue
+            ll_new = sum(_ll(_blend(r, new), r["y"]) for r in rva) / len(rva)
+            ll_glob = sum(_ll(_blend(r, base), r["y"]) for r in rva) / len(rva)
+            take = ll_new < ll_glob
+            if take:
+                out.setdefault(lg, {})[g] = fit_group(rows) or new
+            log.append({"lig": lg, "grup": g, "durum": "benimsendi" if take else "küresel daha iyi",
+                        "ll_lig": round(ll_new, 4), "ll_kuresel": round(ll_glob, 4), "n": len(rows)})
+    return out, log
+
+
 # ----------------------------------------------------------------------------- seçim kuralının geri testi
 def select(match: dict, params: dict, deep: set | None = None) -> dict | None:
     best = None
@@ -338,6 +369,7 @@ def run(store, log: list | None = None) -> dict:
     _rebuild(matches, ew)
     log.append(f"ℹ️ motor topluluk: Elo ağırlığı {ew:.2f} ({elo_log['durum']})")
     params, learn_log = learn(matches, prev.get("params"))
+    params_lig, lig_log = learn_leagues(matches, params)
     bt = selection_backtest(matches)
     n_by = {g: len(_flat(matches, g)) for g in GROUPS}
     # Yayına girebilecek pazar: geri testte yeterli örnek VE seçim kuralı o pazarda tuttuğunu söylediği kadar tutuyor
@@ -351,7 +383,7 @@ def run(store, log: list | None = None) -> dict:
     for mt in matches:
         for k in ("_m", "_dc", "_el", "_rho"):
             mt.pop(k, None)
-    out = {"params": params, "topluluk": elo_log, "elo_w": ew, "ogrenme": learn_log, "geritest": bt, "derin_pazarlar": deep, "ornek": n_by,
+    out = {"params": params, "params_lig": params_lig, "lig_ogrenme": lig_log, "topluluk": elo_log, "elo_w": ew, "ogrenme": learn_log, "geritest": bt, "derin_pazarlar": deep, "ornek": n_by,
            "gecmis": hist, "guncellendi": to_iso(now_utc()),
            "yontem": "yürüyen pencere Dixon-Coles + Elo (topluluk ağırlığı öğrenilir) + marjsız ön maç oranı; w ve izotonik kalibrasyon log-loss ile; "
                      "son %30 doğrulamada iyileşmeyen parametre benimsenmez; bantlar çapraz uydurmayla örneklem dışı"}
