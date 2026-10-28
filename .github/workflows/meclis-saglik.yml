@@ -28,9 +28,15 @@ jobs:
           R=$(curl -sf --max-time 20 "https://raw.githubusercontent.com/$REPO/veri/q/v_sistem_durumu.json" || echo "[]")
           echo "$R"
           GEC=$(echo "$R" | jq -r '[.[] | select(.gecikti) | .is_adi] | join(", ")')
-          if [ -z "$GEC" ]; then echo "Tüm işler zamanında."; exit 0; fi
-          gh label create otomatik-izleme --color B60205 -d "Zamanlanmış iş hataları" -R "$REPO" 2>/dev/null || true
           T="Sağlık denetimi: geciken işler"
+          if [ -z "$GEC" ]; then
+            echo "Tüm işler zamanında."
+            for n in $(gh issue list -R "$REPO" -l otomatik-izleme -s open --search "in:title \"$T\"" --json number -q '.[].number'); do
+              gh issue close "$n" -R "$REPO" -c "$(date -u '+%F %H:%M') UTC — bütün işler zamanında; otomatik kapatıldı." || true
+            done
+            exit 0
+          fi
+          gh label create otomatik-izleme --color B60205 -d "Zamanlanmış iş hataları" -R "$REPO" 2>/dev/null || true
           N=$(gh issue list -R "$REPO" -l otomatik-izleme -s open --search "in:title \"$T\"" --json number -q '.[0].number')
           B="$(date -u '+%F %H:%M') UTC — son başarılı çalışması geciken işler: $GEC"
           if [ -n "$N" ]; then
