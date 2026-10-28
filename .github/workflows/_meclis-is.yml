@@ -58,7 +58,8 @@ jobs:
         run: bash scripts/veri.sh al statik
       - name: python -m meclis ${{ inputs.komut }}
         id: calis
-        run: python -m meclis "${{ inputs.komut }}"
+        # İşin süresinden 10 dk önce durdurulur: yarım kalsa bile veritabanı ve defter sonraki adımlarda kaydedilir.
+        run: timeout -s INT -k 60 $(( (${{ inputs.sure }} - 10) * 60 )) python -m meclis "${{ inputs.komut }}"
       - name: Defter + Kanıt Mührü (yalnızca ekleme)
         if: ${{ !cancelled() && steps.vt.outputs.ok == '1' }}
         run: python -m meclis.defter_git .
