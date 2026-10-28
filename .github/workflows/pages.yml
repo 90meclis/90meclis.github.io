@@ -25,10 +25,6 @@ jobs:
     defaults:
       run:
         working-directory: web
-    env:
-      VITE_SUPABASE_URL: https://fwispwtdqapmnkcjisek.supabase.co
-      # Yalnızca publishable (anon) anahtar. service_role / secret anahtar derlemeyi durdurur (scripts/check-key.mjs).
-      VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -39,14 +35,6 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run build
-      - name: Anon okuma denetimi (RLS)
-        if: env.VITE_SUPABASE_PUBLISHABLE_KEY != ''
-        continue-on-error: true
-        run: |
-          for t in matches teams match_stats injuries trends lineups weather agenda analyses coupons predictions; do
-            code=$(curl -s -o /dev/null -w "%{http_code}" "$VITE_SUPABASE_URL/rest/v1/$t?select=*&limit=1" -H "apikey: $VITE_SUPABASE_PUBLISHABLE_KEY")
-            echo "$t: $code"
-          done
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

@@ -250,7 +250,7 @@ export async function botBulten(day: string): Promise<BotBultenRow[] | null> {
   const [lo, hi] = dayBoundsUtc(day);
   const { data, error } = await db().from("v_bot_bulten").select("*").gte("kickoff_at", lo).lt("kickoff_at", hi).order("kickoff_at");
   if (error) { botBultenMissing = true; return null; }
-  return (data ?? []) as BotBultenRow[];
+  return (data ?? []) as unknown as BotBultenRow[];
 }
 
 // ---------------------------------------------------------------------------------------------

@@ -41,16 +41,12 @@ console.log(`[90 Meclis] ${routes.length - 1} bölüm sayfası, 404.html ve site
 
 // Maç başına statik SEO sayfası: son 30 gün + önümüzdeki 7 gün. /mac/<lig>-<ev>-<dep>-<tarih>/ ; başlık, açıklama
 // (Meclis gol beklentisinden Poisson 1X2), JSON-LD SportsEvent, canonical, sitemap. Anahtar yoksa atlanır.
-const U = process.env.VITE_SUPABASE_URL, K = process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-async function rest(path) {
-  const out = [];
-  for (let from = 0; from < 20000; from += 1000) {
-    const r = await fetch(`${U}/rest/v1/${path}`, { headers: { apikey: K, Range: `${from}-${from + 999}` } });
-    if (!r.ok) throw new Error(`${r.status} ${path}`);
-    const page = await r.json(); out.push(...page);
-    if (page.length < 1000) break;
-  }
-  return out;
+// Veri: `veri` dalındaki statik sorgu dosyaları (veritabanına bağlanılmaz).
+const VERI = (process.env.VITE_VERI_URL || "https://raw.githubusercontent.com/90meclis/90meclis.github.io/veri") + "/q";
+async function jget(path) {
+  const r = await fetch(`${VERI}/${path}`);
+  if (!r.ok) return null;
+  return r.json();
 }
 function pois(l, k) { let p = Math.exp(-l); for (let i = 1; i <= k; i++) p *= l / i; return p; }
 function x12(lh, la) {
@@ -62,18 +58,21 @@ const slugOk = (id) => { const p = id.split(":"); return p.length === 4 && /^[A-
 const pc = (x) => `%${Math.round(x * 100)}`;
 const trDate = (iso) => new Intl.DateTimeFormat("tr-TR", { timeZone: "Europe/Istanbul", day: "numeric", month: "long", year: "numeric" }).format(new Date(iso));
 const trTime = (iso) => new Intl.DateTimeFormat("tr-TR", { timeZone: "Europe/Istanbul", hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
-if (U && K) {
+{
   try {
-    const lo = new Date(Date.now() - 30 * 864e5).toISOString(), hi = new Date(Date.now() + 7 * 864e5).toISOString();
-    const [ms, lgs] = await Promise.all([
-      rest(`matches?select=id,league,kickoff_at,home_name,away_name,home_goals,away_goals,status,venue,city&kickoff_at=gte.${lo}&kickoff_at=lt.${hi}&order=kickoff_at`),
-      rest("leagues?select=code,name").catch(() => []),
-    ]);
+    const meta = await jget("_meta.json");
+    if (!meta) throw new Error("veri dalı yok");
+    const days = [];
+    for (let d = new Date(meta.gun_ilk + "T12:00:00Z"); d.toISOString().slice(0, 10) <= meta.gun_son; d = new Date(+d + 864e5)) days.push(d.toISOString().slice(0, 10));
+    const ms = (await Promise.all(days.map((d) => jget(`matches/gun/${d}.json`)))).flat().filter(Boolean)
+      .sort((a, b) => a.kickoff_at.localeCompare(b.kickoff_at));
+    const lgs = (await jget("leagues.json")) ?? [];
     const lgName = Object.fromEntries(lgs.map((x) => [x.code, x.name]));
     // labels.ts içindeki Türkçe lig adları önceliklidir (T1 → Süper Lig)
     for (const [, c, n] of readFileSync(join(root, "src/lib/labels.ts"), "utf8").matchAll(/^\s*([A-Z0-9]+): \{ name: "([^"]+)"/gm)) lgName[c] = n;
     const recent = new Date(Date.now() - 2 * 864e5).toISOString();
-    const an = await rest(`analyses?select=match_id,lambdas:payload->lambdas,basis:payload->>basis,created_at&created_at=gte.${lo}&order=created_at.desc`).catch(() => []);
+    const an = (await Promise.all(days.map((d) => jget(`analyses/gun/${d}.json`)))).flat().filter(Boolean)
+      .map((a) => ({ match_id: a.match_id, lambdas: a.payload?.lambdas, basis: a.payload?.basis }));
     const lam = new Map(); for (const a of an) if (!lam.has(a.match_id) && a.lambdas?.home && String(a.basis ?? "").startsWith("model")) lam.set(a.match_id, a.lambdas);
     const urls = [];
     for (const m of ms) {

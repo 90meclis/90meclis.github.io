@@ -1,6 +1,8 @@
 # Ortak çalıştırıcı (yeniden kullanılabilir iş akışı). Zamanlamalar meclis-*.yml dosyalarındadır.
-# Her iş kendi zaman bütçesiyle çalışır; adım hatası diğer adımları durdurmaz (meclis/__main__.py run()).
-# Kritik adım (bot / sonuclandir) düşerse iş kırmızı olur ve "otomatik-izleme" etiketli GitHub issue açılır/güncellenir.
+# Mimari (28.10.2026'dan beri): barındırılan veritabanı YOK. Veri, GitHub Release "veritabani" varlığındaki SQLite
+# dosyasıdır; iş onu indirir, çalışır, geri yükler (günlük anlık görüntü dahil). Aynı anda tek iş yazar
+# (concurrency: meclis-veritabani). Site yalnızca `veri` dalındaki statik JSON'u okur. Kilitli tahmin/kupon ve
+# Kanıt Mührü main dalında yalnızca-ekleme JSONL olarak tutulur (defter/, muhur/).
 name: _meclis-is
 
 on:
@@ -19,10 +21,14 @@ jobs:
   run:
     runs-on: ubuntu-latest
     timeout-minutes: ${{ inputs.sure }}
+    concurrency:
+      group: meclis-veritabani
+      cancel-in-progress: false
     env:
       PYTHONUNBUFFERED: "1"
-      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      GH_TOKEN: ${{ github.token }}
+      LOCAL_DB_PATH: ${{ github.workspace }}/vt/meclis.db
+      MECLIS_STATIK_DIR: statik
       FOOTBALL_DATA_TOKEN: ${{ secrets.FOOTBALL_DATA_TOKEN }}
       API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
       ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
@@ -40,107 +46,47 @@ jobs:
       BOT_HORIZON_HOURS: "72"
     steps:
       - uses: actions/checkout@v4
-      - name: Supabase erişim yoklaması (402 = kota kısıtı → iş atlanır, tek issue, erişim dönünce kendiliğinden kapanır)
-        id: erisim
-        env:
-          GH_TOKEN: ${{ github.token }}
-          URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        run: |
-          code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "$SUPABASE_URL/rest/v1/leagues?select=code&limit=1" \
-                 -H "apikey: $SUPABASE_KEY" -H "Authorization: Bearer $SUPABASE_KEY" || true)
-          echo "Supabase HTTP $code"
-          T="Supabase erişimi kısıtlı (402)"
-          gh label create otomatik-izleme --color B60205 -d "Zamanlanmış iş hataları" 2>/dev/null || true
-          N=$(gh issue list -l otomatik-izleme -s open --search "in:title \"$T\"" --json number -q '.[0].number' || true)
-          if [ "$code" = "402" ]; then
-            echo "kisitli=1" >> "$GITHUB_OUTPUT"
-            echo "::warning::Supabase projesi kısıtlı (402, egress kotası). ${{ inputs.komut }} bu çalışmada atlandı."
-            if [ -z "$N" ]; then
-              gh issue create -t "$T" -l otomatik-izleme -b "$(date -u '+%F %H:%M') UTC — Supabase REST 402 (exceed_egress_quota) döndürüyor. Zamanlanmış işler hata vermeden atlanıyor; erişim geri geldiğinde ilk iş bu issue'yu kapatır ve kaldığı yerden devam eder. İlk tespit: $URL" || true
-            fi
-          else
-            echo "kisitli=0" >> "$GITHUB_OUTPUT"
-            if [ -n "$N" ] && [ "$code" = "200" ]; then
-              gh issue close "$N" -c "$(date -u '+%F %H:%M') UTC — Supabase erişimi geri geldi (HTTP 200); işler kendiliğinden devam ediyor: $URL" || true
-            fi
-          fi
       - uses: actions/setup-python@v5
-        if: steps.erisim.outputs.kisitli != '1'
         with:
           python-version: "3.12"
           cache: pip
-      - if: steps.erisim.outputs.kisitli != '1'
-        run: pip install -r requirements.txt
-      - name: Ayna önbelleği (egress tasarrufu — yalnızca değişen satırlar Supabase'ten çekilir)
-        if: steps.erisim.outputs.kisitli != '1'
-        uses: actions/cache/restore@v4
-        with:
-          path: .ayna
-          key: meclis-ayna-${{ github.run_id }}
-          restore-keys: meclis-ayna-
+      - run: pip install -r requirements.txt
+      - name: Veritabanını indir (Release → vt/meclis.db)
+        id: vt
+        run: bash scripts/vt.sh indir "$LOCAL_DB_PATH" && echo "ok=1" >> "$GITHUB_OUTPUT"
       - name: Statik site verisi (veri dalı) → statik/
-        if: steps.erisim.outputs.kisitli != '1'
         run: bash scripts/veri.sh al statik
       - name: python -m meclis ${{ inputs.komut }}
         id: calis
-        if: steps.erisim.outputs.kisitli != '1'
-        env:
-          MECLIS_AYNA_DIR: .ayna
-          MECLIS_STATIK_DIR: statik
         run: python -m meclis "${{ inputs.komut }}"
-      - name: Ayna önbelleğini kaydet
-        if: ${{ always() && steps.erisim.outputs.kisitli != '1' && hashFiles('.ayna/*.json.gz') != '' }}
-        uses: actions/cache/save@v4
-        with:
-          path: .ayna
-          key: meclis-ayna-${{ github.run_id }}
+      - name: Defter + Kanıt Mührü (yalnızca ekleme)
+        if: ${{ !cancelled() && steps.vt.outputs.ok == '1' }}
+        run: python -m meclis.defter_git .
+      - name: Veritabanını yükle (Release; günlük anlık görüntü)
+        if: ${{ !cancelled() && steps.vt.outputs.ok == '1' }}
+        run: bash scripts/vt.sh yukle "$LOCAL_DB_PATH"
       - name: Statik site verisi → veri dalı
-        if: ${{ !cancelled() && steps.erisim.outputs.kisitli != '1' }}
+        if: ${{ !cancelled() && steps.vt.outputs.ok == '1' }}
         run: bash scripts/veri.sh gonder statik "${{ inputs.komut }}"
-      - name: Kanıt Mührü manifestosu → main (herkese açık kanıt + 60 gün hareketsizlik koruması)
-        if: ${{ !cancelled() && inputs.muhur_commit && steps.erisim.outputs.kisitli != '1' }}
+      - name: Defter / mühür → main
+        if: ${{ !cancelled() && steps.vt.outputs.ok == '1' }}
         run: |
-          python -m meclis muhur --cikti muhur
           git config user.name "90-meclis-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add muhur/manifest.json
-          if git diff --cached --quiet; then echo "Mühür değişmedi."; exit 0; fi
-          git commit -qm "Kanıt Mührü $(date -u +%F)"
-          for i in 1 2 3; do git pull -q --rebase origin main && git push -q origin HEAD:main && break; sleep 5; done
-      - name: Gece yedeği → backups dalı
-        if: ${{ !cancelled() && inputs.yedek && steps.erisim.outputs.kisitli != '1' }}
-        env:
-          MECLIS_AYNA_DIR: .ayna
-        run: |
-          python -m meclis yedek --cikti /tmp/yedek
-          # eksik/boş dışa aktarım eski yedeği ASLA silmez (27→28 Ekim 402 sırasında boş yedek itilmişti)
-          if ! python -c "import json,sys; c=json.load(open('/tmp/yedek/meta.json'))['counts']; sys.exit(0 if len(c)==5 and c.get('matches') else 1)"; then
-            echo "::warning::Yedek eksik — backups dalı değiştirilmedi."; exit 0
-          fi
-          git config user.name "90-meclis-bot"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          if git fetch -q origin backups; then
-            git worktree add -q -B backups /tmp/bk origin/backups
-          else
-            git worktree add -q --detach /tmp/bk
-            cd /tmp/bk && git checkout -q --orphan backups && git rm -rfq . && cd -
-          fi
-          rsync -a --delete --exclude .git /tmp/yedek/ /tmp/bk/
-          cd /tmp/bk
-          git add -A
-          git diff --cached --quiet || git commit -qm "Yedek $(date -u +%F)"
-          git push -q origin backups
+          git add defter muhur
+          if git diff --cached --quiet; then echo "Defter değişmedi."; exit 0; fi
+          git commit -qm "Defter ${{ inputs.komut }} $(date -u '+%F %H:%M')"
+          for i in 1 2 3 4 5; do git pull -q --rebase origin main && git push -q origin HEAD:main && break; sleep $((RANDOM % 7 + 3)); done
       - name: Hata → GitHub issue (otomatik-izleme)
-        if: ${{ failure() || cancelled() }}
+        if: ${{ failure() }}
         env:
-          GH_TOKEN: ${{ github.token }}
           KOMUT: ${{ inputs.komut }}
           URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           gh label create otomatik-izleme --color B60205 -d "Zamanlanmış iş hataları" 2>/dev/null || true
           T="Otomatik iş hatası: $KOMUT"
           N=$(gh issue list -l otomatik-izleme -s open --search "in:title \"$T\"" --json number -q '.[0].number')
-          B="$(date -u '+%F %H:%M') UTC — $KOMUT başarısız/kesildi: $URL"
+          B="$(date -u '+%F %H:%M') UTC — $KOMUT başarısız: $URL"
           # yorum yağmuru yok: açık issue varsa son 24 saatte en fazla bir yorum
           if [ -n "$N" ]; then
             L=$(gh issue view "$N" --json comments,createdAt -q '(.comments[-1].createdAt // .createdAt)')

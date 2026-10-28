@@ -1,0 +1,276 @@
+{
+ "not": "Kurtarıldı (28.10.2026): Supabase 402 kısıtı nedeniyle asıl kayıt okunamadı; maç/pazar/oran 27.10 yayın günlüğü ve canlı site görüntüsünden, olasılık yüzde olarak (yuvarlanmış) alındı.",
+ "28_ekim": [
+  {
+   "seq": 2,
+   "match_id": "B26:2026-10-28:ifkgoteborg:djurgardens",
+   "home": "IFK Göteborg",
+   "away": "Djurgårdens IF",
+   "kickoff_at": "2026-10-28T18:00:00+00:00",
+   "market": "OU_GOALS",
+   "selection": "ALT",
+   "line": 3.5,
+   "odds": 1.5,
+   "probability": 0.62,
+   "tag": "gunun_karari",
+   "coupon_seq": 1
+  },
+  {
+   "seq": 3,
+   "match_id": "B26:2026-10-28:brommapojkarna:hacken",
+   "home": "IF Brommapojkarna",
+   "away": "BK Häcken",
+   "kickoff_at": "2026-10-28T18:00:00+00:00",
+   "market": "OU_GOALS",
+   "selection": "ÜST",
+   "line": 2.5,
+   "odds": 1.5,
+   "probability": 0.61,
+   "tag": "gunun_karari",
+   "coupon_seq": 1
+  },
+  {
+   "seq": 4,
+   "match_id": "SC0:2026-10-28:dundee:kilmarnock",
+   "home": "Dundee",
+   "away": "Kilmarnock",
+   "kickoff_at": "2026-10-28T19:45:00+00:00",
+   "market": "OU_GOALS",
+   "selection": "ALT",
+   "line": 3.5,
+   "odds": 1.52,
+   "probability": 0.61,
+   "tag": "gunun_karari",
+   "coupon_seq": 1
+  },
+  {
+   "seq": 5,
+   "match_id": "SC0:2026-10-28:hearts:rangers",
+   "home": "Hearts",
+   "away": "Rangers",
+   "kickoff_at": "2026-10-28T20:00:00+00:00",
+   "market": "BTTS",
+   "selection": "VAR",
+   "line": null,
+   "odds": 1.53,
+   "probability": 0.61,
+   "tag": "meclis_gorusu",
+   "coupon_seq": null
+  },
+  {
+   "seq": 6,
+   "match_id": "I1:2026-10-28:venezia:inter",
+   "home": "Venezia FC",
+   "away": "Inter",
+   "kickoff_at": "2026-10-28T17:30:00+00:00",
+   "market": "BTTS",
+   "selection": "VAR",
+   "line": null,
+   "odds": 1.55,
+   "probability": 0.62,
+   "tag": "meclis_gorusu",
+   "coupon_seq": null
+  },
+  {
+   "seq": 7,
+   "match_id": "I2:2026-10-28:pisa:palermo",
+   "home": "Pisa",
+   "away": "Palermo",
+   "kickoff_at": "2026-10-28T18:00:00+00:00",
+   "market": "BTTS",
+   "selection": "VAR",
+   "line": null,
+   "odds": 1.56,
+   "probability": 0.61,
+   "tag": "meclis_gorusu",
+   "coupon_seq": null
+  },
+  {
+   "seq": 8,
+   "match_id": "SC0:2026-10-28:stmirren:hibernian",
+   "home": "St Mirren",
+   "away": "Hibernian",
+   "kickoff_at": "2026-10-28T19:45:00+00:00",
+   "market": "BTTS",
+   "selection": "VAR",
+   "line": null,
+   "odds": 1.56,
+   "probability": 0.58,
+   "tag": "meclis_gorusu",
+   "coupon_seq": null
+  },
+  {
+   "seq": 9,
+   "match_id": "SC0:2026-10-28:celtic:dundeeunited",
+   "home": "Celtic",
+   "away": "Dundee United",
+   "kickoff_at": "2026-10-28T19:45:00+00:00",
+   "market": "BTTS",
+   "selection": "VAR",
+   "line": null,
+   "odds": 1.61,
+   "probability": 0.57,
+   "tag": "meclis_gorusu",
+   "coupon_seq": null
+  },
+  {
+   "seq": 10,
+   "match_id": "B26:2026-10-28:halmstads:malmoff",
+   "home": "Halmstads BK",
+   "away": "Malmö FF",
+   "kickoff_at": "2026-10-28T18:00:00+00:00",
+   "market": "OU_GOALS",
+   "selection": "ÜST",
+   "line": 2.5,
+   "odds": 1.59,
+   "probability": 0.57,
+   "tag": "meclis_gorusu",
+   "coupon_seq": null
+  },
+  {
+   "seq": 11,
+   "match_id": "B40:2026-10-28:manchestercity:brighton",
+   "home": "Manchester City",
+   "away": "Brighton & Hove Albion",
+   "kickoff_at": "2026-10-28T19:30:00+00:00",
+   "market": "BTTS",
+   "selection": "VAR",
+   "line": null,
+   "odds": 1.51,
+   "probability": 0.61,
+   "tag": "meclis_gorusu",
+   "coupon_seq": null
+  },
+  {
+   "seq": 12,
+   "match_id": "B91:2026-10-28:carlisleunited:harrogatetown",
+   "home": "Carlisle United",
+   "away": "Harrogate Town",
+   "kickoff_at": "2026-10-28T19:45:00+00:00",
+   "market": "OU_GOALS",
+   "selection": "ALT",
+   "line": 3.5,
+   "odds": 1.52,
+   "probability": 0.61,
+   "tag": "meclis_gorusu",
+   "coupon_seq": null
+  },
+  {
+   "seq": 14,
+   "match_id": "SC0:2026-10-28:hearts:rangers",
+   "home": "Hearts",
+   "away": "Rangers",
+   "kickoff_at": "2026-10-28T20:00:00+00:00",
+   "market": "BTTS",
+   "selection": "VAR",
+   "line": null,
+   "odds": 1.53,
+   "probability": 0.61,
+   "tag": "karar_birligi",
+   "coupon_seq": 13
+  },
+  {
+   "seq": 15,
+   "match_id": "I1:2026-10-28:venezia:inter",
+   "home": "Venezia FC",
+   "away": "Inter",
+   "kickoff_at": "2026-10-28T17:30:00+00:00",
+   "market": "BTTS",
+   "selection": "VAR",
+   "line": null,
+   "odds": 1.55,
+   "probability": 0.62,
+   "tag": "karar_birligi",
+   "coupon_seq": 13
+  },
+  {
+   "seq": 16,
+   "match_id": "I2:2026-10-28:pisa:palermo",
+   "home": "Pisa",
+   "away": "Palermo",
+   "kickoff_at": "2026-10-28T18:00:00+00:00",
+   "market": "BTTS",
+   "selection": "VAR",
+   "line": null,
+   "odds": 1.56,
+   "probability": 0.61,
+   "tag": "karar_birligi",
+   "coupon_seq": 13
+  }
+ ],
+ "28_ekim_kuponlar": {
+  "1": {
+   "tag": "gunun_karari",
+   "total_odds": 3.42,
+   "joint_probability": 0.231,
+   "legs": 3,
+   "first_kickoff_at": "2026-10-28T18:00:00+00:00"
+  },
+  "13": {
+   "tag": "karar_birligi",
+   "total_odds": 3.7,
+   "joint_probability": 0.23,
+   "legs": 3,
+   "first_kickoff_at": "2026-10-28T17:30:00+00:00"
+  }
+ },
+ "29_ekim": {
+  "kuponlar": [
+   {
+    "seq": 17,
+    "tur": "Günün Kararı",
+    "toplam_oran": 3.38,
+    "bacak": 3
+   },
+   {
+    "seq": 29,
+    "tur": "Karar Birliği",
+    "toplam_oran": 2.29,
+    "bacak": 2
+   }
+  ],
+  "tekliler_gunlukten": [
+   {
+    "seq": 21,
+    "mac": "FC Dallas – Columbus Crew",
+    "secim": "KG Var"
+   },
+   {
+    "seq": 22,
+    "mac": "Red Bull Bragantino – Chapecoense",
+    "secim": "Toplam Gol 3.5 Alt"
+   },
+   {
+    "seq": 23,
+    "mac": "Remo – Botafogo",
+    "secim": "KG Var"
+   },
+   {
+    "seq": 24,
+    "mac": "Inter Miami CF – FC Cincinnati",
+    "secim": "Toplam Gol 3.5 Üst"
+   },
+   {
+    "seq": 25,
+    "mac": "Charlotte FC – CF Montréal",
+    "secim": "KG Var"
+   },
+   {
+    "seq": 26,
+    "mac": "St.Louis City – Portland Timbers",
+    "secim": "MS 1 (St.Louis City)"
+   },
+   {
+    "seq": 27,
+    "mac": "New England Revolution – New York Red Bulls",
+    "secim": "MS 1 (New England Revolution)"
+   },
+   {
+    "seq": 28,
+    "mac": "Santos – Palmeiras",
+    "secim": "KG Var"
+   }
+  ],
+  "kayip": "Kupon bacakları (mühür 18–20, 30–31), tekli oran/olasılıkları ve 31 kaydın kanonik içeriği (zaman damgası mikrosaniyesi, 6 haneli olasılık) Supabase'te kaldı; içerik özetleri (icerik_sha256) bu yüzden yeniden hesaplanıp doğrulanamıyor. Mühür zinciri (manifest kökü) olduğu gibi korunur ve yeni kayıtlar ona eklenir."
+ }
+}

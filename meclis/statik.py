@@ -93,6 +93,12 @@ def export(store, log: list, full_defter: bool = False, out: Path | None = None)
     out.mkdir(parents=True, exist_ok=True)
     now = now_utc()
     stamp = to_iso(now)
+    if getattr(store, "kind", "") != "supabase":  # yerel veritabanı: her şey dosyadan, tam okuma ücretsiz
+        full_defter = True
+        _fill_from_db(store)
+        from .statik_q import export_q
+
+        export_q(store, out, log)
     n_def = _defter(store, out, full_defter, stamp)
     n_ed = _editoryal(store, out, stamp)
     n_days = _days(store, out, stamp)
@@ -270,3 +276,17 @@ def _teams(store, out: Path, stamp: str) -> int:
             if not u or now - parse_dt(u) > timedelta(days=3):
                 f.unlink()
     return n
+
+
+def _fill_from_db(store) -> None:
+    """Yerel veritabanında kanca gerekmez: son analizler ve editoryal kayıtlar doğrudan okunur."""
+    latest: dict[str, dict] = {}
+    for r in store.select("analyses", order="created_at"):
+        latest[r["match_id"]] = r
+    with _lock:
+        for mid, r in latest.items():
+            p = r.get("payload") or {}
+            if mid.startswith("meclis:"):
+                PAYLOADS[mid] = p
+            else:
+                ANALYSES[mid] = {"match_id": mid, "created_at": r.get("created_at"), **{k: p.get(k) for k in LITE}}

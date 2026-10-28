@@ -15,8 +15,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
-      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       GH_TOKEN: ${{ github.token }}
       REPO: ${{ github.repository }}
     steps:
@@ -25,14 +23,9 @@ jobs:
           for w in meclis-yayin.yml meclis-canli.yml meclis-sonuc.yml meclis-gundem.yml meclis-gece.yml meclis-saglik.yml pages.yml; do
             gh api -X PUT "repos/$REPO/actions/workflows/$w/enable" >/dev/null 2>&1 || true
           done
-      - name: Son başarılı çalışmalar (v_sistem_durumu) — gecikme varsa issue
+      - name: Son başarılı çalışmalar (veri dalı · v_sistem_durumu) — gecikme varsa issue
         run: |
-          code=$(curl -s -o /tmp/r.json -w '%{http_code}' --max-time 20 "$SUPABASE_URL/rest/v1/v_sistem_durumu?select=is_adi,gecikti,son_basari,son_mesaj" -H "apikey: $SUPABASE_KEY" -H "Authorization: Bearer $SUPABASE_KEY" || true)
-          if [ "$code" != "200" ]; then
-            # 402 = kota kısıtı: tek issue'yu ortak iş akışı (_meclis-is) yönetir; burada yalnızca uyarı
-            echo "::warning::Supabase HTTP $code — sağlık denetimi atlandı."; exit 0
-          fi
-          R=$(cat /tmp/r.json)
+          R=$(curl -sf --max-time 20 "https://raw.githubusercontent.com/$REPO/veri/q/v_sistem_durumu.json" || echo "[]")
           echo "$R"
           GEC=$(echo "$R" | jq -r '[.[] | select(.gecikti) | .is_adi] | join(", ")')
           if [ -z "$GEC" ]; then echo "Tüm işler zamanında."; exit 0; fi
