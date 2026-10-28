@@ -129,3 +129,25 @@ canlı skor 10 dakikada bir maç satırlarını okuyup yazıyordu; site her ziya
   issue açılır (yorum yok), erişim dönünce ilk iş issue'yu kapatır. Hata issue'larına 24 saatte en fazla bir yorum.
 - **Yedek koruması**: eksik dışa aktarım `backups` dalını artık silmez (28.10 01:34'te 402 sırasında boş yedek itilmişti;
   önceki tam yedek `d32255b` commit'inde duruyor).
+
+## 28.10 (öğleden sonra) — Supabase'den tamamen çıkış: GitHub-yerli arka uç
+
+Kullanıcı kararı (ücretli plan yok): Supabase kısıtı (402) kalkmadı, veritabanı GitHub'a taşındı. Sistem artık
+hiçbir barındırılan veritabanına bağlı değil.
+
+- **Veritabanı**: SQLite (`meclis/store.py` SQLiteStore; aynı tablolar, görünümler ve değişmezlik tetikleyicileri).
+  Kalıcı kopya `veritabani` sürümünde (Release) `meclis.db.gz`; her gün `meclis-YYYY-MM-DD.db.gz` anlık görüntüsü
+  (14 gün). `scripts/vt.sh indir|yukle` bütünlük denetimi yapar (`PRAGMA integrity_check`, >1000 maç).
+- **Eşzamanlılık**: bütün yazan işler `meclis-veritabani` eşzamanlılık grubunda; aynı anda tek yazar, iptal yok.
+- **Site** yalnızca `veri` dalındaki statik JSON'u okur (`q/` sorgu dosyaları + eski statik dosyalar).
+  `web/src/lib/statikdb.ts` PostgREST sorgu kurucusunu tarayıcıda taklit eder. Ziyaretçi başına veritabanı okuması yok.
+  `@supabase/supabase-js` kaldırıldı; `VITE_SUPABASE_*` tanımlıysa derleme durur.
+- **Defter git'te, yalnızca ekleme**: `meclis/defter_git.py` her işten sonra `defter/tahminler.jsonl`,
+  `defter/kuponlar.jsonl`, `defter/sonuclar.jsonl` (olay kaydı) ve `muhur/kanonik.jsonl` + `muhur/manifest.json`
+  dosyalarına yalnızca yeni satır ekler; main'e commit edilir, git geçmişinde denetlenebilir.
+- **Kurtarma** (`scripts/kurtarma_2026_10_28.py`, `defter/kurtarma-2026-10-28.json`): veritabanı `d32255b` yedeğinden
+  kuruldu. 28.10 resmî seçimleri (Günün Kararı 3.42, Karar Birliği 3.70, 8 tekli) iş günlüklerinden ve ekran
+  görüntülerinden geri yazıldı; kayıt zamanı 27.10 19:19 UTC. 31 mührün kanonik içeriği Supabase'de kaldığı için
+  `icerik_sha256` doğrulanamıyor; manifest kökü korunur, yeni mühürler bu köke zincirlenir. 29.10 için 27.10 akşamı
+  kilitlenen 15 kayıt (seq 17–31) oran/olasılık bilgisi kaybolduğundan geri yazılmadı ve istatistiğe girmez.
+- `SUPABASE_*` sırları artık kullanılmıyor (silinebilir; silinmedi).
