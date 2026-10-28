@@ -62,5 +62,12 @@ def write_manifest(store, out_dir: str) -> dict:
            "olusturuldu": to_iso(now_utc()), "kayit": len(rows), "kok": rows[-1]["sha256"] if rows else None,
            "muhurler": [{k: r[k] for k in ("seq", "ref_table", "ref_id", "icerik_sha256", "sha256", "muhurlendi_at")}
                         for r in rows]}
-    Path(out_dir, "manifest.json").write_text(json.dumps(man, ensure_ascii=False, indent=1), encoding="utf-8")
+    path = Path(out_dir, "manifest.json")
+    try:  # zincir değişmediyse dosyaya dokunma (yalnızca zaman damgası için commit üretmesin)
+        old = json.loads(path.read_text(encoding="utf-8"))
+        if old.get("kayit") == man["kayit"] and old.get("kok") == man["kok"]:
+            return {"kayit": len(rows), "kok": man["kok"]}
+    except (OSError, ValueError):
+        pass
+    path.write_text(json.dumps(man, ensure_ascii=False, indent=1), encoding="utf-8")
     return {"kayit": len(rows), "kok": man["kok"]}
