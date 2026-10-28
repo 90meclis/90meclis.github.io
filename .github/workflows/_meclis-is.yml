@@ -74,10 +74,19 @@ jobs:
         run: |
           git config user.name "90-meclis-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add defter muhur
-          if git diff --cached --quiet; then echo "Defter değişmedi."; exit 0; fi
-          git commit -qm "Defter ${{ inputs.komut }} $(date -u '+%F %H:%M')"
-          for i in 1 2 3 4 5; do git pull -q --rebase origin main && git push -q origin HEAD:main && break; sleep $((RANDOM % 7 + 3)); done
+          # Defter dosyaları veritabanından yalnızca-ekleme ile üretilir: çakışmada rebase yerine main'in en güncel
+          # hâli üzerine yeniden üretilir (başka bir işin eklediği satırlar korunur).
+          for i in 1 2 3 4 5 6; do
+            git rebase --abort 2>/dev/null || true
+            git fetch -q origin main && git reset -q --hard origin/main
+            python -m meclis.defter_git .
+            git add defter muhur
+            if git diff --cached --quiet; then echo "Defter değişmedi."; exit 0; fi
+            git commit -qm "Defter ${{ inputs.komut }} $(date -u '+%F %H:%M')"
+            if git push -q origin HEAD:main; then echo "Defter main'e yazıldı."; exit 0; fi
+            sleep $((RANDOM % 7 + 3))
+          done
+          echo "::error::Defter main'e yazılamadı"; exit 1
       - name: Hata → GitHub issue (otomatik-izleme)
         if: ${{ failure() }}
         env:
