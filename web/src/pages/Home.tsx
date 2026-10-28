@@ -16,6 +16,7 @@ import { NAV } from "../lib/nav";
 import { bulletinRows, hunt, scanFor, streakText, type Saha, type ScanRow } from "../lib/lab";
 import type { Coupon, Match, Prediction } from "../lib/types";
 import "../styles/elite.css";
+import { Kurtarildi } from "../components/Kurtarildi";
 
 const UEFA = new Set(["CL", "EL", "ECL"]);
 const ortak = () => NAV.find((n) => n.to === "/ortak") ?? { to: "/ortak", label: "Ortak", icon: "◆", short: "Ortak" };
@@ -59,6 +60,7 @@ function GkHero({ gk, legs, live }: { gk: Coupon; legs: Prediction[]; live: bool
           <p className="eyebrow">{live ? (gk.coupon_date === trDay() ? "Bugünün kuponu" : dateLong(gk.coupon_date + "T12:00:00+03:00")) : "Son kupon · sonuçlandı"}</p>
           <h2>Günün Kararı</h2>
           <p className="muted small">Meclis'in ana tercihlerinden oluşan günün kuponu</p>
+          <Kurtarildi mv={gk.model_version} />
         </div>
         <div className="gk-odds"><small>Toplam oran</small><b><CountUp to={Number(gk.total_odds)} digits={2} /></b></div>
       </header>
