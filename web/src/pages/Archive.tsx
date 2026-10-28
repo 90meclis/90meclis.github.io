@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import * as api from "../lib/data";
 import { useAsync } from "../lib/useAsync";
-import { dateLong, dateShort, dateTime, hoursBefore, num, pct, signed, time, trDay } from "../lib/format";
+import { dateLong, dateShort, dateTime, dayLabel, hoursBefore, num, pct, signed, time, trDay } from "../lib/format";
 import { MARKET_LABELS, STATUS_LABELS, league, pickLabel } from "../lib/labels";
 import { matchPath } from "../lib/match";
 import { usePageMeta, ROUTES } from "../lib/seo";
@@ -35,7 +35,8 @@ export default function Archive() {
   };
   const [n, setN] = useState(PAGE);
   const [view, setView] = useState<"masa" | "kayit" | "kupon">("masa");
-  const [pickDay, setPickDay] = useState("");
+  const [sp] = useSearchParams();
+  const [pickDay, setPickDay] = useState(() => sp.get("gun") ?? "");
 
   const preds = useMemo(() => d.data?.preds ?? [], [d.data]);
   const leagues = useMemo(() => [...new Set(preds.map((p) => p.league ?? ""))].filter(Boolean).sort((a, b) => league(a).order - league(b).order), [preds]);
@@ -108,13 +109,15 @@ export default function Archive() {
         {view === "masa" && (
           <div className="masa">
             <div className="masa-day">
-              <h2 className="day-title">{day === today ? "Bugünün masası" : dateLong(day + "T12:00:00+03:00")}</h2>
+              <h2 className="day-title">{day === today ? "Bugünün masası" : dayLabel(day).top === "Yarın" ? `Yarının masası · ${dateLong(day + "T12:00:00+03:00")}` : dateLong(day + "T12:00:00+03:00")}</h2>
               {contentDays.length > 1 && (
-                <label><span className="muted small">Gün</span>
-                  <select value={day} onChange={(e) => setPickDay(e.target.value)}>
-                    {contentDays.map((x) => <option key={x} value={x}>{dateLong(x + "T12:00:00+03:00")}</option>)}
-                  </select>
-                </label>
+                <div className="seg day-seg" role="tablist" aria-label="Gün">
+                  {[...contentDays].reverse().map((x) => (
+                    <button key={x} role="tab" aria-selected={x === day} className={x === day ? "on" : ""} onClick={() => setPickDay(x)}>
+                      {dayLabel(x).top} <small className="muted">{dayLabel(x).bottom}</small>
+                    </button>
+                  ))}
+                </div>
               )}
             </div>
             {gk.length ? gk.map((c) => <CouponHero key={c.id} c={c} legs={legsOf(c.id)} ed={ed} />) : (

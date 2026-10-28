@@ -153,6 +153,7 @@ export default function Home() {
   const gkAll = coupons.filter((c) => c.tag === "gunun_karari");
   const gkLive = gkAll.filter((c) => c.coupon_date >= today && !SETTLED.has(c.status)).sort((a, b) => a.coupon_date.localeCompare(b.coupon_date))[0] ?? null;
   const gk = gkLive ?? [...gkAll].sort((a, b) => b.coupon_date.localeCompare(a.coupon_date))[0] ?? null;
+  const nextCoupons = gk ? coupons.filter((c) => c.coupon_date > gk.coupon_date && c.coupon_date === [...coupons.map((x) => x.coupon_date).filter((x) => x > gk.coupon_date)].sort()[0]) : [];
   const gkLegs = gk ? preds.filter((p) => p.coupon_id === gk.id).sort((a, b) => a.kickoff_at.localeCompare(b.kickoff_at)) : [];
   const gkMatchIds = new Set(gkLegs.map((p) => p.match_id));
   const recent = useMemo(() => {
@@ -218,6 +219,12 @@ export default function Home() {
       <div className="home-grid">
         <section id="gunun-karari" className="hg-gk">
           <Gate loading={book.loading} error={book.error} rows={3}>
+            {gk && nextCoupons.length > 0 && (
+              <Link to={`/tahmin-arsivi?gun=${nextCoupons[0].coupon_date}`} className="next-coupons">
+                <span className="kicker">{dayLabel(nextCoupons[0].coupon_date).top === "Yarın" ? "Yarının kuponları hazır" : `${dateLong(nextCoupons[0].coupon_date + "T12:00:00+03:00")} kuponları hazır`}</span>
+                <span>{nextCoupons.map((c) => `${TAG_LABELS[c.tag]} ${num(c.total_odds)}`).join(" · ")} · kilitli →</span>
+              </Link>
+            )}
             {gk ? <GkHero gk={gk} legs={gkLegs} live={!!gkLive} /> : (
               <div className="coupon-hero empty gk-wait">
                 <span className="kicker">Günün Kararı</span>
