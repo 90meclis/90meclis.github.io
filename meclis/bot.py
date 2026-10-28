@@ -567,7 +567,8 @@ class Bot:
             except Exception as e:
                 return m["id"], e
 
-        workers = 1 if self.store.kind == "sqlite" else 6
+        # SQLite deposu iş parçacığı güvenli (RLock); yalnızca bellek içi test deposu sıralı çalışır
+        workers = 1 if getattr(self.store, "path", None) == ":memory:" else 6
         if workers == 1:
             return dict(one(m) for m in matches)
         with ThreadPoolExecutor(max_workers=workers) as ex:
