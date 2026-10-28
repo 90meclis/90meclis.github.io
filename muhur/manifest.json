@@ -1,6 +1,6 @@
 {
  "aciklama": "90 Meclis Kanıt Mührü — her satır: sha256(önceki_mühür + sha256(kanonik kayıt)). Kök, zincirin son mührüdür.",
- "olusturuldu": "2026-10-27T20:21:57+00:00",
+ "olusturuldu": "2026-10-28T15:53:55+00:00",
  "kayit": 31,
  "kok": "5442979bbd3821470fa408a4792be2323e8a01d34e05d96967aa900243bf5e0d",
  "muhurler": [
