@@ -85,6 +85,7 @@ export default function Archive() {
         <span className="ledger-kicker">Meclis Defteri · yayımlanan kararlar</span>
         <h1>Tahmin Arşivi</h1>
         <p>Burada yalnızca Meclis'in yayımladığı kararlar durur: <b>Günün Kararı</b> kuponu, <b>Meclis Görüşleri</b> ve <b>Karar Birliği</b>. Hepsi Ortak'ın analiz ettiği bütün bültenden, tutma olasılığı en yüksek seçimlerden süzülür; bir maç günde yalnızca bir üründe yer alır. Kuponlar bir önceki gün 18:00'de (TSİ) bütün gün masadayken kurulur; her karar maçtan en az 3 saat önce kilitlenir, mühürlenir ve kazansın kaybetsin hiç silinmez.</p>
+        <p className="muted small">Kayıt notu (28.10.2026): eski veritabanı sağlayıcısı kota nedeniyle erişimi kapattı. 28 Ekim kararları yayın günlüğü ve sitenin kayıtlı görünümünden kurtarıldı (olasılıklar yüzde olarak yuvarlanmış); 27 Ekim'de 29 Ekim için yayımlanan 15 kaydın içeriği kurtarılamadı ve istatistiklere girmez. Ayrıntı: <a href="https://github.com/90meclis/90meclis.github.io/blob/main/defter/kurtarma-2026-10-28.json" target="_blank" rel="noreferrer">kurtarma kaydı</a> · defterin tamamı git'te: <a href="https://github.com/90meclis/90meclis.github.io/tree/main/defter" target="_blank" rel="noreferrer">defter/</a></p>
         <div className="ledger-stats">
           <div><b>{ledger.total}</b><span>karar</span></div>
           <div className="w"><b>{ledger.won}</b><span>kazandı</span></div>
