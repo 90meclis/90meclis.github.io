@@ -47,6 +47,13 @@ export default function Seal() {
             <div className={same === d.data.rows.length ? "ok" : "bad"}><small>Bugünkü kayıtla</small><b>{same === d.data.rows.length ? "Birebir ✓" : `${d.data.rows.length - same} fark`}</b><span>{same}/{d.data.rows.length} kayıt alan alan aynı</span></div>
             {d.data.man && <div className={d.data.man.kok === d.data.v.root || d.data.rows.some((r) => r.sha256 === d.data!.man!.kok) ? "ok" : "bad"}><small>Depodaki kök</small><b>{d.data.rows.some((r) => r.sha256 === d.data!.man!.kok) ? "Eşleşiyor ✓" : "Eşleşmiyor"}</b><span><a href={MANIFEST_PAGE} target="_blank" rel="noreferrer">manifest.json</a> · {d.data.man.kayit} kayıt</span></div>}
           </div>
+          {d.data.rows.some((r) => r.kanonik.startsWith("KAYIP")) && (
+            <p className="muted small">
+              Not (28.10.2026): İlk {d.data.rows.filter((r) => r.kanonik.startsWith("KAYIP")).length} mührün kanonik metni eski veritabanı sağlayıcısındaki erişim kısıtı (402) nedeniyle okunamadı; bu halkalar yeniden hesaplanamadığı için “kopuk” görünür. Mühür özetleri ve kök{" "}
+              <a href={MANIFEST_PAGE} target="_blank" rel="noreferrer">manifest.json</a>'da değişmeden duruyor; yeni mühürler bu köke zincirlenir.{" "}
+              <a href="https://github.com/90meclis/90meclis.github.io/blob/main/defter/kurtarma-2026-10-28.json" target="_blank" rel="noreferrer">Kurtarma kaydı</a>
+            </p>
+          )}
           <Card title="Bir kaydı doğrula">
             <form className="seal-find" onSubmit={(e) => { e.preventDefault(); setQ(term ? { id: term.trim() } : {}, { replace: true }); }}>
               <input value={term} onChange={(e) => setTerm(e.target.value)} placeholder="Kayıt kimliği (paylaşım kartında ya da arşivde)" aria-label="Kayıt kimliği" />
@@ -68,7 +75,7 @@ export default function Seal() {
                     <dt>Önceki mühür</dt><dd><code>{sel.onceki_sha256}</code></dd>
                     <dt>Mühür</dt><dd><code>{sel.sha256}</code></dd>
                   </dl>
-                  <details><summary>Kanonik kayıt (mühürlenen metin)</summary><pre>{JSON.stringify(JSON.parse(sel.kanonik), null, 1)}</pre></details>
+                  <details><summary>Kanonik kayıt (mühürlenen metin)</summary><pre>{sel.kanonik.startsWith("{") ? JSON.stringify(JSON.parse(sel.kanonik), null, 1) : sel.kanonik}</pre></details>
                   <p className="muted tiny">Kendin de hesaplayabilirsin: sha256(kanonik metin) = içerik özeti; sha256(önceki mühür + içerik özeti) = mühür.</p>
                 </div>
               );
