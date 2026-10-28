@@ -103,6 +103,10 @@ def main(bk: str, out: str) -> None:
                                    "coupon_id": by_seq[cseq]["ref_id"] if cseq else None, "market": mk, "selection": sel,
                                    "line": line, "probability": prob, "odds": odds, "odds_source": "piyasa",
                                    "fair_odds": round(1 / prob, 2), "model_version": "kurtarildi", "rationale": NOTE}])
+    # ekleme tetikleyicileri kayıt zamanını "şimdi" yapar; asıl kilit zamanı geri yazılır (tetikleyiciler bir sonraki
+    # açılışta şemadan yeniden kurulur)
+    st.conn.executescript(f"""drop trigger if exists predictions_bu; drop trigger if exists coupons_bu;
+        update predictions set recorded_at = '{REC}'; update coupons set created_at = '{REC}';""")
     st.upsert("source_status", [{"source": "kurtarma:2026-10-28", "ok": 1, "message": json.dumps(LOST29, ensure_ascii=False),
                                  "updated_at": "2026-10-28T15:30:00+00:00"}])
     st.conn.execute("vacuum")

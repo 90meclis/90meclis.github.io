@@ -2,7 +2,7 @@
 
 Maç maç analiz yapan, tahminlerini **maç başlamadan önce kilitli bir deftere yazan** ve sonra kendi
 karnesini dürüstçe (kayıplar dahil) gösteren bir futbol tahmin uygulaması. Arayüz tamamen Türkçedir,
-tek bir çok sayfalı Streamlit uygulamasıdır; veri Supabase'te (PostgreSQL) tutulur.
+herkese açık web sitesi GitHub Pages'te çalışır; barındırılan veritabanı yoktur (bkz. **Mimari**).
 
 > ⚠️ Bu uygulama bahis tavsiyesi değildir. Model olasılıkları hata payı taşır; geçmiş isabet gelecek
 > için garanti vermez. 18 yaş altı için uygun değildir.
@@ -39,16 +39,23 @@ DEMO_MODE=1 streamlit run app.py
 Tamamen **uydurma** takımlar ("Örnek Kartal" vb.) ve oranlarla arayüzü dener. Her sayfada kırmızı
 **ÖRNEK VERİ** bandı görünür; gerçek veriyle asla karışmaz (ayrı bellek içi veritabanı).
 
-### Supabase
+### Mimari (28.10.2026'dan beri — ücretsiz, barındırılan veritabanı yok)
 
-1. supabase.com'da proje açın (ör. "90 Meclis", AB/İrlanda, Free plan).
-2. **SQL Editor → New query** → `supabase/schema.sql` dosyasının tamamını yapıştırıp **Run**. Dosya tekrar
-   çalıştırılabilir.
-3. **Project Settings → API**: `Project URL` → `SUPABASE_URL`; anahtarlar:
-   - **anon / publishable** → herkese açık Streamlit uygulaması (salt okunur; RLS yazmayı engeller).
-   - **service_role / secret** → yalnızca bot (GitHub Actions secret). İstemciye, Streamlit Cloud'a, depoya **asla**.
+Supabase Free planın 5 GB egress sınırı 27.10.2026'da aşılınca proje kısıtlandı (402). Sistem tamamen GitHub'a taşındı:
 
-Ayrıntılar, tablo tablo şema ve Vault kullanımı: **[docs/supabase-sema.md](docs/supabase-sema.md)**.
+- **Veritabanı = SQLite dosyası**, GitHub Release `veritabani` varlığı (`meclis.db.gz`; ayrıca 14 günlük
+  `meclis-YYYY-MM-DD.db.gz` anlık görüntüleri). Her iş (`.github/workflows/_meclis-is.yml`) dosyayı indirir
+  (`scripts/vt.sh`), `python -m meclis <komut>` çalıştırır, bütünlük denetiminden sonra geri yükler. Aynı anda tek iş
+  yazar (`concurrency: meclis-veritabani`). Yerelde `LOCAL_DB_PATH` aynı dosyayı gösterir.
+- **Site yalnızca statik JSON okur**: işler her çalışmada `veri` dalına (tek commit, geçmiş tutulmaz) `q/` sorgu
+  dosyalarını yazar (`meclis/statik_q.py`); tarayıcıdaki `web/src/lib/statikdb.ts` PostgREST benzeri sorguları bu
+  dosyalarda çalıştırır. Ziyaretçi başına veritabanı okuması yoktur. Canlı skor (`meclis-canli`) `canli.json` yazar.
+- **Değiştirilemez defter git'te**: kilitli tahmin/kupon `defter/tahminler.jsonl`, `defter/kuponlar.jsonl`; sonuçlar
+  ayrı olay satırı olarak `defter/sonuclar.jsonl`; Kanıt Mührü `muhur/manifest.json` + `muhur/kanonik.jsonl`.
+  Yalnızca ekleme yapılır; git geçmişi kanıttır.
+- 28.10 kurtarma kaydı: `defter/kurtarma-2026-10-28.json` (neyin kurtarıldığı, neyin kaybolduğu).
+
+Supabase kodu (`SupabaseStore`, `supabase/`) yalnızca tarihî/yedek yol olarak durur; iş akışları ona bağlanmaz.
 
 ### Ortam değişkenleri
 
@@ -56,7 +63,7 @@ Okuma sırası: ortam değişkeni → `.streamlit/secrets.toml` (Streamlit Cloud
 
 | Değişken | Zorunlu mu | Açıklama |
 |---|---|---|
-| `SUPABASE_URL`, `SUPABASE_KEY` | Önerilir | Kalıcı kayıt. Yoksa yerel SQLite. |
+| `LOCAL_DB_PATH` | Hayır | SQLite dosyası (varsayılan `data/meclis.db`; Actions'ta Release'ten indirilen kopya). |
 | Veri kaynağı anahtarları | Evet (her biri) | Aşağıdaki tablo. Tanımlı değilse kaynak atlanır ve arayüzde **🔑 anahtar bekleniyor** yazar. |
 | `LEAGUES` | Hayır | Boşsa 23 çekirdek lig `T1,E0,SP1,I1,D1,F1,CL,EL,ECL,T2,E1,N1,P1,B1,SC0,G1,E2,SP2,I2,D2,F2,E3,SC1` + `AUTO`: BSD'nin verdiği diğer bütün kulüp ligleri ve kupaları her çalışmada keşfedilir (kod `B<bsd_id>`, adlar `leagues` tablosunda). Milli takım, gençlik ve kadın ligleri alınmaz. `AUTO` yazılmazsa yalnızca listelenenler. |
 | `BSD_MAX_CALLS`, `BSD_ODDS_HOURS` | Hayır | BSD kota ayarı: çalışma başı istek tavanı (1200), oran istenen ufuk (48 saat). |
@@ -128,13 +135,13 @@ Elle çalıştırma: **Actions → iş akışı → Run workflow**.
 **Resmî kayıt 27 Ekim 2026 00:00 TSİ'de başladı.** Öncesi deneme dönemidir; o kayıtlar `deneme_yedek_*`
 tablolarında saklanır, sitede ve istatistiklerde yer almaz. Eski mühür manifestosu `muhur/arsiv/` altındadır.
 
-- Repo → Settings → Secrets and variables → Actions → **Secrets**: `SUPABASE_URL`,
-  `SUPABASE_SERVICE_ROLE_KEY` ve yukarıdaki tablodaki tüm veri anahtarları (`API_FOOTBALL_KEY`,
+- Repo → Settings → Secrets and variables → Actions → **Secrets**: yukarıdaki tablodaki veri anahtarları
+  (`SUPABASE_*` secret'ları artık kullanılmıyor; silinebilir) (`API_FOOTBALL_KEY`,
   `FOOTBALL_DATA_TOKEN`, `ODDS_API_KEY`, `ODDSPAPI_KEY`, `SPORTMONKS_KEY`, `FOOTYSTATS_KEY`, `SPORTDEVS_KEY`,
   `THESPORTSDB_KEY`, `BSD_API_KEY`, isteğe bağlı `HIGHLIGHTLY_KEY`, `BIGBALLS_KEY`, `NOSYAPI_KEY`, `PLAYERELO_KEY`). Tanımlanmayan secret boş geçer; bot o kaynağı "anahtar bekleniyor" diye raporlar.
   **Variables**: `LEAGUES` (boşsa 23 çekirdek lig + AUTO keşfi — bkz. `meclis/config.py`).
-  Gece işi (03:40 TSİ) tabloları `backups` dalına JSON/CSV olarak commit'ler (defterin ikinci kopyası; düzenli
-  commit GitHub'ın 60 gün hareketsizlikte zamanlanmış işleri kapatmasını da önler).
+  Yedek: her iş veritabanını Release'e yükler ve günde bir anlık görüntü bırakır (14 gün); defter ve mühür main'de
+  commit'lenir (düzenli commit, GitHub'ın 60 gün hareketsizlik kapatmasını da önler).
 
 ## Model özeti
 
