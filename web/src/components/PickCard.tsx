@@ -9,6 +9,7 @@ import { SealBadge } from "./SealBadge";
 import { cardForPick } from "../lib/share";
 import type { Kart } from "../lib/editorial";
 import { Gerekce, SonNot } from "./Gerekce";
+import { Kurtarildi } from "./Kurtarildi";
 
 export function PickCard({ p, compact = false, kart, not }: { p: Prediction; compact?: boolean; kart?: Kart; not?: string }) {
   const home = p.home_name ?? "Ev", away = p.away_name ?? "Dep";
@@ -17,6 +18,7 @@ export function PickCard({ p, compact = false, kart, not }: { p: Prediction; com
       <div className="pick-top">
         <TagPill tag={p.tag} />
         <StatusPill status={p.status} />
+        <Kurtarildi mv={p.model_version} />
       </div>
       <Link to={matchPath(p.match_id)} className="pick-match">
         <span className="muted small">{league(p.league).flag} {league(p.league).name} · {dateShort(p.kickoff_at)} {time(p.kickoff_at)}</span>

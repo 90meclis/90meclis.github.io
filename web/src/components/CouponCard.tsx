@@ -10,6 +10,7 @@ import { SealBadge } from "./SealBadge";
 import { cardForCoupon } from "../lib/share";
 import type { Kart } from "../lib/editorial";
 import { Gerekce, SonNot } from "./Gerekce";
+import { Kurtarildi } from "./Kurtarildi";
 
 type Ed = { kart?: Record<string, Kart>; not?: Record<string, string> };
 
@@ -17,7 +18,7 @@ export function CouponCard({ c, legs, ed }: { c: Coupon; legs: Prediction[]; ed?
   return (
     <article className={`coupon c-${c.tag} st-border-${c.status}`}>
       <header className="coupon-head">
-        <div><TagPill tag={c.tag} /><span className="muted small"> {dateMed(c.coupon_date + "T12:00:00+03:00")} · {c.legs_count} maç</span></div>
+        <div><TagPill tag={c.tag} /><span className="muted small"> {dateMed(c.coupon_date + "T12:00:00+03:00")} · {c.legs_count} maç</span> <Kurtarildi mv={c.model_version} /></div>
         <StatusPill status={c.status} />
       </header>
       <div className="coupon-nums">
@@ -38,7 +39,7 @@ export function CouponHero({ c, legs, ed }: { c: Coupon; legs: Prediction[]; ed?
   return (
     <article className={`coupon-hero st-border-${c.status}`}>
       <header>
-        <div><span className="kicker">{dateMed(c.coupon_date + "T12:00:00+03:00")}</span><h2>Günün Kararı</h2><span className="muted small">{legs.length} maç · toplam oran {num(c.total_odds)}</span></div>
+        <div><span className="kicker">{dateMed(c.coupon_date + "T12:00:00+03:00")}</span><h2>Günün Kararı</h2><span className="muted small">{legs.length} maç · toplam oran {num(c.total_odds)}</span> <Kurtarildi mv={c.model_version} /></div>
         <div className="ch-odds"><small>Toplam oran</small><b>{num(c.total_odds)}</b>{c.odds_source === "model_adil" && <em>adil oran</em>}</div>
       </header>
       <ol className="ch-legs">
