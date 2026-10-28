@@ -1,5 +1,6 @@
 import { supabase } from "./supabase";
 import { dayBoundsUtc, addDays, trDay } from "./format";
+import { canliBindir, defter, fresh, gunDosyasi, gunler, statikAnalizler, takimSatirlari } from "./statik";
 import type {
   Agenda, Analysis, Coupon, Injury, Lineup, Match, MatchStat, Prediction, QueueItem, Team, Trend, Weather,
 } from "./types";
@@ -41,7 +42,7 @@ async function all<T>(make: () => Sel, max = 20000): Promise<T[]> {
   return out;
 }
 
-const MATCH_LIST = "id,league,kickoff_at,home_team_id,away_team_id,home_name,away_name,home_goals,away_goals,score,ht_home_goals,ht_away_goals,status,durum,venue,referee,city,odds,missing_fields,completeness,updated_at,season,canli:sources->_canli";
+const MATCH_LIST = "id,league,kickoff_at,home_team_id,away_team_id,home_name,away_name,home_goals,away_goals,score,ht_home_goals,ht_away_goals,status,durum,venue,referee,city,odds,missing_fields,completeness,updated_at,season";
 
 export async function leaguesInDb(): Promise<string[]> {
   const since = new Date(Date.now() - 45 * 86400000).toISOString();
@@ -53,6 +54,13 @@ export async function leaguesInDb(): Promise<string[]> {
 }
 
 export async function matchDays(fromDay: string, toDay: string): Promise<Record<string, Record<string, number>>> {
+  const g = await gunler();
+  // statik dosya bugün −14 … +10 günü kapsar; aralık içindeyse veritabanına gidilmez
+  if (g && fresh(g, 12) && fromDay >= addDays(trDay(), -14) && toDay <= addDays(trDay(), 10)) {
+    const out: Record<string, Record<string, number>> = {};
+    for (const [d, v] of Object.entries(g.gunler)) if (d >= fromDay && d <= toDay) out[d] = v;
+    return out;
+  }
   const [lo] = dayBoundsUtc(fromDay);
   const [, hi] = dayBoundsUtc(toDay);
   const rows = await all<{ league: string; kickoff_at: string }>(() =>
@@ -69,7 +77,9 @@ export async function matchDays(fromDay: string, toDay: string): Promise<Record<
 
 export async function matchesOnDay(day: string): Promise<Match[]> {
   const [lo, hi] = dayBoundsUtc(day);
-  const rows = await all<Match>(() => db().from("matches").select(MATCH_LIST).gte("kickoff_at", lo).lt("kickoff_at", hi).order("kickoff_at"));
+  const f = await gunDosyasi(day);
+  const rows = await canliBindir(f && fresh(f, day < trDay() ? 72 : 6) ? f.maclar
+    : await all<Match>(() => db().from("matches").select(MATCH_LIST).gte("kickoff_at", lo).lt("kickoff_at", hi).order("kickoff_at")));
   // Yanlış ad eşlemesiyle başka takımın kimliğine yazılmış satırları ayıkla (yalnız ad ↔ kimlik uyuşmayanlar denetlenir)
   const sus = rows.filter((m) => { const p = m.id.split(":"); return p.length >= 4 && (nameKey(m.home_name) !== p[2] || nameKey(m.away_name) !== p[3]); });
   await prefetchLeagueSlugs(sus.map((m) => m.league));
@@ -152,14 +162,24 @@ export const newsForMatch = (id: string) =>
   run<Agenda>(db().from("agenda").select("*").contains("match_ids", JSON.stringify([id])).order("published_at", { ascending: false }).limit(12));
 export const teamsIn = (ids: string[]) => run<Team>(db().from("teams").select("*").in("id", ids));
 
-export const allPredictions = () =>
-  pub(all<Prediction>(() => db().from("predictions").select("*").order("kickoff_at", { ascending: false })));
-export const allCoupons = () => all<Coupon>(() => db().from("coupons").select("*").order("coupon_date", { ascending: false }));
+/** Defter (tahmin + kupon): önce statik defter.json (işler her yazmada günceller), bayatsa veritabanı. */
+async function defterOr<T>(pick: (d: { predictions: Prediction[]; coupons: Coupon[] }) => T[], live: () => Promise<T[]>): Promise<T[]> {
+  const d = await defter();
+  if (d && fresh(d, 6)) return pick(d);
+  try { return await live(); } catch (e) { if (d) return pick(d); throw e; }
+}
+export const allPredictionsLive = () =>
+  all<Prediction>(() => db().from("predictions").select("*").order("kickoff_at", { ascending: false }));
+export const allPredictions = () => pub(defterOr((d) => d.predictions, allPredictionsLive));
+export const allCoupons = () => defterOr((d) => d.coupons,
+  () => all<Coupon>(() => db().from("coupons").select("*").order("coupon_date", { ascending: false })));
 export const queue = () => all<QueueItem>(() => db().from("analysis_queue").select("*"));
 
 export async function upcomingPredictions(): Promise<Prediction[]> {
   const [lo] = dayBoundsUtc(addDays(trDay(), -1));
-  return pub(all<Prediction>(() => db().from("predictions").select("*").gte("kickoff_at", lo).order("kickoff_at")));
+  return pub(defterOr((d) => d.predictions.filter((p) => new Date(p.kickoff_at) >= new Date(lo))
+    .sort((a, b) => a.kickoff_at.localeCompare(b.kickoff_at)),
+    () => all<Prediction>(() => db().from("predictions").select("*").gte("kickoff_at", lo).order("kickoff_at"))));
 }
 
 export const news = (limit = 400) =>
@@ -201,8 +221,11 @@ export async function analysesLite(ids: string[], light = false): Promise<Record
     ? "match_id,created_at,ready:payload->ready,basis:payload->>basis,markets:payload->markets,model_matches:payload->model_matches,min_team_matches:payload->min_team_matches"
     : "match_id,created_at,ready:payload->ready,basis:payload->>basis,markets:payload->markets,scenarios:payload->scenarios,model_matches:payload->model_matches,min_team_matches:payload->min_team_matches,lambdas:payload->lambdas,injury_effect:payload->injury_effect,form:payload->form,top_scores:payload->top_scores";
   const analyses: Record<string, BotAnalysis> = {};
+  const st = await statikAnalizler(); // önce statik gün dosyaları; yalnızca eksikler veritabanından
+  for (const id of ids) if (st[id]) analyses[id] = st[id];
+  const miss = ids.filter((id) => !analyses[id]);
   const chunks: string[][] = [];
-  for (let i = 0; i < ids.length; i += 40) chunks.push(ids.slice(i, i + 40));
+  for (let i = 0; i < miss.length; i += 40) chunks.push(miss.slice(i, i + 40));
   // parçalar paralel (sırayla beklemek LCP'yi saniyelerce geciktiriyordu)
   const parts = await Promise.all(chunks.map((c) => run<BotAnalysis>(
     db().from("analyses").select(cols).in("match_id", c).order("created_at", { ascending: false }))));
@@ -211,7 +234,9 @@ export async function analysesLite(ids: string[], light = false): Promise<Record
 }
 
 export const predictionsBetween = (fromIso: string, toIso: string) =>
-  pub(all<Prediction>(() => db().from("predictions").select("*").gte("kickoff_at", fromIso).lt("kickoff_at", toIso).order("kickoff_at")));
+  pub(defterOr((d) => d.predictions.filter((p) => new Date(p.kickoff_at) >= new Date(fromIso) && new Date(p.kickoff_at) < new Date(toIso))
+    .sort((a, b) => a.kickoff_at.localeCompare(b.kickoff_at)),
+    () => all<Prediction>(() => db().from("predictions").select("*").gte("kickoff_at", fromIso).lt("kickoff_at", toIso).order("kickoff_at"))));
 
 /** Botun kaydettiği bülten (v_bot_bulten). Görünüm henüz yoksa null döner; sayfa analizlerden türetir. */
 export interface BotBultenRow {
@@ -383,11 +408,12 @@ export async function leagueNames(): Promise<{ code: string; name: string | null
 /** Birden çok takımın bu sezonki maç maç satırları (Seri Avcısı). Görünüm yoksa null. */
 export async function statRowsForSlugs(slugs: string[], sinceIso: string, beforeIso: string): Promise<TeamStatRow[] | null> {
   try {
+    const st = await takimSatirlari<TeamStatRow>(slugs, sinceIso, beforeIso); // önce statik takım dosyaları
     const parts: string[][] = [];
-    for (let i = 0; i < slugs.length; i += 50) parts.push(slugs.slice(i, i + 50));
+    for (let i = 0; i < st.eksik.length; i += 50) parts.push(st.eksik.slice(i, i + 50));
     const res = await Promise.all(parts.map((part) => all<TeamStatRow>(() => db().from("v_takim_mac_istatistik").select("match_id,kickoff_at,league,competition,side,team_slug,team_name,goals_for,goals_against,corners_for,corners_against,cards_for,cards_against,sot_for,sot_against,xg_for,xg_against")
       .in("team_slug", part).gte("kickoff_at", sinceIso).lt("kickoff_at", beforeIso).order("kickoff_at", { ascending: false }))));
-    return res.flat();
+    return [...st.rows, ...res.flat()].sort((a, b) => b.kickoff_at.localeCompare(a.kickoff_at));
   } catch { return null; }
 }
 
@@ -435,7 +461,7 @@ export const sealsLite = () =>
 export const sealsFull = () =>
   all<SealRow>(() => db().from("v_kanit_muhru").select("*").order("seq")).catch(() => [] as SealRow[]);
 /** Mühür doğrulaması için süzgeçsiz tahmin listesi (yayım süzgeci uygulanmaz; mühür her kaydı kapsar). */
-export const allPredictionsRaw = () => all<Prediction>(() => db().from("predictions").select("*").order("kickoff_at", { ascending: false }));
+export const allPredictionsRaw = () => defterOr((d) => d.predictions, allPredictionsLive);
 
 /** Otomatik işlerin son başarılı çalışması (v_sistem_durumu) — alt bilgide sessiz sağlık işareti. */
 export async function systemStatus(): Promise<{ is_adi: string; son_basari: string | null; gecikti: boolean }[]> {

@@ -106,3 +106,26 @@ herkese açık (t25u).
 - **Motor**: Dixon-Coles↔Elo topluluk ağırlığı gece öğrenilir (korumalı; ilk çalışmada 0.45 korundu: aday 0.00 doğrulamada daha kötü). Lig başına kalibrasyon kancası hazır; bugün hiçbir ligde pazar başına 300 seçim yok (en çok E3: 282) → küresel parametre.
 - **Kart pazarı**: hakemin bu sezonki maç başı kart ortalaması lig ortalamasına büzülerek (k=8) beklentiye çarpan olarak girer (0.75–1.30). Korner/kart pazarları geri test derinliği oluşana kadar yayına girmez.
 - **Kupa + piyasa oranı yok**: farklı lig seviyelerinde güç farkı yarıya büzülür (Copa del Rey'de %99'luk 1X2 görülmüştü).
+
+## 28.10 — Supabase egress kotası (402) ve kalıcı egress diyeti
+
+27.10 ~22:48 UTC'de proje Free plan 5 GB egress sınırını aştı ve kısıtlandı (HTTP 402). Nedenler: her saatlik yayın
+bütün sezonun `matches` satırlarını (ağır `sources` jsonb dahil, ~34 MB) iki kez, `match_stats`'ı, `teams`'i birkaç kez,
+oyuncu maçlarını takım takım okuyordu; her upsert yazdığı satırları geri döndürüyordu (`returning=representation`);
+canlı skor 10 dakikada bir maç satırlarını okuyup yazıyordu; site her ziyaretçide ~0.5–1.5 MB okuyordu.
+
+- **Ayna** (`meclis/ayna.py`): matches, match_stats, teams, lineups, players, player_matches yerel kopyadan sorgulanır
+  (GitHub Actions önbelleği `.ayna`). Artımlı eşitleme iki aşamalı: önce yalnızca anahtar + `updated_at`, sonra yalnız
+  gerçekten değişen satırlar. 14 günde bir tam yenileme. Değişmeyen satır yazılmaz; bütün yazmalar `returning=minimal`.
+- **Kilitli analizler** bir kez okunur, aynada saklanır (kilitli maç analizi değişmez).
+- **Statik site verisi** (`meclis/statik.py`, `veri` dalı, tek commit): defter, editoryal, gün dosyaları (maç + analiz +
+  tarama), gün sayımları, takım sezon satırları. Supabase yeniden okunmadan üretilir. Site önce bunları okur; yoksa ya da
+  bayatsa Supabase'e düşer.
+- **Canlı skor** Supabase'e hiç dokunmaz: gün dosyasından maçları okur, `canli.json` yazar.
+- **Egress bütçesi** (`meclis/egress.py`): her iş baytları ölçer, `is:<iş>` mesajına (v_sistem_durumu.son_mesaj) ve aylık
+  deftere (`source_status 'egress:ay'`) yazar. %70'te vazgeçilebilir adımlar, %95'te yayın/sonuç dışındaki adımlar atlanır
+  (`MECLIS_EGRESS_AY_MB`, varsayılan 2500).
+- **402'de zarif davranış**: ortak iş akışı önce yoklar; 402'de iş yeşil biter, tek bir "Supabase erişimi kısıtlı (402)"
+  issue açılır (yorum yok), erişim dönünce ilk iş issue'yu kapatır. Hata issue'larına 24 saatte en fazla bir yorum.
+- **Yedek koruması**: eksik dışa aktarım `backups` dalını artık silmez (28.10 01:34'te 402 sırasında boş yedek itilmişti;
+  önceki tam yedek `d32255b` commit'inde duruyor).

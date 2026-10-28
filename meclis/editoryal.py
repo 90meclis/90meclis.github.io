@@ -191,8 +191,9 @@ def postmortem(pred: dict, m: dict, stats: dict, a: dict | None) -> str | None:
 
 # ----------------------------------------------------------------------------- işler
 def _latest_payload(store, mid: str) -> dict | None:
-    rows = store.select("analyses", [("match_id", "eq", mid)], order="created_at", desc=True, limit=1)
-    return rows[0]["payload"] if rows else None
+    from .ayna import frozen_analysis  # yayımlanmış seçimin analizi kilitlidir → bir kez okunur
+
+    return frozen_analysis(store, mid)
 
 
 def _put(store, key: str, payload: dict) -> None:
@@ -243,7 +244,8 @@ def _top_match(store, ms: list[dict]) -> dict | None:
     order = {"CL": 0, "EL": 1, "ECL": 2, "E0": 3, "SP1": 4, "I1": 5, "D1": 6, "F1": 7, "T1": 8}
     cand = sorted((m for m in ms if m["league"] in order), key=lambda m: (order[m["league"]], m["kickoff_at"]))
     for m in cand[:6]:
-        a = _latest_payload(store, m["id"])
+        rows = store.select("analyses", [("match_id", "eq", m["id"])], order="created_at", desc=True, limit=1)
+        a = rows[0]["payload"] if rows else None  # vitrin maçı kilitli değil: güncel analiz
         if not a:
             continue
         p = {x["selection"]: x.get("p_kal") or x.get("probability") for x in a.get("markets") or [] if x["market"] == "1X2"}

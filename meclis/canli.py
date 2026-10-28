@@ -56,3 +56,58 @@ def run(store, log: list, fetch=None) -> int:
         n += 1
     log.append(f"✅ canlı: {n}/{len(ms)} maçın skoru güncellendi (ESPN, {len(events)} etkinlik)")
     return n
+
+
+def run_static(out_dir, log: list, fetch=None, now=None) -> int:
+    """Supabase'siz canlı skor: maç listesi statik gün dosyalarından okunur, sonuç `canli.json`'a yazılır
+    (site bu dosyayı Maç Merkezi'ne bindirir). Veritabanına hiçbir okuma/yazma yapılmaz (egress 0)."""
+    import json
+    from pathlib import Path
+
+    from .sources import espn
+    from .timeutil import TR
+
+    fetch = fetch or espn.scoreboard
+    out = Path(out_dir)
+    now = now or now_utc()
+    t = now.astimezone(TR).date()
+    ms: list[dict] = []
+    for d in (t - timedelta(days=1), t):
+        try:
+            ms += json.loads((out / "gun" / f"{d.isoformat()}.json").read_text(encoding="utf-8")).get("maclar") or []
+        except Exception:
+            pass
+    lo, hi = now - timedelta(hours=3), now + timedelta(minutes=5)
+    ms = [m for m in ms if lo <= parse_dt(m["kickoff_at"]) <= hi and m.get("status") in ("planlandi", "basladi", None)
+          and not str(m.get("league", "")).startswith("Y")]
+    p = out / "canli.json"
+    try:
+        prev = json.loads(p.read_text(encoding="utf-8")).get("maclar") or {}
+    except Exception:
+        prev = {}
+    keep = {k: v for k, v in prev.items() if parse_dt(v.get("at")) and now - parse_dt(v["at"]) < timedelta(hours=4)}
+    n = 0
+    events: list[dict] = []
+    if ms:
+        for d in sorted({parse_dt(m["kickoff_at"]).date() for m in ms}):
+            events += fetch(parse_dt(d.isoformat() + "T12:00:00Z"))
+        for m in ms:
+            e = pair(m, events)
+            if not e or not (e["canli"] or e["bitti"]):
+                continue
+            keep[m["id"]] = {"kaynak": "ESPN", "durum": e["durum"], "dakika": e["dakika"], "skor": f"{e['hg']}-{e['ag']}",
+                             "at": to_iso(now), "bitti": e["bitti"]}
+            n += 1
+    out.mkdir(parents=True, exist_ok=True)
+    p.write_text(json.dumps({"uretildi": to_iso(now), "maclar": keep}, ensure_ascii=False, separators=(",", ":")),
+                 encoding="utf-8")
+    log.append(f"✅ canlı (statik): {n}/{len(ms)} maç güncellendi (ESPN, {len(events)} etkinlik); Supabase egress 0")
+    return n
+
+
+if __name__ == "__main__":  # python -m meclis.canli <veri-dizini>
+    import sys
+
+    _log: list = []
+    run_static(sys.argv[1] if len(sys.argv) > 1 else "statik", _log)
+    print("\n".join(_log))

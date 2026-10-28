@@ -27,7 +27,12 @@ jobs:
           done
       - name: Son başarılı çalışmalar (v_sistem_durumu) — gecikme varsa issue
         run: |
-          R=$(curl -sf "$SUPABASE_URL/rest/v1/v_sistem_durumu?select=is_adi,gecikti,son_basari" -H "apikey: $SUPABASE_KEY" -H "Authorization: Bearer $SUPABASE_KEY")
+          code=$(curl -s -o /tmp/r.json -w '%{http_code}' --max-time 20 "$SUPABASE_URL/rest/v1/v_sistem_durumu?select=is_adi,gecikti,son_basari,son_mesaj" -H "apikey: $SUPABASE_KEY" -H "Authorization: Bearer $SUPABASE_KEY" || true)
+          if [ "$code" != "200" ]; then
+            # 402 = kota kısıtı: tek issue'yu ortak iş akışı (_meclis-is) yönetir; burada yalnızca uyarı
+            echo "::warning::Supabase HTTP $code — sağlık denetimi atlandı."; exit 0
+          fi
+          R=$(cat /tmp/r.json)
           echo "$R"
           GEC=$(echo "$R" | jq -r '[.[] | select(.gecikti) | .is_adi] | join(", ")')
           if [ -z "$GEC" ]; then echo "Tüm işler zamanında."; exit 0; fi
@@ -35,4 +40,7 @@ jobs:
           T="Sağlık denetimi: geciken işler"
           N=$(gh issue list -R "$REPO" -l otomatik-izleme -s open --search "in:title \"$T\"" --json number -q '.[0].number')
           B="$(date -u '+%F %H:%M') UTC — son başarılı çalışması geciken işler: $GEC"
-          if [ -n "$N" ]; then gh issue comment "$N" -R "$REPO" -b "$B"; else gh issue create -R "$REPO" -t "$T" -l otomatik-izleme -b "$B"; fi
+          if [ -n "$N" ]; then
+            L=$(gh issue view "$N" -R "$REPO" --json comments,createdAt -q '(.comments[-1].createdAt // .createdAt)')
+            [ $(( $(date -u +%s) - $(date -u -d "$L" +%s) )) -gt 86400 ] && gh issue comment "$N" -R "$REPO" -b "$B" || true
+          else gh issue create -R "$REPO" -t "$T" -l otomatik-izleme -b "$B"; fi

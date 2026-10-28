@@ -405,8 +405,10 @@ class Bot:
                 f"{k} {v:+.3f}" for k, v in sorted(bias.items()) if abs(v) >= 0.01)[:400])
         analyses, bot_rows, nopick = [], [], 0
         for m in matches:
-            if m["id"] in locked:  # arşive alınmış maç kilitli: yeniden hesaplanmaz
-                a = self._latest_analysis(m["id"])
+            if m["id"] in locked:  # arşive alınmış maç kilitli: yeniden hesaplanmaz (analizi aynadan)
+                from .ayna import frozen_analysis
+
+                a = frozen_analysis(self.store, m["id"])
                 if a:
                     analyses.append((m, a))
                 continue

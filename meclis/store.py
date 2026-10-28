@@ -487,6 +487,73 @@ class SupabaseStore(BaseStore):
         self.client = create_client(url, key)
         self.read_only = key_is_read_only(key) if read_only is None else read_only
         self.label = "Supabase (salt okunur — anon anahtarı)" if self.read_only else "Supabase"
+        import os as _os
+
+        # Ayna (egress tasarrufu): matches/match_stats yerel kopyadan sorgulanır, yalnızca değişenler çekilir
+        self._ayna_on = not self.read_only and _os.environ.get("MECLIS_AYNA", "1") != "0"
+        self._mirrors: dict = {}
+        if self._ayna_on:
+            import atexit
+
+            atexit.register(self.flush_mirrors)
+
+    def _mirror(self, table: str):
+        from .ayna import MIRRORED, Mirror
+
+        if not self._ayna_on or table not in MIRRORED:
+            return None
+        m = self._mirrors.get(table)
+        if m is None:
+            from .ayna import LOG_MODE
+
+            col = LOG_MODE.get(table)
+            m = Mirror(table,
+                       (lambda since, t=table, c=col: self._select_raw(t, [(c, "gte", since)], order=c)) if col else
+                       (lambda since, t=table: self._select_raw(t, [("updated_at", "gt", since)], order="updated_at")),
+                       lambda t=table: self._select_raw(t, [], order=",".join(PRIMARY_KEYS[t])),
+                       read_log=(lambda t=table: self._ayna_log(t)) if col else None,
+                       # iki aşamalı artımlı eşitleme: önce yalnızca anahtar + updated_at, sonra gerçekten farklı satırlar
+                       fetch_keys=None if col else (lambda since, t=table: self._select_raw(
+                           t, [("updated_at", "gt", since)], cols=",".join(PRIMARY_KEYS[t]) + ",updated_at")),
+                       fetch_rows=None if col else (lambda vals, t=table: [
+                           r for i in range(0, len(vals), 80)
+                           for r in self._select_raw(t, [(PRIMARY_KEYS[t][0], "in", vals[i:i + 80])])]))
+            self._mirrors[table] = m
+        return m
+
+    def _ayna_log(self, table: str) -> list[dict]:
+        rows = self._select_raw("source_status", [("source", "eq", f"ayna:{table}")])
+        try:
+            return json.loads(rows[0]["message"]) if rows else []
+        except Exception:
+            return []
+
+    def _ayna_log_add(self, table: str, rows: list[dict]) -> None:
+        from datetime import timedelta
+
+        from .ayna import LOG_MODE
+        from .timeutil import parse_dt
+
+        col = LOG_MODE.get(table)
+        vals = [r.get(col) for r in rows if r.get(col)]
+        if not col or not vals:
+            return
+        now = now_utc()
+        ent = [e for e in self._ayna_log(table) if parse_dt(e.get("at")) and now - parse_dt(e["at"]) < timedelta(days=15)]
+        ent.append({"at": to_iso(now), "min": to_iso(min(parse_dt(v) for v in vals))})
+        self.client.table("source_status").upsert({"source": f"ayna:{table}", "ok": True, "message": json.dumps(ent[-200:]),
+                                                   "updated_at": to_iso(now)}, on_conflict="source",
+                                                  returning=__import__("postgrest").types.ReturnMethod.minimal).execute()
+
+    def flush_mirrors(self) -> None:
+        for m in list(self._mirrors.values()):
+            try:
+                m.save()
+            except Exception as e:
+                log.warning("ayna kaydedilemedi (%s): %s", m.table, e)
+
+    def mirror_pulled(self) -> int:
+        return sum(m.pulled for m in self._mirrors.values())
 
     def _guard(self, table: str) -> bool:
         """anon anahtarıyla yazma yapılamaz (RLS). Önbellek tabloları sessizce atlanır; defter tabloları hata verir."""
@@ -539,12 +606,33 @@ class SupabaseStore(BaseStore):
     def upsert(self, table, rows):
         if not rows or not self._guard(table):
             return
+        from postgrest.types import ReturnMethod
+
+        mir = self._mirror(table)
+        if mir is not None:
+            mir.ensure()
+            rows = self._clean(rows, table)
+            rows = [r for r in rows if not mir.unchanged(r)]  # değişmeyen satır yazılmaz (ve geri okunmaz)
+            ts = to_iso(now_utc())
+            rows = [dict(r, updated_at=ts) for r in rows]
+            if not rows:
+                return
         for i in range(0, len(rows), 500):
             chunk = rows[i:i + 500]
             for _ in range(4):  # canlı şema eskiyse bilinmeyen sütunu düşürüp yeniden dene
                 try:
-                    self.client.table(table).upsert(self._clean(chunk, table),
+                    self.client.table(table).upsert(self._clean(chunk, table), returning=ReturnMethod.minimal,
                                                     on_conflict=",".join(PRIMARY_KEYS[table])).execute()
+                    from . import statik as _st
+
+                    _st.note_upsert(table, chunk)
+                    if mir is not None:
+                        mir.apply_upsert(self._clean(chunk, table))
+                        if getattr(mir, "read_log", None):
+                            try:
+                                self._ayna_log_add(table, chunk)
+                            except Exception as e:
+                                log.warning("ayna günlüğü yazılamadı (%s): %s", table, e)
                     break
                 except Exception as e:
                     if not self._drop_missing_column(table, e):
@@ -555,6 +643,12 @@ class SupabaseStore(BaseStore):
             return []
         try:
             res = self.client.table(table).insert(self._clean(rows, table)).execute()
+            from .ayna import Egress
+
+            Egress.add(table, res.data)
+            from . import statik as _st
+
+            _st.note_insert(table, res.data or [])
             return res.data or []
         except Exception as e:
             raise StoreError(f"Supabase insert hatası ({table}): {e}") from e
@@ -578,22 +672,28 @@ class SupabaseStore(BaseStore):
                 return self._select_raw("v_kaynak_durumu", filters, order, desc, limit)
             except Exception:
                 self._no_status_view = True  # görünüm henüz yok (schema.sql çalıştırılmadı)
+        mir = self._mirror(table)
+        if mir is not None:
+            return mir.select(filters, order, desc, limit)
         return self._select_raw(table, filters, order, desc, limit)
 
-    def _select_raw(self, table, filters, order=None, desc=False, limit=None):
+    def _select_raw(self, table, filters, order=None, desc=False, limit=None, cols="*"):
         out: list[dict] = []
         page = 1000
         start = 0
         try:
             while True:
-                q = self._apply(self.client.table(table).select("*"), filters)
-                if order:
-                    q = q.order(order, desc=desc)
+                q = self._apply(self.client.table(table).select(cols), filters)
+                for oc in (order.split(",") if order else []):
+                    q = q.order(oc, desc=desc)
                 end = start + page - 1
                 if limit:
                     end = min(end, limit - 1)
                 res = _with_retry(lambda: q.range(start, end).execute())
                 data = res.data or []
+                from .ayna import Egress
+
+                Egress.add(table, data)
                 out.extend(data)
                 if len(data) < (end - start + 1) or (limit and len(out) >= limit):
                     break
@@ -609,7 +709,9 @@ class SupabaseStore(BaseStore):
         if not self._guard(table):
             return
         try:
-            self._apply(self.client.table(table).delete(), filters).execute()
+            from postgrest.types import ReturnMethod
+
+            self._apply(self.client.table(table).delete(returning=ReturnMethod.minimal), filters).execute()
         except Exception as e:
             raise StoreError(f"Supabase silme hatası ({table}): {e}") from e
 
@@ -620,7 +722,22 @@ class SupabaseStore(BaseStore):
         if not self._guard(table):
             return
         try:
-            self._apply(self.client.table(table).update(self._clean([values], table)[0]), filters).execute()
+            from postgrest.types import ReturnMethod
+
+            mir = self._mirror(table)
+            vals = self._clean([values], table)[0]
+            if mir is not None:
+                mir.ensure()
+                cur = mir.select(filters)
+                if cur and all(mir.unchanged({**{k: r.get(k) for k in mir.keys}, **vals}) for r in cur):
+                    return  # zaten bu değerler: yazma yok
+                vals["updated_at"] = to_iso(now_utc())
+            self._apply(self.client.table(table).update(vals, returning=ReturnMethod.minimal), filters).execute()
+            if mir is not None:
+                mir.apply_update(vals, filters)
+            from . import statik as _st
+
+            _st.note_update(table, vals, filters)
         except Exception as e:
             raise StoreError(f"Supabase güncelleme hatası ({table}): {e}") from e
 

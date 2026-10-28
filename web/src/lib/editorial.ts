@@ -1,4 +1,6 @@
 import { supabase } from "./supabase";
+import { editoryal, fresh } from "./statik";
+import { addDays, trDay } from "./format";
 
 /** Editoryal katman: arka uç 'analyses' tablosuna anahtarlı satırlar yazar (meclis:bulten:GÜN, meclis:not:GÜN, meclis:motor). */
 export type Kart = { maddeler: string[]; risk: string | null; bant: { bant: string; isabet: number | null; n: number; metin: string } | null; etiket: string };
@@ -17,6 +19,13 @@ export type Motor = {
 };
 
 async function payload<T>(key: string): Promise<T | null> {
+  // önce statik editoryal.json (son 14 gün + motor); kapsam içindeyse ve dosyada yoksa kayıt yoktur
+  const e = await editoryal();
+  if (e && fresh(e, 12)) {
+    if (key in e.anahtarlar) return e.anahtarlar[key] as T;
+    const day = key.split(":").pop() ?? "";
+    if (key === "meclis:motor" || (/^\d{4}-\d{2}-\d{2}$/.test(day) && day >= addDays(trDay(), -13))) return null;
+  }
   if (!supabase) return null;
   const { data, error } = await supabase.from("analyses").select("payload").eq("match_id", key)
     .order("created_at", { ascending: false }).limit(1);

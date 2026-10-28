@@ -1,3 +1,4 @@
+import { fresh, gunDosyasi, statikAnalizler, takimSatirlari } from "./statik";
 /*
  * Veri Laboratuvarı motoru. Tek kaynak: v_takim_mac_istatistik (takım × maç, lehte/aleyhte, iç/dış, Avrupa/Lig).
  * Yalnızca BU SEZON (1 Temmuz'dan itibaren). Ortalama yok sayılmaz: her şey maç maç seriden türetilir.
@@ -148,15 +149,21 @@ export async function bulletinRows(maxFixtures?: number): Promise<{ fixtures: Fi
   const today = trDay();
   const [lo] = dayBoundsUtc(today), [, hi] = dayBoundsUtc(addDays(today, 1));
   const now = new Date().toISOString();
-  const all = await paged<Fixture>(() => db().from("matches").select("id,league,kickoff_at,home_team_id,away_team_id,home_name,away_name")
-    .gte("kickoff_at", lo > now ? lo : now).lt("kickoff_at", hi).order("kickoff_at"));
+  const [f0, f1] = await Promise.all([gunDosyasi(today), gunDosyasi(addDays(today, 1))]);
+  const from = lo > now ? lo : now;
+  const all = f0 && f1 && fresh(f0, 6) && fresh(f1, 6)
+    ? [...f0.maclar, ...f1.maclar].filter((m) => new Date(m.kickoff_at) >= new Date(from) && new Date(m.kickoff_at) < new Date(hi)) as unknown as Fixture[]
+    : await paged<Fixture>(() => db().from("matches").select("id,league,kickoff_at,home_team_id,away_team_id,home_name,away_name")
+      .gte("kickoff_at", from).lt("kickoff_at", hi).order("kickoff_at"));
   const fx = maxFixtures ? [...all].sort((a, b) => league(a.league).order - league(b.league).order || a.kickoff_at.localeCompare(b.kickoff_at)).slice(0, maxFixtures) : all;
   const slugOf = (id: string) => id.slice(id.indexOf(":") + 1);
   const slugs = [...new Set(fx.flatMap((f) => [slugOf(f.home_team_id), slugOf(f.away_team_id)]))];
   const rows: LabRow[] = [];
   const since = seasonStartIso();
+  const st = await takimSatirlari<LabRow>(slugs, since, now); // önce statik takım dosyaları
+  rows.push(...st.rows);
   const chunks: string[][] = [];
-  for (let i = 0; i < slugs.length; i += 30) chunks.push(slugs.slice(i, i + 30));
+  for (let i = 0; i < st.eksik.length; i += 30) chunks.push(st.eksik.slice(i, i + 30));
   const parts = await Promise.all(chunks.map((c) => paged<LabRow>(() => db().from(V).select(COLS).in("team_slug", c).gte("kickoff_at", since).lt("kickoff_at", now))));
   for (const p of parts) rows.push(...p);
   return { fixtures: fx, rows: await clean(rows) };
@@ -164,11 +171,23 @@ export async function bulletinRows(maxFixtures?: number): Promise<{ fixtures: Fi
 
 export interface ScanRow { match_id: string; market: string; selection: string; line: number | null; p_model: number | null; p_kal?: number | null; odds: number | null; edge: number | null; deger: boolean | null; secildi: boolean | null }
 export async function scanFor(ids: string[]): Promise<ScanRow[]> {
+  // v_bot_tarama, analizin pazar satırlarının düzleştirilmiş hâlidir → statik gün dosyalarından türetilir
+  const st = await statikAnalizler();
+  const out: ScanRow[] = [];
+  for (const id of ids) {
+    for (const x of (st[id]?.markets ?? []) as unknown as Record<string, unknown>[]) {
+      const n = (k: string) => (x[k] == null ? null : Number(x[k]));
+      out.push({ match_id: id, market: x.market, selection: x.selection, line: n("line"), p_model: n("probability"),
+        p_kal: n("p_kal"), odds: n("odds"), edge: x.edge_kal != null ? n("edge_kal") : n("edge"),
+        deger: !!x.deger, secildi: !!x.secildi } as unknown as ScanRow);
+    }
+  }
+  const missIds = ids.filter((id) => !st[id]);
   const parts: string[][] = [];
-  for (let i = 0; i < ids.length; i += 60) parts.push(ids.slice(i, i + 60));
+  for (let i = 0; i < missIds.length; i += 60) parts.push(missIds.slice(i, i + 60));
   const res = await Promise.all(parts.map((part) => paged<ScanRow>(() => db().from("v_bot_tarama").select("match_id,market,selection,line,p_model,p_kal,odds,edge,deger,secildi").in("match_id", part))
     .catch(() => [] as ScanRow[]))); // görünüm yoksa değer bayrağı gösterilmez
-  return res.flat();
+  return [...out, ...res.flat()];
 }
 
 export interface TeamLite { id: string; name: string; league: string }

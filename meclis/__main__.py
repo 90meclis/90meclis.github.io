@@ -25,7 +25,7 @@ from .store import get_store
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="python -m meclis", description="90 Meclis komut satırı")
     ap.add_argument("komut", choices=["yenile", "gundem", "bot", "sonuclandir", "sabah", "durum", "kadro",
-                                        "gecmis", "analiz", "sezon", "yedek", "gunici", "yayin", "yerel", "geritest", "muhur", "simulasyon", "editoryal", "notlar", "canli"])
+                                        "gecmis", "analiz", "sezon", "yedek", "gunici", "yayin", "yerel", "geritest", "muhur", "simulasyon", "editoryal", "notlar", "canli", "statik"])
     ap.add_argument("--zorla", action="store_true", help="kadro: 7 günlük önbelleği yok say")
     ap.add_argument("--saat", type=float, default=168, help="kadro: kaç saat sonrasına kadarki maçlar (varsayılan 168 = 7 gün)")
     ap.add_argument("--gecmis", action="store_true", help="geçmiş sezon verisini de çek")
@@ -41,6 +41,16 @@ def main(argv=None) -> int:
     print(f"Depo: {store.label} | Ligler: {', '.join(s.leagues)}" + (" | ÖRNEK VERİ MODU" if s.demo_mode else ""))
     if not s.supabase_enabled and not s.demo_mode:
         print("UYARI: SUPABASE_URL/SUPABASE_KEY yok — yerel SQLite kullanılıyor (kalıcı paylaşım yok).")
+    if s.supabase_enabled and not s.demo_mode:
+        from .egress import probe
+
+        code = probe(s.supabase_url, s.supabase_key)
+        if code == 402:  # kota kısıtı: iş kırmızı olmaz, tek bir issue açılır (iş akışı), erişim dönünce kendiliğinden sürer
+            print("⛔ Supabase projesi kısıtlı (HTTP 402: kota aşımı). Bu çalışma atlandı; erişim dönünce işler "
+                  "kaldığı yerden devam eder.", flush=True)
+            _gh_output("kisitli", "1")
+            return 0
+        _gh_output("kisitli", "0")
     from .bot import Bot
     from .news import scan_news
     from .pool import DataPool
@@ -82,6 +92,10 @@ def main(argv=None) -> int:
         except Exception:
             pass
     out_logs = _LiveLog()
+    from .egress import Ledger
+
+    ledger = Ledger(store, a.komut)
+    ledger.load()
     # İŞ DÜZENİ (her biri ayrı iş akışı, ayrı zaman bütçesi — biri yavaşlarsa yayın beklemez):
     #   yayin       : fikstür/oran (bugün+yarın+2 gün) → eksik/ilk 11 (48 saat) → analiz + seçim + kilit → mühür
     #   sonuclandir : biten maçlar, kapanış oranı (CLV)
@@ -89,16 +103,16 @@ def main(argv=None) -> int:
     #   gecmis      : gece ağır işleri (sezon doldurma, yerel lig, geri test, simülasyon) — kaldığı yerden devam eder
     STEPS = {"sabah": ["yenile", "gundem", "kadro", "bot", "sonuclandir"],
              "gunici": ["yenile", "kadro", "bot", "kadro_s", "sonuclandir"],
-             "yayin": ["yenile", "kadro", "bot", "editoryal", "kadro_s"],
-             "sonuclandir": ["sonuclandir", "notlar"],
-             "gecmis": ["gecmis", "yerel", "sezon", "geritest", "simulasyon", "muhur"],
+             "yayin": ["yenile", "kadro", "bot", "editoryal", "statik", "kadro_s"],
+             "sonuclandir": ["sonuclandir", "notlar", "statik"],
+             "gecmis": ["gecmis", "yerel", "sezon", "geritest", "simulasyon", "muhur", "statik"],
              "analiz": ["analiz"]}
     steps = list(STEPS.get(a.komut, [a.komut]))
     if a.komut == "yenile" and a.gecmis:
         steps = ["yenile_s"]
     # adım başına zaman bütçesi (saniye) — aşılırsa adım kesilir, sonraki adımlar yine çalışır
     BUDGET = {"kesif": 180, "yenile": 600, "yenile_s": 1800, "kadro": 600, "kadro_s": 600, "bot": 1500, "gundem": 1200, "gecmis": 2400,
-              "yerel": 900, "sezon": 1500, "geritest": 600, "simulasyon": 900, "muhur": 300, "sonuclandir": 1200, "editoryal": 240, "notlar": 300, "canli": 240,
+              "yerel": 900, "sezon": 1500, "geritest": 600, "simulasyon": 900, "muhur": 300, "sonuclandir": 1200, "editoryal": 240, "notlar": 300, "canli": 240, "statik": 180,
               "analiz": 2400, "yedek": 600}
     is_adi = a.komut
     state = {"failed": []}
@@ -131,8 +145,11 @@ def main(argv=None) -> int:
             signal.signal(signal.SIGALRM, old)
         dt = _t.monotonic() - t0
         _bsd_ledger_flush()
+        from .ayna import Egress as _Eg
+
         print(f"■ {step}: {'OK' if ok else 'HATA'} {dt:.0f} sn (BSD bu çalışmada {pool.bsd.calls}, "
-              f"bugün kalan ≈ {BsdBudget.remaining(pool.bsd.calls)})", flush=True)
+              f"bugün kalan ≈ {BsdBudget.remaining(pool.bsd.calls)}; Supabase egress bu çalışmada "
+              f"{_Eg.total() / 1e6:.1f} MB: {_Eg.top()})", flush=True)
         try:
             store.set_source_status(f"is:{is_adi}:{step}", ok, f"{dt:.0f} sn — {msg}")
             if ok:
@@ -276,6 +293,11 @@ def main(argv=None) -> int:
 
         run_live(store, out_logs)
 
+    def statik():
+        from .statik import export
+
+        export(store, out_logs, full_defter=a.komut == "gecmis")
+
     def editoryal():
         from .editoryal import run_bulletins
 
@@ -297,21 +319,40 @@ def main(argv=None) -> int:
                 print(f"  {st['source']}: {'OK' if st['ok'] else 'SORUN'} — {st['message']} ({st['updated_at']})")
 
     FN = {"kadro_s": kadro_s, "yenile": yenile, "yenile_s": yenile, "gundem": gundem, "kadro": kadro, "gecmis": gecmis, "yerel": yerel,
-          "geritest": geritest, "bot": bot, "editoryal": editoryal, "notlar": notlar, "canli": canli, "sezon": sezon, "simulasyon": simulasyon, "muhur": muhur, "yedek": yedek,
+          "geritest": geritest, "bot": bot, "editoryal": editoryal, "notlar": notlar, "canli": canli, "statik": statik, "sezon": sezon, "simulasyon": simulasyon, "muhur": muhur, "yedek": yedek,
           "analiz": analiz, "sonuclandir": sonuclandir, "durum": durum}
     if not a.ligler and not s.demo_mode and any(x in steps for x in ("yenile", "yenile_s", "gecmis", "bot")):
         run("kesif", kesif)
     for step in steps:
+        why = ledger.skip_reason(step)
+        if why:
+            out_logs.append(f"⏭️ {step} atlandı: {why}")
+            continue
         run(step, FN[step])
         if step == "bot":  # yayımlanan kayıtlar hemen mühürlenir
             run("muhur", muhur)
     try:
+        try:
+            store.flush_mirrors()
+        except Exception:
+            pass
+        eg = ledger.commit()
         store.set_source_status(f"is:{is_adi}", not state["failed"],
-                                "başarısız adımlar: " + ", ".join(state["failed"]) if state["failed"] else "tamam")
+                                ("başarısız adımlar: " + ", ".join(state["failed"]) if state["failed"] else "tamam")
+                                + f" · {eg}")
     except Exception:
         pass
     # kritik adım (bot / sonuclandir) düştüyse iş akışı kırmızı olsun → otomatik GitHub issue
     return 1 if set(state["failed"]) & {"bot", "sonuclandir", "analiz"} else 0
+
+
+def _gh_output(k: str, v: str) -> None:
+    import os
+
+    p = os.environ.get("GITHUB_OUTPUT")
+    if p:
+        with open(p, "a") as f:
+            f.write(f"{k}={v}\n")
 
 
 class _StepTimeout(BaseException):  # BaseException: kaynak kodundaki geniş 'except Exception' blokları yutmasın
