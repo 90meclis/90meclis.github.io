@@ -110,3 +110,5 @@
 {"id": "aef9b9cb-9b3e-4c91-afcf-06abc8a5c1e5", "profit": -1.0, "settled_at": "2026-10-31T15:19:27+00:00", "settlement_note": null, "status": "kaybetti", "tablo": "coupons"}
 {"closing_odds": 1.51, "clv": 0.0, "id": "9f547e62-6c3f-46c7-a14a-fa369a43f91f", "profit": 0.51, "result_value": "4-1", "settled_at": "2026-10-31T17:18:59+00:00", "settlement_note": null, "status": "kazandi", "tablo": "predictions"}
 {"closing_odds": 1.53, "clv": 0.0, "id": "09a58960-1325-4f9f-9069-d7f1b8aa935a", "profit": 0.53, "result_value": "4-2", "settled_at": "2026-10-31T17:18:59+00:00", "settlement_note": null, "status": "kazandi", "tablo": "predictions"}
+{"closing_odds": null, "clv": null, "id": "ff8dc72a-1a26-4fd7-8df0-5bd0623ff6c6", "profit": null, "result_value": null, "settled_at": null, "settlement_note": null, "status": "basladi", "tablo": "predictions"}
+{"closing_odds": null, "clv": null, "id": "421d617d-1fdc-4beb-8a6d-7d836303cde7", "profit": null, "result_value": null, "settled_at": null, "settlement_note": null, "status": "basladi", "tablo": "predictions"}
