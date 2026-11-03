@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import difflib
+import functools
 import re
 import unicodedata
 
@@ -162,9 +163,13 @@ def best_match(name: str, candidates: list[str], threshold: float = 0.90) -> str
     return best if best_score >= threshold else None
 
 
-def mentions_team(text: str, team_name: str) -> bool:
-    """Haber metninde takım adı geçiyor mu (aksan/ek duyarsız)."""
-    t = " " + re.sub(r"[^a-z0-9]+", " ", strip_accents(text).lower()) + " "
+@functools.lru_cache(maxsize=4096)
+def _norm_text(text: str) -> str:
+    return " " + re.sub(r"[^a-z0-9]+", " ", strip_accents(text).lower()) + " "
+
+
+@functools.lru_cache(maxsize=8192)
+def _team_patterns(team_name: str) -> tuple:
     disp = display_name(team_name)
     variants = {strip_accents(team_name).lower(), strip_accents(disp).lower()}
     out = set()
@@ -175,7 +180,11 @@ def mentions_team(text: str, team_name: str) -> bool:
             out.add(v)
             if v.endswith("spor") and len(v) > 7:
                 out.add(v[:-4].strip())
-    for v in out:
-        if re.search(r"(?<![a-z0-9])" + re.escape(v) + r"(?:[a-z]{0,4})(?![a-z0-9])", t):
-            return True
-    return False
+    return tuple(re.compile(r"(?<![a-z0-9])" + re.escape(v) + r"(?:[a-z]{0,4})(?![a-z0-9])") for v in sorted(out))
+
+
+def mentions_team(text: str, team_name: str) -> bool:
+    """Haber metninde takım adı geçiyor mu (aksan/ek duyarsız). Metin ve takım kalıpları önbelleklenir:
+    Gündem taraması (haber x maç) her çiftte yeniden normalleştirme yaptığı için 15 dk bütçeyi aşıyordu."""
+    t = _norm_text(text or "")
+    return any(p.search(t) for p in _team_patterns(team_name or ""))
