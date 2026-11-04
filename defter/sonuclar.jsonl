@@ -213,3 +213,10 @@
 {"closing_odds": 1.53, "clv": 0.0, "id": "ce2b9d80-c4db-468b-949c-48be67f46de3", "profit": 0.53, "result_value": "1-0", "settled_at": "2026-11-04T03:33:56+00:00", "settlement_note": null, "status": "kazandi", "tablo": "predictions"}
 {"closing_odds": null, "clv": null, "id": "579e02a3-b69c-4c1e-be9d-f96c6e92c810", "profit": null, "result_value": null, "settled_at": null, "settlement_note": null, "status": "basladi", "tablo": "predictions"}
 {"closing_odds": 1.5, "clv": 0.02, "id": "579e02a3-b69c-4c1e-be9d-f96c6e92c810", "profit": 0.53, "result_value": "1-0", "settled_at": "2026-11-04T17:39:01+00:00", "settlement_note": null, "status": "kazandi", "tablo": "predictions"}
+{"closing_odds": 1.45, "clv": 0.0483, "id": "f66a905d-fb46-4686-ba6c-0e33e2b02a9c", "profit": -1.0, "result_value": "3-2", "settled_at": "2026-11-04T19:45:15+00:00", "settlement_note": null, "status": "kaybetti", "tablo": "predictions"}
+{"closing_odds": null, "clv": null, "id": "770473f0-4ea9-451d-8440-96cb1e6a2596", "profit": null, "result_value": null, "settled_at": null, "settlement_note": null, "status": "basladi", "tablo": "predictions"}
+{"closing_odds": null, "clv": null, "id": "1619d875-6add-4841-b0e5-fd4c71eadcbe", "profit": null, "result_value": null, "settled_at": null, "settlement_note": null, "status": "basladi", "tablo": "predictions"}
+{"closing_odds": 1.63, "clv": 0.0, "id": "07212483-d1a5-4370-9a56-cfb0d034d876", "profit": 0.63, "result_value": "2-3", "settled_at": "2026-11-04T19:45:15+00:00", "settlement_note": null, "status": "kazandi", "tablo": "predictions"}
+{"closing_odds": null, "clv": null, "id": "7d2468a9-61f1-43a6-8338-4cbdc5166e30", "profit": null, "result_value": null, "settled_at": null, "settlement_note": null, "status": "basladi", "tablo": "predictions"}
+{"id": "4edcc745-e55c-4612-ac31-becda3d8c360", "profit": -1.0, "settled_at": "2026-11-04T19:45:15+00:00", "settlement_note": null, "status": "kaybetti", "tablo": "coupons"}
+{"id": "90f61c33-b3b5-4709-8fa6-b02e48dcfe8b", "profit": null, "settled_at": null, "settlement_note": null, "status": "basladi", "tablo": "coupons"}
