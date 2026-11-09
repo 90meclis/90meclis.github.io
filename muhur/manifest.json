@@ -1,8 +1,8 @@
 {
  "aciklama": "90 Meclis Kanıt Mührü — her satır: sha256(önceki_mühür + sha256(kanonik kayıt)). Kök, zincirin son mührüdür.",
- "olusturuldu": "2026-11-08T15:52:58+00:00",
- "kayit": 214,
- "kok": "ed178971d3ca653e917bd2a7d006810016e4c7fcd3c98ab068013a595bac8c0b",
+ "olusturuldu": "2026-11-09T15:10:58+00:00",
+ "kayit": 215,
+ "kok": "5f3d91699eb0add6c9d91eea7a6c057a1f5b0a1db954ced3b5547e9c8290d21c",
  "muhurler": [
   {
    "seq": 1,
@@ -1715,6 +1715,14 @@
    "icerik_sha256": "a371f4829e52217ebf87cbd14c1636c69f632b91d37f8d73f8d72d7ebee329d8",
    "sha256": "ed178971d3ca653e917bd2a7d006810016e4c7fcd3c98ab068013a595bac8c0b",
    "muhurlendi_at": "2026-11-08T15:52:26+00:00"
+  },
+  {
+   "seq": 215,
+   "ref_table": "predictions",
+   "ref_id": "b4121620-1c73-4def-b3f2-aa3ed3e8ffe6",
+   "icerik_sha256": "bf4810d4b081caf71e50658cdf9f10866e94197a17bd6c1bb8cbfbd242e85e69",
+   "sha256": "5f3d91699eb0add6c9d91eea7a6c057a1f5b0a1db954ced3b5547e9c8290d21c",
+   "muhurlendi_at": "2026-11-09T15:10:30+00:00"
   }
  ]
 }
