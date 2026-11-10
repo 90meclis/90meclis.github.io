@@ -1,8 +1,8 @@
 {
  "aciklama": "90 Meclis Kanıt Mührü — her satır: sha256(önceki_mühür + sha256(kanonik kayıt)). Kök, zincirin son mührüdür.",
- "olusturuldu": "2026-11-09T15:10:58+00:00",
- "kayit": 215,
- "kok": "5f3d91699eb0add6c9d91eea7a6c057a1f5b0a1db954ced3b5547e9c8290d21c",
+ "olusturuldu": "2026-11-10T16:02:26+00:00",
+ "kayit": 218,
+ "kok": "529064ee0ecdc85e15f093f94535db7eff924975c00911ad5609f02c44b01fe1",
  "muhurler": [
   {
    "seq": 1,
@@ -1723,6 +1723,30 @@
    "icerik_sha256": "bf4810d4b081caf71e50658cdf9f10866e94197a17bd6c1bb8cbfbd242e85e69",
    "sha256": "5f3d91699eb0add6c9d91eea7a6c057a1f5b0a1db954ced3b5547e9c8290d21c",
    "muhurlendi_at": "2026-11-09T15:10:30+00:00"
+  },
+  {
+   "seq": 216,
+   "ref_table": "coupons",
+   "ref_id": "731bd953-d7c1-4af7-b746-d52dc969e505",
+   "icerik_sha256": "dc8d2737a4792db2179e40aead7e419b400c14f40370bc3747f8e796f332a2c2",
+   "sha256": "e0502488dcc6bd3ba4e024bb6d9ae822a829c742242795b185e6327d9a8a85f6",
+   "muhurlendi_at": "2026-11-10T16:01:56+00:00"
+  },
+  {
+   "seq": 217,
+   "ref_table": "predictions",
+   "ref_id": "ad8df2a5-978d-4062-8b39-d6e1464df585",
+   "icerik_sha256": "9acbc670da0ab4c7bf7e4e211d08dee1df53714d05aa7129a24763b34346c09a",
+   "sha256": "8b074d0bf32641325944484a5bc0970d9f838342873a90a81fc3d709a5d2ee04",
+   "muhurlendi_at": "2026-11-10T16:01:56+00:00"
+  },
+  {
+   "seq": 218,
+   "ref_table": "predictions",
+   "ref_id": "654f711c-1327-4715-92ba-dd51b6682719",
+   "icerik_sha256": "96458b20080f08a0cc3f888a37351774e1ce5dbb99250aba404a1687f1cf69a6",
+   "sha256": "529064ee0ecdc85e15f093f94535db7eff924975c00911ad5609f02c44b01fe1",
+   "muhurlendi_at": "2026-11-10T16:01:56+00:00"
   }
  ]
 }
