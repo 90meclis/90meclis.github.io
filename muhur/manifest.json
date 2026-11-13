@@ -1,8 +1,8 @@
 {
  "aciklama": "90 Meclis Kanıt Mührü — her satır: sha256(önceki_mühür + sha256(kanonik kayıt)). Kök, zincirin son mührüdür.",
- "olusturuldu": "2026-11-13T11:07:55+00:00",
- "kayit": 226,
- "kok": "6be6dacefee28d5f102ba26736a56951be9ceb647a689ebc9d350f84d0c16eb9",
+ "olusturuldu": "2026-11-13T18:43:06+00:00",
+ "kayit": 242,
+ "kok": "d4ceb67cd675d7bda8ef8ff6edb6b2b73e37124957c6d3f9c40688127c4b9408",
  "muhurler": [
   {
    "seq": 1,
@@ -1811,6 +1811,134 @@
    "icerik_sha256": "c52aeeb4dcdfba40c0bbf318d9e9f41d952e69407c6e5baac760c54d585797d5",
    "sha256": "6be6dacefee28d5f102ba26736a56951be9ceb647a689ebc9d350f84d0c16eb9",
    "muhurlendi_at": "2026-11-13T11:06:07+00:00"
+  },
+  {
+   "seq": 227,
+   "ref_table": "coupons",
+   "ref_id": "10e3c3c3-00c0-4788-bbb0-42d7feb6558c",
+   "icerik_sha256": "7f41e97d788f792e849aa843535cc790b60a24712a2f2350c7da7c0c18513c5d",
+   "sha256": "39b7e013ea0b18449545cca4c41aba46bfa104cd8037f9c97a39a65567a49e51",
+   "muhurlendi_at": "2026-11-13T18:40:53+00:00"
+  },
+  {
+   "seq": 228,
+   "ref_table": "coupons",
+   "ref_id": "488dcd83-bc0e-4b3a-bd92-4c6a98feab38",
+   "icerik_sha256": "ea363fb49ebde792fa993ae30fd0886160dd5462214c6d07c050800ec5138375",
+   "sha256": "087bcc7e9dcf81b5ab33bc16c7e836ea4a67335647eaed9ca97bc622e9753f95",
+   "muhurlendi_at": "2026-11-13T18:40:53+00:00"
+  },
+  {
+   "seq": 229,
+   "ref_table": "predictions",
+   "ref_id": "996f6493-5dd1-4df8-9d7b-1e28ef1344e9",
+   "icerik_sha256": "4200a168d12e27aa9c10dc22c64754b364c2f67aa1541b2a2a511a7b6f6a4c45",
+   "sha256": "19dd422b77c0f9e668fe02a4a93f32840b038d9366bd5d415b586b3eebccb54a",
+   "muhurlendi_at": "2026-11-13T18:40:53+00:00"
+  },
+  {
+   "seq": 230,
+   "ref_table": "predictions",
+   "ref_id": "5918ef57-c959-48df-9035-74f075ebc69e",
+   "icerik_sha256": "0936994eacab243ec2cd3dcdb86f82b8cb29514ff4e0ea88d2a83196765eea8d",
+   "sha256": "6fae7854482539c9d5e6f5c02cd3a2aad11659543082790ec7a7e7aea8983c83",
+   "muhurlendi_at": "2026-11-13T18:40:53+00:00"
+  },
+  {
+   "seq": 231,
+   "ref_table": "predictions",
+   "ref_id": "9fe27609-96c2-4470-8c33-848f45fbbfa9",
+   "icerik_sha256": "131ebec0da320874056e9bd1560a211ca65eab60bf8681bae1916efb8906ae75",
+   "sha256": "f2e64c2fb7b1a62b7b0ce6dcf054e6daca3675ba70dd38b0f216f540dfce9861",
+   "muhurlendi_at": "2026-11-13T18:40:53+00:00"
+  },
+  {
+   "seq": 232,
+   "ref_table": "predictions",
+   "ref_id": "74329cf4-ba4e-4b5b-8f83-6f07cd7d9387",
+   "icerik_sha256": "2714f1b100ae71b154d24606fdea0556310d51c3f6a7102be4de5f60f03fa014",
+   "sha256": "61674c2b1261ebeeb0afc36dc2304966d1c2b766ea5eaabb43038590e05b0540",
+   "muhurlendi_at": "2026-11-13T18:40:53+00:00"
+  },
+  {
+   "seq": 233,
+   "ref_table": "predictions",
+   "ref_id": "617b0ef6-753a-40ca-9517-a8ead281757c",
+   "icerik_sha256": "c44f2b2d038b60aeba2fcdddbad3f8f76ab5db43a02d41f6fd629efb7cbe78d0",
+   "sha256": "7e41a78c023eb675e86e8e09d37c981529c8ebead9569babe98f80e65f9e3119",
+   "muhurlendi_at": "2026-11-13T18:40:53+00:00"
+  },
+  {
+   "seq": 234,
+   "ref_table": "predictions",
+   "ref_id": "ccd94fd0-1c10-4443-9e9b-5360caf63e93",
+   "icerik_sha256": "1330fa9c9441356be24a6a5b97e350e4796f0de77b7e7d58cb29fb2212423e34",
+   "sha256": "8172e9ee12a146c6126ae9fa40a7b0dbb0a1e73bf9fba7b3ff8f495bac6e29c2",
+   "muhurlendi_at": "2026-11-13T18:40:53+00:00"
+  },
+  {
+   "seq": 235,
+   "ref_table": "predictions",
+   "ref_id": "20d9fdf7-76c1-47c5-8a03-756e7ed7f031",
+   "icerik_sha256": "7cc6dbebbd5c11e2a5db36c52cd29cecf69d44a15a6f8f0e972a71d2f230aa43",
+   "sha256": "90413d1b44ee6c693f0b8cc52e9c9d5a2f9b7fa16eddf33069e0f7e5a65ba943",
+   "muhurlendi_at": "2026-11-13T18:40:53+00:00"
+  },
+  {
+   "seq": 236,
+   "ref_table": "predictions",
+   "ref_id": "97ab6707-837f-42ed-b892-42a4b87e784a",
+   "icerik_sha256": "79618078e2cd3d1862f94c9c65fdef04895077b3c9e39dd55f999a4232408345",
+   "sha256": "ecae09fafbede6912f369a26399f283ab30533015a533c472a993abb8741bf8d",
+   "muhurlendi_at": "2026-11-13T18:40:53+00:00"
+  },
+  {
+   "seq": 237,
+   "ref_table": "predictions",
+   "ref_id": "a5a0d748-84b9-402d-989e-138657a82fdb",
+   "icerik_sha256": "2001bbdf35af9546ff9163b2a28abced8c7da15d8a6c2ba0b0159985ddaf958e",
+   "sha256": "1d4502cf7b673ad4f5ca56f85cecb677008b133bba3b4870810cd10a25fba4bf",
+   "muhurlendi_at": "2026-11-13T18:40:53+00:00"
+  },
+  {
+   "seq": 238,
+   "ref_table": "predictions",
+   "ref_id": "fc32718f-264c-4396-8152-c08c69efc143",
+   "icerik_sha256": "19e51ab5da2dd381834c8a4d752dec72c6067f3a706aa51ccd3d49db1a12f9fd",
+   "sha256": "13633b61820c982664cc99c4e177588ceea50e14d3d88a498b3587bd12abcfb9",
+   "muhurlendi_at": "2026-11-13T18:40:53+00:00"
+  },
+  {
+   "seq": 239,
+   "ref_table": "predictions",
+   "ref_id": "2b9170b3-a176-42c7-a909-60524d5b8cf2",
+   "icerik_sha256": "6b1185acbb1ef59cd8d62a31d76a8d00a3864a1c272a537be3a0931ee5a72977",
+   "sha256": "1113abfe24082160633a4ce8bba99d21254712045855313c6cf9e9ef7e52063d",
+   "muhurlendi_at": "2026-11-13T18:40:53+00:00"
+  },
+  {
+   "seq": 240,
+   "ref_table": "predictions",
+   "ref_id": "f4f33152-1690-4d52-bd4c-4544852bae58",
+   "icerik_sha256": "04ea917c756164a8df3e03f755c6f42d6303d9a2cdbf91c7c57d3bc0a6f63b8e",
+   "sha256": "5a750b4698b2774b9fba55566f42a4403845b24c8566c8263764e22dc918d70b",
+   "muhurlendi_at": "2026-11-13T18:40:53+00:00"
+  },
+  {
+   "seq": 241,
+   "ref_table": "predictions",
+   "ref_id": "1cf9a316-329d-42b6-8cc2-5fd2384afc87",
+   "icerik_sha256": "24b839d1ac93dcbb711d1150566475f93a6e431a53d0e6bae416bc756834ad9a",
+   "sha256": "17c9f71b98cfd4458ac8ff3f46db885b55d53583852f196ceb4f0ed663254750",
+   "muhurlendi_at": "2026-11-13T18:40:53+00:00"
+  },
+  {
+   "seq": 242,
+   "ref_table": "predictions",
+   "ref_id": "8030d666-7c8f-4dc0-b62e-024ab63221a4",
+   "icerik_sha256": "1d22362080bb8254da6b372c9e3e8e50fc15463ad3eb778569dbaf1c3638ddb9",
+   "sha256": "d4ceb67cd675d7bda8ef8ff6edb6b2b73e37124957c6d3f9c40688127c4b9408",
+   "muhurlendi_at": "2026-11-13T18:40:53+00:00"
   }
  ]
 }
