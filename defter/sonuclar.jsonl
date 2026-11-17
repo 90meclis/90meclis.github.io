@@ -467,3 +467,4 @@
 {"id": "00d2c10a-4fc9-4218-b7cb-a34266a65a50", "profit": -1.0, "settled_at": "2026-11-17T03:16:03+00:00", "settlement_note": null, "status": "kaybetti", "tablo": "coupons"}
 {"id": "8940731a-de81-4d09-9749-c09af33ae2c2", "profit": 1.8545, "settled_at": "2026-11-17T03:16:03+00:00", "settlement_note": "etkin oran 2.854", "status": "kazandi", "tablo": "coupons"}
 {"closing_odds": 1.69, "clv": 0.0, "id": "889eb5eb-6fbd-4b0b-8141-2461a79de28b", "profit": 0.69, "result_value": "1-1", "settled_at": "2026-11-17T13:56:44+00:00", "settlement_note": null, "status": "kazandi", "tablo": "predictions"}
+{"closing_odds": 1.64, "clv": 0.0, "id": "f2039f35-e143-4c28-82e3-95e22f9505a8", "profit": 0.64, "result_value": "3-0", "settled_at": "2026-11-17T22:44:14+00:00", "settlement_note": null, "status": "kazandi", "tablo": "predictions"}
