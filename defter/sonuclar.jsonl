@@ -497,3 +497,10 @@
 {"closing_odds": null, "clv": null, "id": "35110668-1acd-44e9-81e5-d22dfcedce4f", "profit": null, "result_value": null, "settled_at": null, "settlement_note": null, "status": "basladi", "tablo": "predictions"}
 {"closing_odds": 1.56, "clv": 0.0064, "id": "4eed84fd-0d35-45b3-8724-a5e6895f6403", "profit": 0.57, "result_value": "0-0", "settled_at": "2026-11-20T22:01:04+00:00", "settlement_note": null, "status": "kazandi", "tablo": "predictions"}
 {"id": "0b9b89ed-2fc2-487d-8b30-0b84b7150d48", "profit": null, "settled_at": null, "settlement_note": null, "status": "basladi", "tablo": "coupons"}
+{"closing_odds": 1.48, "clv": 0.0203, "id": "d2ddbaa4-9b16-4928-91d4-f8adebf59ece", "profit": -1.0, "result_value": "1-0", "settled_at": "2026-11-21T03:34:54+00:00", "settlement_note": null, "status": "kaybetti", "tablo": "predictions"}
+{"closing_odds": 1.53, "clv": 0.0, "id": "72b6cfed-35e8-4fac-92c4-84c34a40a416", "profit": 0.53, "result_value": "2-2", "settled_at": "2026-11-21T03:34:54+00:00", "settlement_note": null, "status": "kazandi", "tablo": "predictions"}
+{"closing_odds": 1.57, "clv": 0.0, "id": "1238bf3e-2fba-406f-8905-ead4278149db", "profit": 0.57, "result_value": "1-2", "settled_at": "2026-11-21T03:34:54+00:00", "settlement_note": null, "status": "kazandi", "tablo": "predictions"}
+{"closing_odds": 1.55, "clv": 0.0, "id": "513c809a-b766-4988-85fc-f8b6c1436071", "profit": 0.55, "result_value": "5-1", "settled_at": "2026-11-21T03:34:54+00:00", "settlement_note": null, "status": "kazandi", "tablo": "predictions"}
+{"closing_odds": 1.62, "clv": -0.0247, "id": "35110668-1acd-44e9-81e5-d22dfcedce4f", "profit": 0.58, "result_value": "2-3", "settled_at": "2026-11-21T03:34:54+00:00", "settlement_note": null, "status": "kazandi", "tablo": "predictions"}
+{"id": "c194f981-ce6d-4c3d-be31-f87e000279bb", "profit": -1.0, "settled_at": "2026-11-21T03:34:54+00:00", "settlement_note": null, "status": "kaybetti", "tablo": "coupons"}
+{"id": "0b9b89ed-2fc2-487d-8b30-0b84b7150d48", "profit": 2.4884, "settled_at": "2026-11-21T03:34:54+00:00", "settlement_note": "etkin oran 3.488", "status": "kazandi", "tablo": "coupons"}
